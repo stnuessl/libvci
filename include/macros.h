@@ -9,7 +9,7 @@
 #define max(a, b)                                                              \
     ((a) > (b)) ? (a) : (b)
     
-#define ARRAY_LENGTH(a)                                                        \
+#define ARRAY_SIZE(a)                                                        \
     (sizeof((a)) / sizeof(*(a)))
 
 #define ALIGN(x, a)                                                            \

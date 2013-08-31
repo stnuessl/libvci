@@ -8,10 +8,8 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
+#include "macros.h"
 #include "etrace.h"
-
-#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
-
 
 static void **_buffer;
 static int  _size;
@@ -114,7 +112,7 @@ int etrace_backtrace_on_signals(bool trace, const int *signals, int size)
     
     if(!signals) {
         signals = def_signals;
-        size = ARRAY_SIZE(def_signals);;
+        size    = ARRAY_SIZE(def_signals);;
     }
 
     err  = 0;

@@ -35,8 +35,6 @@ static struct timespec _clock_elapsed(struct clock *__restrict c)
     return _timespec_diff(&c->_current, &c->_start);
 }
 
-
-
 struct clock *clock_new(clockid_t clk_id)
 {
     struct clock *c;
@@ -133,7 +131,7 @@ unsigned long clock_elapsed_ms(struct clock *__restrict c)
     
     ts = _clock_elapsed(c);
     
-    return ts.tv_sec * 1000L + ts.tv_nsec / 1000000L;
+    return ts.tv_sec * 1000UL + ts.tv_nsec / 1000000UL;
 }
 
 unsigned long clock_elapsed_us(struct clock *__restrict c)
@@ -142,7 +140,7 @@ unsigned long clock_elapsed_us(struct clock *__restrict c)
     
     ts = _clock_elapsed(c);
     
-    return ts.tv_sec * 1000000L + ts.tv_nsec / 1000L;
+    return ts.tv_sec * 1000000UL + ts.tv_nsec / 1000UL;
 }
 
 unsigned long clock_elapsed_ns(struct clock *__restrict c)
@@ -151,5 +149,5 @@ unsigned long clock_elapsed_ns(struct clock *__restrict c)
     
     ts = _clock_elapsed(c);
     
-    return ts.tv_sec * 1000000000L + ts.tv_nsec % 1000000000L;
+    return ts.tv_sec * 1000000000UL + ts.tv_nsec % 1000000000UL;
 }
