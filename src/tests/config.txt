@@ -1,0 +1,10 @@
+#
+# you shouldn't be able to read this
+#
+
+Whiskey=Talisker # this sould be unreadable, too
+Age=21
+Distillery=Talisker_Distillery
+
+
+
