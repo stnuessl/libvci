@@ -117,10 +117,13 @@ void clock_continue(struct clock *__restrict c)
 {
     struct timespec ts;
     
+    /* get already elapsed time */
     ts = _clock_elapsed(c);
     
+    /* get new start time */
     clock_gettime(c->_clk_id, &c->_start);
     
+    /* push the start time further into the past by the already elapsed time */
     c->_start  = _timespec_diff(&c->_start, &ts);
     c->_active = true;
 }
