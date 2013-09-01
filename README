@@ -49,3 +49,9 @@ $ mkdir ../src/tests/build
 $ cd ../src/tests/build
 $ cmake ../
 $ make
+
+DOCUMENTATION
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+None, because I don't need one. If you really like to use this library and 
+want/need some documentation, leave me a message.
