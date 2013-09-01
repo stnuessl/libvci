@@ -3,45 +3,13 @@
 
 #include "macros.h"
 #include "item.h"
-#include "mempool.h"
-
-#define ITEM_DEFAULT_NUM 1000
-
-static struct mempool *_item_pool(void);
-
-static void _item_pool_delete(void)
-{
-    mempool_delete(_item_pool());
-}
-
-static struct mempool *_item_pool(void)
-{
-    static struct mempool *pool;
-    
-    if(unlikely(!pool)) {
-        pool = mempool_new(ITEM_DEFAULT_NUM, sizeof(struct item));
-        if(!pool)
-            return NULL;
-        
-        if(atexit(&_item_pool_delete) != 0) {
-            mempool_delete(pool);
-            return NULL;
-        }
-    }
-    
-    return pool;
-}
+#include "item_allocator.h"
 
 struct item *item_new(void *__restrict data, void *__restrict key)
 {
-    struct mempool *pool;
     struct item *item;
     
-    pool = _item_pool();
-    if(unlikely(!pool))
-        return NULL;
-    
-    item = mempool_alloc_chunk(pool);
+    item = item_allocator_alloc();
     if(unlikely(!item))
         return NULL;
     
@@ -95,7 +63,7 @@ void item_delete(struct item *__restrict item,
     if(key_delete)
         key_delete(item_key(item));
     
-    mempool_free_chunk(_item_pool(), item);
+    item_allocator_free(item);
 }
 
 void item_swap(struct item *__restrict a, struct item *__restrict b)
