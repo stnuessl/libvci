@@ -18,6 +18,7 @@ add_library(vci
             src/lib/container/hash.c
             src/lib/container/heap.c
             src/lib/container/item.c
+            src/lib/container/item_allocator.c
             src/lib/container/list.c
             src/lib/container/queue.c
             src/lib/container/stack.c
@@ -41,6 +42,7 @@ install(FILES
         include/hash.h
         include/heap.h
         include/item.h
+        include/item_allocator.h
         include/list.h
         include/mempool.h
         include/queue.h
