@@ -34,7 +34,7 @@ static void _signal_handler(int signal)
 
 int etrace_init(int size, int fd)
 {
-    if(fd <= 0)
+    if(fd < 0)
         fd = STDERR_FILENO;
     
     _fd   = fd;

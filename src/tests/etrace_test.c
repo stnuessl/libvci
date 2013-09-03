@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     int err;
     char *s;
     
-    if(etrace_init(16, 0) < 0)
+    if(etrace_init(16, -1) < 0)
         abort();
     
     if(argc > 2) {
