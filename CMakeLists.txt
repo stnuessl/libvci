@@ -23,6 +23,7 @@ add_library(vci
             src/lib/container/queue.c
             src/lib/container/stack.c
             src/lib/container/tree.c
+            src/lib/log/log.c
             src/lib/etrace/etrace.c
             src/lib/mempool/mempool.c
             src/lib/threadpool/threadpool.c
@@ -44,6 +45,7 @@ install(FILES
         include/item.h
         include/item_allocator.h
         include/list.h
+        include/log.h
         include/mempool.h
         include/queue.h
         include/stack.h
