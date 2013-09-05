@@ -52,6 +52,8 @@ int etrace_init(int size, const char *__restrict path)
         if(err < 0)
             return err;
     }
+    
+    _fd = log_fd(&_log);
 
     if(size <= 4) {
         /* don't use backtrace - mode */
