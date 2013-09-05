@@ -1,10 +1,8 @@
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-
 
 #include <etrace.h>
 
@@ -50,11 +48,11 @@ int main(int argc, char *argv[])
     int err;
     char *s;
     
-    if(etrace_init(16, -1) < 0)
+    if(etrace_init(16, NULL) < 0)
         abort();
     
     if(argc > 2) {
-        etrace_printf("Aborting: Too many arguments.\n");
+        etrace_write("Aborting: Too many arguments.\n");
         abort();
     }
     
@@ -69,18 +67,18 @@ int main(int argc, char *argv[])
         abort();
     }
     
-    if(!strcmp(s, "-segfault"))
+    if(!strcmp(s, "--segfault"))
         path();
-    else if(!strcmp(s, "-float"))
-        bad_fakulty(5);
-    else if(!strcmp(s, "-abort"))
+    else if(!strcmp(s, "--float"))
+        printf("%lu\n", bad_fakulty(10));
+    else if(!strcmp(s, "--abort"))
         abort();
-    else if(!strcmp(s, "-error"))
+    else if(!strcmp(s, "--error"))
         error();
     else
         fprintf(stdout, "Finished successful\n");
     
-    etrace_destroy(false);
+    etrace_destroy();
     
     return EXIT_SUCCESS;
 }

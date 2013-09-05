@@ -6,11 +6,12 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 #include "clock.h"
 #include "log.h"
 
-static const char *_log_level_string(int severity)
+static const char *_log_severity_string(int severity)
 {
     static const char *strings[] = {
         "ERROR",
@@ -24,7 +25,7 @@ static const char *_log_level_string(int severity)
     return strings[severity];
 }
 
-static void _write_line_header(struct log *__restrict l, int level)
+static void _log_write_line_header(struct log *__restrict l, int level)
 {
     time_t now;
     struct tm ltime;
@@ -54,7 +55,7 @@ static void _write_line_header(struct log *__restrict l, int level)
         fprintf(l->_f, "( %*u ) ", 5, getpid());
         
     if(l->_flags & LOG_PRINT_LEVEL)
-        fprintf(l->_f, "{ %*s } ", 9, _log_level_string(level));
+        fprintf(l->_f, "{ %*s } ", 9, _log_severity_string(level));
     
     fprintf(l->_f, ": ");
 }
@@ -62,8 +63,7 @@ static void _write_line_header(struct log *__restrict l, int level)
 
 struct log *log_new(const char *__restrict path, 
                     const char *__restrict name, 
-                    uint8_t flags, 
-                    uint8_t log_level)
+                    uint8_t flags)
 {
     struct log *l;
     int err;
@@ -72,7 +72,7 @@ struct log *log_new(const char *__restrict path,
     if(!l)
         return NULL;
     
-    err = log_init(l, path, name, flags, log_level);
+    err = log_init(l, path, name, flags);
     if(err < 0) {
         free(l);
         return NULL;
@@ -90,8 +90,7 @@ void log_delete(struct log *__restrict l)
 int log_init(struct log *__restrict l,
              const char *__restrict path,
              const char *__restrict name, 
-             uint8_t flags, 
-             uint8_t log_level)
+             uint8_t flags)
 {
 #define HOSTNAME_SIZE 64
     char hostname[HOSTNAME_SIZE];
@@ -131,8 +130,8 @@ int log_init(struct log *__restrict l,
         }
     }
 
-    l->_flags     = flags;
-    l->_log_level = log_level;
+    l->_flags = flags;
+    l->_severity_cap = LOG_SEVERITY_INFO;
     
     return 0;
 
@@ -152,38 +151,66 @@ void log_destroy(struct log *__restrict l)
     if(l->_flags & LOG_PRINT_TIMESTAMP)
         clock_destroy(&l->_clock);
     
+    if(l->_flags & LOG_PRINT_HOSTNAME)
+        free(l->_hostname);
+    
     free(l->_name);
+    
     fclose(l->_f);
 }
 
+void log_set_file(struct log *__restrict l, FILE *f)
+{
+    if(l->_f)
+        fclose(l->_f);
 
-int log_fd(struct log *__restrict l)
+    l->_f  =  f;
+}
+
+inline int log_fd(const struct log *__restrict l)
 {
     return fileno(l->_f);
 }
 
-static void _log_write(struct log *__restrict l,
-                       int level,
+inline void log_set_severity_cap(struct log *__restrict l, int severity_cap)
+{
+    l->_severity_cap = severity_cap;
+}
+
+inline int log_severity_cap(const struct log *__restrict l)
+{
+    return l->_severity_cap;
+}
+
+static void _log_printf(struct log *__restrict l,
+                       int severity,
                        const char *__restrict fmt,
                        va_list vargs)
 {
-    if(level > l->_log_level)
+    if(severity > l->_severity_cap)
         return;
 
-    _write_line_header(l, level);
+    _log_write_line_header(l, severity);
     vfprintf(l->_f, fmt, vargs);
     fflush(l->_f);
 }
 
-void log_write(struct log *__restrict l, 
-               int level, 
+void log_printf(struct log *__restrict l, 
+               int severity, 
                const char *__restrict fmt, ...)
 {
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_write(l, level, fmt, vargs);
+    _log_printf(l, severity, fmt, vargs);
     va_end(vargs);
+}
+
+void log_vprintf(struct log *__restrict l,
+                  int level,
+                  const char *__restrict fmt, va_list vargs)
+{
+    _log_printf(l, level, fmt, vargs);
 }
 
 void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
@@ -191,7 +218,7 @@ void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_write(l, LOG_INFO, fmt, vargs);
+    _log_printf(l, LOG_SEVERITY_INFO, fmt, vargs);
     va_end(vargs);
 }
 
@@ -200,7 +227,7 @@ void log_debug(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_write(l, LOG_DEBUG, fmt, vargs);
+    _log_printf(l, LOG_SEVERITY_DEBUG, fmt, vargs);
     va_end(vargs);
 }
 
@@ -209,7 +236,7 @@ void log_message(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_write(l, LOG_MESSAGE, fmt, vargs);
+    _log_printf(l, LOG_SEVERITY_MESSAGE, fmt, vargs);
     va_end(vargs);
 }
 
@@ -218,7 +245,7 @@ void log_warning(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_write(l, LOG_WARNING, fmt, vargs);
+    _log_printf(l, LOG_SEVERITY_WARNING, fmt, vargs);
     va_end(vargs);
 }
 
@@ -227,7 +254,7 @@ void log_critical(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_write(l, LOG_CRITICAL, fmt, vargs);
+    _log_printf(l, LOG_SEVERITY_CRITICAL, fmt, vargs);
     va_end(vargs);
 }
 
@@ -236,6 +263,6 @@ void log_error(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_write(l, LOG_ERROR, fmt, vargs);
+    _log_printf(l, LOG_SEVERITY_ERROR, fmt, vargs);
     va_end(vargs);
 }

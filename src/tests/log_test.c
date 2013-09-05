@@ -14,16 +14,22 @@ int main(int argc, char *argv[])
             LOG_PRINT_HOSTNAME | 
             LOG_PRINT_LEVEL;
                 
-    
-    l = log_new("/tmp/test.log", "MyLogFile", flags, LOG_INFO);
+    /* open dummy */
+    l = log_new("/dev/null", "MyLogFile", flags);
+
     assert(l);
+    
+    log_set_severity_cap(l, LOG_SEVERITY_INFO);
+    
+    /* set file now */
+    log_set_file(l, stdout);
     
     log_error(l, "error message\n");
     log_critical(l, "critical message\n");
     log_warning(l, "warning message\n");
     log_message(l, "general message\n");
-    log_info(l, "info message\n");
     log_debug(l, "debug message\n");
+    log_info(l, "info message\n");
     
     log_delete(l);
     

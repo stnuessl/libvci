@@ -8,23 +8,25 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
+#include "log.h"
 #include "macros.h"
 #include "etrace.h"
 
 static void **_buffer;
 static int  _size;
-static int  _fd;
+static struct log _log;
+static int _fd;
 
 static void _signal_handler(int signal)
 {
-    const char *msg = { "ERROR :: Received signal - " };
+    const char *msg = "ERROR :: Received signal - ";
     char *signal_name;
     
     signal_name = strsignal(signal);
     
     write(_fd, msg, strlen(msg));
     write(_fd, signal_name, strlen(signal_name));
-    write(_fd, "\n", 1);
+    write(_fd, "\n", sizeof(char));
     
     /* skip this function and the glibc wrapper */
     etrace_backtrace(2);
@@ -32,34 +34,47 @@ static void _signal_handler(int signal)
     _exit(EXIT_FAILURE);
 }
 
-int etrace_init(int size, int fd)
+int etrace_init(int size, const char *__restrict path)
 {
-    if(fd < 0)
-        fd = STDERR_FILENO;
+    int flags, err;
     
-    _fd   = fd;
+    flags = LOG_PRINT_DATE | LOG_PRINT_TIMESTAMP | LOG_PRINT_PID | 
+            LOG_PRINT_NAME | LOG_PRINT_LEVEL;
     
+    if(!path) {
+        err = log_init(&_log, "/dev/null", "etrace", flags);
+        if(err < 0)
+            return err;
+    
+        log_set_file(&_log, stderr);
+    } else {
+        err = log_init(&_log, path, "etrace", flags);
+        if(err < 0)
+            return err;
+    }
+
     if(size <= 4) {
-        /* don't use backtrack - mode */
-        _buffer = NULL;
+        /* don't use backtrace - mode */
+        _buffer  = NULL;
         _size    = 0;
         
         return 0;
     }
     
     _buffer = calloc(size, sizeof(*_buffer));
-    if(!_buffer)
+    if(!_buffer) {
+        log_destroy(&_log);
         return -errno;
+    }
     
     _size = size;
     
     return 0;
 }
 
-void etrace_destroy(bool close_fd)
+void etrace_destroy(void)
 {
-    if(close_fd)
-        close(_fd);
+    log_destroy(&_log);
     
     if(_buffer)
         free(_buffer);
@@ -67,7 +82,7 @@ void etrace_destroy(bool close_fd)
 
 void etrace_backtrace(int skip)
 {
-    const char *msg = { "backtrace():\n" };
+    const char *msg = "backtrace():\n";
     int size;
     
     if(!_size)
@@ -93,13 +108,13 @@ void etrace_backtrace(int skip)
     
 }
 
-void etrace_printf(const char *__restrict fmt, ...)
+void etrace_write(const char *__restrict fmt, ...)
 {
     va_list args;
     
     va_start(args, fmt);
     
-    vdprintf(_fd, fmt, args);
+    log_vprintf(&_log, LOG_SEVERITY_ERROR, fmt, args);
     
     va_end(args);
 }
