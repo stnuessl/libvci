@@ -12,18 +12,19 @@
 
 static pthread_mutex_t _mutex_pool;
 static pthread_once_t _pool_initialized = PTHREAD_ONCE_INIT;
-static struct mempool *_pool;
+static struct mempool *_pool = NULL;
 
 static void _item_allocator_init(void)
 {
-    item_allocator_init(ITEM_ALLOCATOR_SIZE);
+    if(!_pool)
+        item_allocator_init(ITEM_ALLOCATOR_SIZE);
 }
 
 int item_allocator_init(int size)
 {
     int err;
     
-    _pool = mempool_new(size, sizeof(struct item) + sizeof(void *));
+    _pool = mempool_new(size, sizeof(struct item));
     if(!_pool) {
         err = -errno;
         goto out;

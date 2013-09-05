@@ -7,9 +7,9 @@
 #include <mempool.h>
 
 #define LOOPS 1
-#define POOL_CHUNKS 20000
-#define USED_CHUNKS 20000
-#define DATA_SIZE 1
+#define POOL_CHUNKS 2000
+#define USED_CHUNKS 2000
+#define DATA_SIZE 64
 
 struct a {
     char a[DATA_SIZE];

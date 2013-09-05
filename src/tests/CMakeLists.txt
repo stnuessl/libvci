@@ -51,3 +51,6 @@ target_link_libraries(mempool_test vci)
 
 add_executable(log_test log_test.c)
 target_link_libraries(log_test vci)
+
+add_executable(allocator_test allocator_test.c)
+target_link_libraries(allocator_test vci)
