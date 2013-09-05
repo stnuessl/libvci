@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     
     clock_reset(&c);
     
-    usleep(900);
+    usleep(800);
     
     clock_stop(&c);
     
