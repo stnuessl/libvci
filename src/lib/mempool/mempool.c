@@ -27,7 +27,7 @@ static int _mempool_grow(struct mempool *__restrict pool, int size)
         }
     }
     
-    for(i = pool->_size; i < size; i += 2) {
+    for(i = pool->_size; i < size; ++i) {
         chunk = mem[i];
         num   = pool->_num_chunks;
         
