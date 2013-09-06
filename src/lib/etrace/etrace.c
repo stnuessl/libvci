@@ -14,7 +14,7 @@
 
 static void **_buffer;
 static int  _size;
-static struct log _log;
+static struct log *_log;
 static int _fd;
 
 static void _signal_handler(int signal)
@@ -36,24 +36,24 @@ static void _signal_handler(int signal)
 
 int etrace_init(int size, const char *__restrict path)
 {
-    int flags, err;
+    int flags;
     
     flags = LOG_PRINT_DATE | LOG_PRINT_TIMESTAMP | LOG_PRINT_PID | 
             LOG_PRINT_NAME | LOG_PRINT_LEVEL;
     
     if(!path) {
-        err = log_init(&_log, "/dev/null", "etrace", flags);
-        if(err < 0)
-            return err;
+        _log = log_new("/dev/null", "etrace", flags);
+        if(!_log)
+            return -errno;
     
-        log_set_file(&_log, stderr);
+        log_set_file(_log, stderr);
     } else {
-        err = log_init(&_log, path, "etrace", flags);
-        if(err < 0)
-            return err;
+        _log = log_new(path, "etrace", flags);
+        if(!_log)
+            return -errno;
     }
     
-    _fd = log_fd(&_log);
+    _fd = log_fd(_log);
 
     if(size <= 4) {
         /* don't use backtrace - mode */
@@ -65,7 +65,7 @@ int etrace_init(int size, const char *__restrict path)
     
     _buffer = calloc(size, sizeof(*_buffer));
     if(!_buffer) {
-        log_destroy(&_log);
+        log_destroy(_log);
         return -errno;
     }
     
@@ -76,7 +76,7 @@ int etrace_init(int size, const char *__restrict path)
 
 void etrace_destroy(void)
 {
-    log_destroy(&_log);
+    log_delete(_log);
     
     if(_buffer)
         free(_buffer);
@@ -97,7 +97,7 @@ void etrace_backtrace(int skip)
         size -= 2;
 
     /* skip this function on printed backtrace */
-    if(skip < size - 1)
+    if(skip + 1 < size)
         skip += 1;
     else
         skip = 0;
@@ -115,9 +115,7 @@ void etrace_write(const char *__restrict fmt, ...)
     va_list args;
     
     va_start(args, fmt);
-    
-    log_vprintf(&_log, LOG_SEVERITY_ERROR, fmt, args);
-    
+    log_vprintf(_log, LOG_SEVERITY_ERROR, fmt, args);
     va_end(args);
 }
 
