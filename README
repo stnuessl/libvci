@@ -30,6 +30,9 @@ threadpool
 -----------------------------------------
 Threadpool interface for managing tasks and threads.
 
+log
+-----------------------------------------
+Logging functions providing configurable line header and severity levels.
 
 
 INSTALLING
