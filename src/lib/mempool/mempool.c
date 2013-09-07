@@ -25,9 +25,7 @@ static int _mempool_grow(struct mempool *__restrict pool, int size)
             err = -errno;
             goto cleanup1;
         }
-    }
-    
-    for(i = pool->_size; i < size; ++i) {
+        
         chunk = mem[i];
         num   = pool->_num_chunks;
         
@@ -35,7 +33,7 @@ static int _mempool_grow(struct mempool *__restrict pool, int size)
             /* add 'chunk' to list */
             ((struct chunk *)chunk)->next = pool->_free_chunks;
             pool->_free_chunks = chunk;
-
+            
             chunk += pool->_chunk_size;
         }
     }
