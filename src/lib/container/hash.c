@@ -125,7 +125,7 @@ int hash_init(struct hash *__restrict hash, int size, size_t key_size)
         return -errno;
     
     hash->_num_lists = size;
-    hash->_key_size = key_size;
+    hash->_key_size  = key_size;
     
     /* lists are already initialized: calloc() zeroes the returned memory */
 

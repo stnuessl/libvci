@@ -27,7 +27,7 @@ void *run(void *__restrict path)
         return NULL;
     
     for(i = 0; i < ARRAY_LENGTH(keys); ++i) {
-        data = config_read(config, keys[i]);
+        data = config_lookup(config, keys[i]);
         fprintf(stdout, "%s: %s -> %s\n", (char *)path, keys[i], data);
     }
     
