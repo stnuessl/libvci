@@ -25,6 +25,10 @@ void list_destroy(struct list *__restrict list,
                   void (*data_delete)(void *),
                   void (*key_delete)(void *));
 
+void list_clear(struct list *__restrict list,
+                void (*data_delete)(void *),
+                void (*key_delete)(void *));
+
 int list_insert_front(struct list *__restrict list, 
                       void *__restrict data, 
                       void *__restrict key);
