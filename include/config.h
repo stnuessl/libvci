@@ -8,15 +8,27 @@
 #include "list.h"
 
 struct config {
-    FILE *_file;
+    char *_path;
     struct hash _hash;
-    struct list _list;
 };
 
-struct config *config_open(const char *__restrict path, bool writable);
+struct config *config_new(const char *__restrict path);
 
-char *config_get(struct config *__restrict config, const char *__restrict key);
+void config_delete(struct config *__restrict config);
 
-void config_close(struct config  *__restrict config);
+int config_init(struct config *__restrict config, const char *__restrict path);
+
+void config_destroy(struct config *__restrict config);
+
+int config_parse(struct config *__restrict config);
+
+const char *config_value(struct config *__restrict config, 
+                         const char *__restrict section,
+                         const char *__restrict key);
+
+int config_set_path(struct config *__restrict config, 
+                     const char *__restrict path);
+
+const char *config_path(struct config *__restrict config);
 
 #endif /* _CONFIG_H_ */  

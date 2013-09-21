@@ -5,33 +5,57 @@
 #include <unistd.h>
 #include <assert.h>
 
+#include <macros.h>
 #include <config.h>
 
-#define ARRAY_LENGTH(a) (sizeof((a))/sizeof((a)[0]))
-
 const char *keys[] = {
-    "Whiskey",
+    "ShoppingList",
+    "Year",
+    "Month",
+    "Day",
+    "Name",
     "Age",
     "Distillery"
 };
 
+const char *sections[] = {
+    NULL,
+    "Whiskey",
+    "Herb Liqueur",
+    "Booze"
+};
 
 void *run(void *__restrict path)
 {
-    config_t *config;
-    int i;
-    char *data;
+    struct config *config;
+    int sections_size, keys_size;
+    const char **iterator1, **iterator2, *data;
+    int err;
     
-    config = config_open(path);
+    config = config_new(path);
     if(!config)
         return NULL;
     
-    for(i = 0; i < ARRAY_LENGTH(keys); ++i) {
-        data = config_lookup(config, keys[i]);
-        fprintf(stdout, "%s: %s -> %s\n", (char *)path, keys[i], data);
+    err = config_parse(config);
+    if(err < 0) {
+        fprintf(stderr, "config parse: %d - %s\n", err, strerror(-err));
+        return NULL;
     }
     
-    config_close(config);
+    sections_size = ARRAY_SIZE(sections);
+    keys_size     = ARRAY_SIZE(keys);   
+    
+    for_each(sections, sections_size, iterator1) {
+        for_each(keys, keys_size, iterator2) {
+            do {
+                data = config_value(config, *iterator1, *iterator2);
+                if(data)
+                    printf("[%s]: %s -> %s\n", *iterator1, *iterator2, data);
+            } while(data);
+        }
+    }
+    
+    config_delete(config);
     
     return NULL;
 }

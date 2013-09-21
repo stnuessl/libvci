@@ -2,9 +2,22 @@
 # you shouldn't be able to read this
 #
 
-Whiskey=Talisker                # this should be unreadable, too
-Age = 21                        # spaces are -
-Distillery= Talisker_Distillery # thrown away
+ShoppingList Drinks
 
+Year    2013
+Month   09      September
+Day     18      Wednesday
 
+[Whiskey]
 
+Name            Talisker
+Age             10 18 25 30 35 
+Distillery      Talisker Distillery
+
+[HerbLiqueur]
+
+Name Jägermeister
+
+[Booze]
+
+Name Absolut Wodka

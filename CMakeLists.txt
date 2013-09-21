@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.6)
 project(libvci C)
 
 add_definitions(-Wall)
-add_definitions(-O2)
-#add_definitions(-g3)
+#add_definitions(-O2)
+add_definitions(-g3)
 
 find_package(Threads)
 
@@ -13,6 +13,8 @@ add_library(vci
 	    SHARED
 	    src/lib/clock/clock.c
 	    src/lib/config/config.c
+	    src/lib/config/config_parser.c
+	    src/lib/config/key.c
             src/lib/container/bintree.c
             src/lib/container/buffer.c
             src/lib/container/hash.c
@@ -46,6 +48,7 @@ install(FILES
         include/item_allocator.h
         include/list.h
         include/log.h
+        include/macros.h
         include/mempool.h
         include/queue.h
         include/stack.h
