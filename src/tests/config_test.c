@@ -5,33 +5,41 @@
 #include <unistd.h>
 #include <assert.h>
 
+#include <macros.h>
 #include <config.h>
+#include <hash.h>
 
-#define ARRAY_LENGTH(a) (sizeof((a))/sizeof((a)[0]))
-
-const char *keys[] = {
-    "Whiskey",
-    "Age",
-    "Distillery"
-};
-
+#define PRINT_CONFIG(config, section, key)                                     \
+    fprintf(stdout,                                                            \
+    "[%15s]: %15s -> %20s\n",                                                  \
+    section ? section : "null", key, config_value(config, section, key))
 
 void *run(void *__restrict path)
 {
-    config_t *config;
-    int i;
-    char *data;
+    struct config *config;
+    int err;
     
-    config = config_open(path);
+    config = config_new(path);
     if(!config)
         return NULL;
     
-    for(i = 0; i < ARRAY_LENGTH(keys); ++i) {
-        data = config_read(config, keys[i]);
-        fprintf(stdout, "%s: %s -> %s\n", (char *)path, keys[i], data);
-    }
+    err = config_parse(config);
+    if(err < 0)
+        return NULL;
     
-    config_close(config);
+    PRINT_CONFIG(config, NULL, "ShoppingList");
+    PRINT_CONFIG(config, NULL, "Year");
+    PRINT_CONFIG(config, NULL, "Month");
+    PRINT_CONFIG(config, NULL, "Day");
+    
+    PRINT_CONFIG(config, "Whiskey", "Name");
+    PRINT_CONFIG(config, "Whiskey", "Age");
+    PRINT_CONFIG(config, "Whiskey", "Distillery");
+    
+    PRINT_CONFIG(config, "HerbLiqueur", "Name");
+    PRINT_CONFIG(config, "Booze", "Name");
+    
+    config_delete(config);
     
     return NULL;
 }
