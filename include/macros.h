@@ -9,17 +9,16 @@
 #define max(a, b)                                                              \
     ((a) > (b)) ? (a) : (b)
     
-#define for_each(array, size, iterator)                                        \
-    for((iterator) = (array); (size); (size)--, (iterator)++)
-    
 #define ARRAY_SIZE(a)                                                          \
     (sizeof((a)) / sizeof(*(a)))
+    
+#define __ALIGN_MASK(x, mask)                                                  \
+    (((x) + (mask)) & ~(mask))
 
 #define ALIGN(x, a)                                                            \
     __ALIGN_MASK(x, (typeof(x))(a)-1)
 
-#define __ALIGN_MASK(x, mask)                                                  \
-    (((x) + (mask)) & ~(mask))
+#undef __ALIGN_MASK
 
 #define container_of(ptr, type, member)                                        \
     (type *)(((char *) ptr) - offsetof(type, member))

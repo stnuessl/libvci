@@ -11,12 +11,12 @@ Day     18      Wednesday
 [Whiskey]
 
 Name            Talisker
-Age             10 18 25 30 35 
+Age             10,18,25,30,35
 Distillery      Talisker Distillery
 
 [HerbLiqueur]
 
-Name Jägermeister
+Name    Jägermeister
 
 [Booze]
 

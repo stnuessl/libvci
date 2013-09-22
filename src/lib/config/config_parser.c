@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 
@@ -33,6 +34,7 @@ bool _parser_char_readable(struct config_parser *__restrict parser)
 {
     return parser->fpos < parser->file + parser->fsize;
 }
+
 static enum parser_state 
 _config_parser_next_state(struct config_parser *__restrict parser)
 {
@@ -54,8 +56,6 @@ _config_parser_next_state(struct config_parser *__restrict parser)
             case '#':
             case ';':
                 return PARSER_STATE_HANDLE_COMMENT;
-            case EOF:
-                
             default:
                 --parser->fpos;
                 
@@ -100,8 +100,6 @@ _config_parser_handle_section(struct config_parser *__restrict parser)
             if(!s)
                 return -errno;
             
-            free(parser->section);
-            
             parser->section = strdup(s);
             if(!parser->section)
                 return -errno;
@@ -138,11 +136,11 @@ static int _config_parser_handle_key(struct config_parser *__restrict parser)
             if(!s)
                 return -errno;
             
-            parser->key = malloc(_KEY_SIZE_);
+            parser->key = malloc(sizeof(*parser->key));
             if(!parser->key)
                 return -errno;
             
-            key_merge(parser->key, _KEY_SIZE_, parser->section, s);
+            key_merge(parser->key, sizeof(*parser->key), parser->section, s);
             break;
         default:
             if(!isalnum(c))
@@ -170,42 +168,43 @@ static int _config_parser_handle_values(struct config_parser *__restrict parser)
     start = parser->fpos;
     
     while(_parser_char_readable(parser)) {
-        if(*parser->fpos++ == '\n') {
-            end = parser->fpos - 1;
-            
-            do {
-                c = *end--;
-            } while(c == ' ' || c == '\t');
-            
-            diff = end - start + 1;
-            
-            err = buffer_prepare_write(parser->buf, diff);
-            if(err < 0)
-                return err;
-            
-            buffer_write(parser->buf, start, diff);
-            
-            s = _buffer_string(parser->buf);
-            if(!s)
-                return -errno;
-            
-            values = strdup(s);
-            if(!values)
-                return -errno;
-            
-            err = hash_insert(&parser->config->_hash, values, parser->key);
-            if(err < 0) {
-                free(values);
-                return -errno;
-            }
-            
-            parser->key = NULL;
-            
-            return 0;
-        }
+        if(*parser->fpos == '\n')
+            break;
+        
+        parser->fpos += 1;
     }
     
-    return (parser->key) ? -EINVAL : 0;
+    end = parser->fpos;
+    
+    do {
+        c = *end--;
+    } while(c == ' ' || c == '\t');
+    
+    diff = end - start + 1;
+    
+    err = buffer_prepare_write(parser->buf, diff);
+    if(err < 0)
+        return err;
+    
+    buffer_write(parser->buf, start, diff);
+    
+    s = _buffer_string(parser->buf);
+    if(!s)
+        return -errno;
+    
+    values = strdup(s);
+    if(!values)
+        return -errno;
+    
+    err = hash_insert(&parser->config->_hash, values, parser->key);
+    if(err < 0) {
+        free(values);
+        return -errno;
+    }
+    
+    parser->key = NULL;
+    
+    return 0;
 }
 
 static void 
@@ -270,6 +269,8 @@ int config_parser_parse(struct config_parser *__restrict parser)
 {
     int err;
     
+    err =  0;
+    
     do {
         parser->state = _config_parser_next_state(parser);
         
@@ -284,8 +285,9 @@ int config_parser_parse(struct config_parser *__restrict parser)
                 err = _config_parser_handle_values(parser);
                 break;
             case PARSER_STATE_HANDLE_COMMENT:
-                err =  0;
                 _config_parser_handle_comment(parser);
+                break;
+            case PARSER_STATE_FINISHED:
                 break;
             case PARSER_STATE_ERROR:
             default:

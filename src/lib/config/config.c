@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdint.h>
 
 #include <hash.h>
 #include <list.h>
@@ -45,7 +46,7 @@ int config_init(struct config *__restrict config, const char *__restrict path)
     if(!config->_path)
         return -errno;
     
-    err = hash_init(&config->_hash, 0, _KEY_SIZE_);
+    err = hash_init(&config->_hash, 0, sizeof(uint64_t));
     if(err < 0) {
         free(config->_path);
         return err;
@@ -84,11 +85,14 @@ const char *config_value(struct config *__restrict config,
                     const char *__restrict section,
                     const char *__restrict key)
 {
-    char merged_keys[_KEY_SIZE_];
+    uint64_t merged_key;
     
-    key_merge(merged_keys, sizeof(merged_keys), section, key);
+    if(!section)
+        section = _NO_SECTION_;
     
-    return hash_retrieve(&config->_hash, merged_keys);
+    key_merge(&merged_key, sizeof(merged_key), section, key);
+    
+    return hash_retrieve(&config->_hash, &merged_key);
 }
 
 int config_set_path(struct config *__restrict config, 

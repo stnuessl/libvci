@@ -1,7 +1,7 @@
 #ifndef _KEYS_H_
 #define _KEYS_H_
 
-#define _KEY_SIZE_ 8
+#include <stdio.h>
 
 int key_compare(const void *m1, const void *m2);
 

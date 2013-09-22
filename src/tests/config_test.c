@@ -7,29 +7,16 @@
 
 #include <macros.h>
 #include <config.h>
+#include <hash.h>
 
-const char *keys[] = {
-    "ShoppingList",
-    "Year",
-    "Month",
-    "Day",
-    "Name",
-    "Age",
-    "Distillery"
-};
-
-const char *sections[] = {
-    NULL,
-    "Whiskey",
-    "Herb Liqueur",
-    "Booze"
-};
+#define PRINT_CONFIG(config, section, key)                                     \
+    fprintf(stdout,                                                            \
+    "[%15s]: %15s -> %20s\n",                                                  \
+    section ? section : "null", key, config_value(config, section, key))
 
 void *run(void *__restrict path)
 {
     struct config *config;
-    int sections_size, keys_size;
-    const char **iterator1, **iterator2, *data;
     int err;
     
     config = config_new(path);
@@ -37,23 +24,20 @@ void *run(void *__restrict path)
         return NULL;
     
     err = config_parse(config);
-    if(err < 0) {
-        fprintf(stderr, "config parse: %d - %s\n", err, strerror(-err));
+    if(err < 0)
         return NULL;
-    }
     
-    sections_size = ARRAY_SIZE(sections);
-    keys_size     = ARRAY_SIZE(keys);   
+    PRINT_CONFIG(config, NULL, "ShoppingList");
+    PRINT_CONFIG(config, NULL, "Year");
+    PRINT_CONFIG(config, NULL, "Month");
+    PRINT_CONFIG(config, NULL, "Day");
     
-    for_each(sections, sections_size, iterator1) {
-        for_each(keys, keys_size, iterator2) {
-            do {
-                data = config_value(config, *iterator1, *iterator2);
-                if(data)
-                    printf("[%s]: %s -> %s\n", *iterator1, *iterator2, data);
-            } while(data);
-        }
-    }
+    PRINT_CONFIG(config, "Whiskey", "Name");
+    PRINT_CONFIG(config, "Whiskey", "Age");
+    PRINT_CONFIG(config, "Whiskey", "Distillery");
+    
+    PRINT_CONFIG(config, "HerbLiqueur", "Name");
+    PRINT_CONFIG(config, "Booze", "Name");
     
     config_delete(config);
     

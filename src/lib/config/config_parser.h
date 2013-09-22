@@ -1,6 +1,8 @@
 #ifndef _CONFIG_PARSER_H_
 #define _CONFIG_PARSER_H_
 
+#include <stdint.h>
+
 #include "config.h"
 
 #define _NO_SECTION_ "__NO_SECTION__"
@@ -20,7 +22,7 @@ struct config_parser {
     struct buffer  *buf;
     int fd;
     char *section;
-    char *key;
+    uint64_t *key;
     char *file;
     size_t fsize;
     char *fpos;
