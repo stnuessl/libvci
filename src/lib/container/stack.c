@@ -110,7 +110,7 @@ int stack_size(const struct stack *__restrict stack)
     return list_size(&stack->_list);
 }
 
-bool stack_is_empty(const struct stack *__restrict stack)
+bool stack_empty(const struct stack *__restrict stack)
 {
     return list_empty(&stack->_list);
 }

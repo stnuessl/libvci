@@ -37,7 +37,7 @@ bool is_palindrome(const char *str)
     stack_set_data_delete(&stack, &free);
     push_string(&stack, str);
     
-    while(!stack_is_empty(&stack)) {
+    while(!stack_empty(&stack)) {
         item = stack_pop_item(&stack);
         c = *(char *)item_data(item);
         

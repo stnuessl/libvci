@@ -38,7 +38,7 @@ struct item *stack_top_item(struct stack *__restrict stack);
 
 int stack_size(const struct stack *__restrict stack);
 
-bool stack_is_empty(const struct stack *__restrict stack);
+bool stack_empty(const struct stack *__restrict stack);
 
 
 #define STACK_DEFINE_SET_CALLBACK(name, type, param)                           \
