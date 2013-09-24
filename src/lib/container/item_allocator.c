@@ -23,9 +23,6 @@ int item_allocator_init(int size)
 {
     int err;
 
-    if(_pool)
-      return 0;
-    
     _pool = mempool_new(size, sizeof(struct item));
     if(!_pool) {
         err = -errno;
