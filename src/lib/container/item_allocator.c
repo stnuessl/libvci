@@ -7,7 +7,7 @@
 #include "macros.h"
 #include "item_allocator.h"
 
-#define ITEM_ALLOCATOR_SIZE 1024
+#define ITEM_ALLOCATOR_SIZE 1000
 
 
 static pthread_mutex_t _mutex_pool;
@@ -23,9 +23,6 @@ static void _item_allocator_init(void)
 int item_allocator_init(int size)
 {
     int err;
-    
-    if(_pool)
-        return 0;
     
     _pool = mempool_new(size, sizeof(struct item));
     if(!_pool) {
