@@ -1,4 +1,4 @@
-libcvi - Library for Various C Interfaces
+libvci - Library for Various C Interfaces
 =========================================
 
 A library with various interfaces for common tasks.
