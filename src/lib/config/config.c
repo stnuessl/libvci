@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <stdint.h>
 
-#include <hash.h>
+#include <map.h>
 #include <list.h>
 #include <buffer.h>
 #include <macros.h>
@@ -46,15 +46,15 @@ int config_init(struct config *__restrict config, const char *__restrict path)
     if(!config->_path)
         return -errno;
     
-    err = hash_init(&config->_hash, 0, sizeof(uint64_t));
+    err = map_init(&config->_map, 0, sizeof(uint64_t));
     if(err < 0) {
         free(config->_path);
         return err;
     }
     
-    hash_set_data_delete(&config->_hash, &free);
-    hash_set_key_delete(&config->_hash, &free);
-    hash_set_key_compare(&config->_hash, &key_compare);
+    map_set_data_delete(&config->_map, &free);
+    map_set_key_delete(&config->_map, &free);
+    map_set_key_compare(&config->_map, &key_compare);
     
     return 0;
 }
@@ -62,7 +62,7 @@ int config_init(struct config *__restrict config, const char *__restrict path)
 void config_destroy(struct config *__restrict config)
 {
     free(config->_path);
-    hash_destroy(&config->_hash);
+    map_destroy(&config->_map);
 }
 
 int config_parse(struct config *__restrict config)
@@ -92,7 +92,7 @@ const char *config_value(struct config *__restrict config,
     
     key_merge(&merged_key, sizeof(merged_key), section, key);
     
-    return hash_retrieve(&config->_hash, &merged_key);
+    return map_retrieve(&config->_map, &merged_key);
 }
 
 int config_set_path(struct config *__restrict config, 

@@ -3,7 +3,7 @@
 
 #include "mempool.h"
 #include "item.h"
-#include "hash.h"
+#include "map.h"
 #include "macros.h"
 #include "item_allocator.h"
 

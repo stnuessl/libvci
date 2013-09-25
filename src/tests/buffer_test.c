@@ -6,8 +6,6 @@
 
 #include <buffer.h>
 
-
-
 int main(int argc, char *argv[])
 {
     struct buffer buf;

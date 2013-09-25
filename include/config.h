@@ -4,12 +4,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "hash.h"
+#include "map.h"
 #include "list.h"
 
 struct config {
     char *_path;
-    struct hash _hash;
+    struct map _map;
 };
 
 struct config *config_new(const char *__restrict path);

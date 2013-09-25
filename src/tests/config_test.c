@@ -7,7 +7,7 @@
 
 #include <macros.h>
 #include <config.h>
-#include <hash.h>
+#include <map.h>
 
 #define PRINT_CONFIG(config, section, key)                                     \
     fprintf(stdout,                                                            \
