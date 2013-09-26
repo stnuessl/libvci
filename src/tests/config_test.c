@@ -25,7 +25,7 @@ void *run(void *__restrict path)
     
     err = config_parse(config);
     if(err < 0)
-        return NULL;
+        goto out;
     
     PRINT_CONFIG(config, NULL, "ShoppingList");
     PRINT_CONFIG(config, NULL, "Year");
@@ -38,7 +38,7 @@ void *run(void *__restrict path)
     
     PRINT_CONFIG(config, "HerbLiqueur", "Name");
     PRINT_CONFIG(config, "Booze", "Name");
-    
+out:
     config_delete(config);
     
     return NULL;

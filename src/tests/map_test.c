@@ -25,7 +25,7 @@ char *strings[] = {
     "I",
     "hope",
     "this",
-    "hash",
+    "map",
     "thing",
     "works",
     NULL
@@ -43,24 +43,24 @@ char *keys[] = {
 
 int main(int argc, char *argv[])
 {
-#define HASH_SIZE 10
+#define MAP_SIZE 10
 #define NELEMENTS 20
-    struct map *hash;
+    struct map *map;
     struct item *item;
     long *key, tmp;
     int *data, i, err;
     char *s1, *s2;
     
-    fprintf(stdout, "Hash test started.\n");
+    fprintf(stdout, "Map test started.\n");
     
-    /* create and initizalize hash */
-    hash = map_new(HASH_SIZE, sizeof(*key));
+    /* create and initizalize map */
+    map = map_new(MAP_SIZE, sizeof(*key));
     
-    assert(hash);
+    assert(map);
     
-    hash_set_data_delete(hash, &free);
-    hash_set_key_delete(hash, &free);
-    hash_set_key_compare(hash, &my_key_compare);
+    map_set_data_delete(map, &free);
+    map_set_key_delete(map, &free);
+    map_set_key_compare(map, &my_key_compare);
     
     /* add a bunch of elements */
     for(i = 0; i < NELEMENTS; ++i) {
@@ -77,10 +77,10 @@ int main(int argc, char *argv[])
         
         assert(item);
         
-        map_insert_item(hash, item);
+        map_insert_item(map, item);
     }
     
-    hash_for_each(hash, item) {
+    map_for_each(map, item) {
         data = item_data(item);
         key  = item_key(item);
         
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     
     for(i = 0; i < (NELEMENTS >> 1); ++i) {
         tmp = i;
-        item = map_take_item(hash, &tmp);
+        item = map_take_item(map, &tmp);
         assert(item);
         
         data = item_data(item);
@@ -101,49 +101,49 @@ int main(int argc, char *argv[])
     
     for(i = NELEMENTS >> 1; i < NELEMENTS; ++i) {
         tmp = i;
-        item = map_retrieve_item(hash, &tmp);
+        item = map_retrieve_item(map, &tmp);
         assert(item);
     }
     
-    hash_for_each(hash, item) {
+    map_for_each(map, item) {
         data = item_data(item);
         key  = item_key(item);
         
         fprintf(stdout, "data %d, key %li\n", *data, *key);
     }
     
-    map_delete(hash);
+    map_delete(map);
     
-    fprintf(stdout, "Starting hash string test.\n");
+    fprintf(stdout, "Starting map string test.\n");
     
-    hash = map_new(2, 0);
-    assert(hash);
+    map = map_new(2, 0);
+    assert(map);
     
-    hash_set_key_length(hash, &my_key_length);
-    hash_set_key_compare(hash, &my_string_compare);
+    map_set_key_length(map, &my_key_length);
+    map_set_key_compare(map, &my_string_compare);
     
     for(i = 0; strings[i]; ++i) {
-        err = map_insert(hash, strings[i], keys[i]);
+        err = map_insert(map, strings[i], keys[i]);
         assert(!err);
     }
     
-    s1 = map_retrieve(hash, "3");
+    s1 = map_retrieve(map, "3");
     assert(s1);
     
     fprintf(stdout, "Data of key %s is %s\n", keys[3], s1);
     
-    hash_for_each(hash, item) {
+    map_for_each(map, item) {
         s1 = item_key(item);
         s2 = item_data(item);
         
         fprintf(stdout, "%s - %s\n", s1, s2);
     }
-    map_delete(hash);
+    map_delete(map);
     
-    fprintf(stdout, "Hash test finished.\n");
+    fprintf(stdout, "Map test finished.\n");
     
     return EXIT_SUCCESS;
     
-#undef HASH_SIZE
+#undef MAP_SIZE
 #undef NELEMENTS
 }

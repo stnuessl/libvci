@@ -367,7 +367,7 @@ MAP_DEFINE_SETGET(key_size, size_t)
 
 #define MAP_DEFINE_SET_CALLBACK(name, type, param)                             \
                                                                                \
-inline void hash_set_##name(struct map *__restrict map, type (*name)param)     \
+inline void map_set_##name(struct map *__restrict map, type (*name)param)     \
 {                                                                              \
     map->_##name = name;                                                       \
 }

@@ -90,7 +90,6 @@ void test_take(void)
     
     while(!list_empty(list)) {
         
-        /* other take_item function is used in hash.c, so no test here */
         if(list_size(list) & 1)
             item = list_take_item_front(list);
         else

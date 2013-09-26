@@ -19,8 +19,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../build/include)
 add_executable(list_test list_test.c)
 target_link_libraries(list_test vci)
 
-add_executable(hash_test hash_test.c)
-target_link_libraries(hash_test vci)
+add_executable(map_test map_test.c)
+target_link_libraries(map_test vci)
 
 add_executable(stack_test stack_test.c)
 target_link_libraries(stack_test vci)
