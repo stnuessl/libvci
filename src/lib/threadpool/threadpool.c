@@ -8,6 +8,7 @@
 
 #include <item.h>
 #include <queue.h>
+#include <map.h>
 
 #include "task.h"
 #include "threadpool.h"
@@ -35,7 +36,7 @@ static void _threadpool_thread_prepare_exit(struct threadpool *__restrict pool)
     thread = pthread_self();
     
     /* '_mutex_data' must be locked! */
-    free(hash_take(&pool->_hash_threads, &thread));
+    free(map_take(&pool->_map_threads, &thread));
 }
 
 static void *_threadpool_task_handler(void *arg)
@@ -149,12 +150,12 @@ int threadpool_init(struct threadpool *__restrict pool, int threads)
     if(err < 0)
         goto cleanup4;
     
-    err = hash_init(&pool->_hash_threads, 0, sizeof(pthread_t));
+    err = map_init(&pool->_map_threads, 0, sizeof(pthread_t));
     if(err < 0)
         goto cleanup5;
     
-    hash_set_key_compare(&pool->_hash_threads, &_thread_compare);
-    hash_set_data_delete(&pool->_hash_threads, &_thread_delete);
+    map_set_key_compare(&pool->_map_threads, &_thread_compare);
+    map_set_data_delete(&pool->_map_threads, &_thread_delete);
     
     for(i = 0; i < threads; ++i) {
         err = threadpool_add_thread(pool);
@@ -171,7 +172,7 @@ int threadpool_init(struct threadpool *__restrict pool, int threads)
     return 0;
 
 cleanup6:
-    hash_destroy(&pool->_hash_threads);
+    map_destroy(&pool->_map_threads);
 cleanup5:
     sem_destroy(&pool->_sem_out);
 cleanup4:
@@ -189,7 +190,7 @@ out:
 void threadpool_destroy(struct threadpool *__restrict pool)
 {
     
-    hash_destroy(&pool->_hash_threads);
+    map_destroy(&pool->_map_threads);
     queue_destroy(&pool->_queue_out);
     queue_destroy(&pool->_queue_in);
     
@@ -234,7 +235,7 @@ int threadpool_add_thread(struct threadpool *__restrict pool)
     
     pthread_mutex_lock(&pool->_mutex_data);
     
-    hash_insert_item(&pool->_hash_threads, item);
+    map_insert_item(&pool->_map_threads, item);
     
     pthread_mutex_unlock(&pool->_mutex_data);
     
@@ -349,7 +350,7 @@ int threadpool_threads_available(struct threadpool *__restrict pool)
     
     pthread_mutex_lock(&pool->_mutex_data);
     
-    ret = hash_size(&pool->_hash_threads);
+    ret = map_size(&pool->_map_threads);
     
     pthread_mutex_unlock(&pool->_mutex_data);
     

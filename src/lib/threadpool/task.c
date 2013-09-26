@@ -5,7 +5,6 @@
 
 #include "task.h"
 
-
 struct task *task_new(void *(*func)(void *), void *arg)
 {
     struct task *task;

@@ -17,7 +17,7 @@ add_library(vci
 	    src/lib/config/key.c
             src/lib/container/bintree.c
             src/lib/container/buffer.c
-            src/lib/container/hash.c
+            src/lib/container/map.c
             src/lib/container/heap.c
             src/lib/container/item.c
             src/lib/container/item_allocator.c
@@ -42,7 +42,7 @@ install(FILES
         include/clock.h
         include/config.h
         include/etrace.h
-        include/hash.h
+        include/map.h
         include/heap.h
         include/item.h
         include/item_allocator.h

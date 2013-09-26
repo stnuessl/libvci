@@ -8,13 +8,12 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include "hash.h"
+#include "map.h"
 #include "buffer.h"
 
 #include "config.h"
 #include "config_parser.h"
 #include "key.h"
-
 
 static const char *_buffer_string(struct buffer *__restrict buf)
 {
@@ -196,7 +195,7 @@ static int _config_parser_handle_values(struct config_parser *__restrict parser)
     if(!values)
         return -errno;
     
-    err = hash_insert(&parser->config->_hash, values, parser->key);
+    err = map_insert(&parser->config->_map, values, parser->key);
     if(err < 0) {
         free(values);
         return -errno;

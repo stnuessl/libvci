@@ -7,7 +7,7 @@
 #include <semaphore.h>
 #include <stdbool.h>
 
-#include <hash.h>
+#include <map.h>
 #include <queue.h>
 
 #include "task.h"
@@ -15,7 +15,7 @@
 struct threadpool {
     struct queue _queue_in;
     struct queue _queue_out;
-    struct hash _hash_threads;
+    struct map _map_threads;
     
     int _threads_to_exit;
     int _tasks_inserted;
