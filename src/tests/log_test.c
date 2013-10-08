@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    struct log *l;
+    struct log *l1, *l2;
     uint8_t flags;
     
     flags = LOG_PRINT_DATE | 
@@ -15,23 +15,28 @@ int main(int argc, char *argv[])
             LOG_PRINT_LEVEL;
                 
     /* open dummy */
-    l = log_new("/dev/null", "MyLogFile", flags);
+    l1 = log_new("/dev/null", "MyComponent", flags);
+    l2 = log_new("/dev/null", "MyOtherComponent", flags);
 
-    assert(l);
+    assert(l1);
+    assert(l2);
     
-    log_set_severity_cap(l, LOG_SEVERITY_INFO);
+    log_set_severity_cap(l1, LOG_SEVERITY_INFO);
+    log_set_severity_cap(l2, LOG_SEVERITY_INFO);
     
     /* set file now */
-    log_set_file(l, stdout);
+    log_set_file(l1, stdout);
+    log_set_file(l2, stdout);
     
-    log_error(l, "error message\n");
-    log_critical(l, "critical message\n");
-    log_warning(l, "warning message\n");
-    log_message(l, "general message\n");
-    log_debug(l, "debug message\n");
-    log_info(l, "info message\n");
+    log_error(l1, "error message\n");
+    log_critical(l1, "critical message\n");
+    log_warning(l1, "warning message\n");
+    log_message(l2, "general message\n");
+    log_debug(l2, "debug message\n");
+    log_info(l2, "info message\n");
     
-    log_delete(l);
+    log_delete(l1);
+    log_delete(l2);
     
     return 0;
 }
