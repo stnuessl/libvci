@@ -5,10 +5,15 @@
 
 #include <clock.h>
 
+void do_task(struct clock *__restrict c)
+{
+    printf("do_task()\nTime: %lu us\n", clock_elapsed_us(c));
+}
+
 int main(int argc, char *argv[])
 {
     struct clock c;
-    int err;
+    int loops, err;
     
     err = clock_init(&c, CLOCK_MONOTONIC);
     if(err < 0) {
@@ -41,6 +46,24 @@ int main(int argc, char *argv[])
     printf("time elapsed ms: %lu\n", clock_elapsed_ms(&c));
     printf("time elapsed us: %lu\n", clock_elapsed_us(&c));
     printf("time elapsed ns: %lu\n", clock_elapsed_ns(&c));
+    
+    clock_clear(&c);
+    clock_start(&c);
+    
+    loops = 0;
+    
+    /* call a function every 500ms */
+    
+    while(loops < 10) {
+        if(clock_elapsed_ms(&c) >= 500) {
+            do_task(&c);
+            clock_reset(&c);
+            loops += 1;
+        }
+        
+        /* time for other tasks */
+        usleep(100000);
+    }
     
     clock_destroy(&c);
     
