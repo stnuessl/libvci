@@ -49,6 +49,7 @@ _config_parser_next_state(struct config_parser *__restrict parser)
             case '\n':
             case ' ':
             case '\t':
+            case '=':
                 break;
             case '[':
                 return PARSER_STATE_HANDLE_SECTION;
@@ -58,12 +59,13 @@ _config_parser_next_state(struct config_parser *__restrict parser)
             default:
                 --parser->fpos;
                 
+                if(!isalnum(c))
+                    return PARSER_STATE_ERROR;
+                                
                 if(parser->key)
                     return PARSER_STATE_HANDLE_VALUES;
-                else if(isalnum(c))
-                    return PARSER_STATE_HANDLE_KEY;
                 else
-                    return PARSER_STATE_ERROR;
+                    return PARSER_STATE_HANDLE_KEY;
         }
     }
 }
@@ -130,7 +132,9 @@ static int _config_parser_handle_key(struct config_parser *__restrict parser)
         
         switch(c) {
         case ' ':
+        case '=':
         case '\t':
+        case '\n':
             s = _buffer_string(parser->buf);
             if(!s)
                 return -errno;

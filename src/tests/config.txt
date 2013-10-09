@@ -1,6 +1,15 @@
 #
-# you shouldn't be able to read this
+# Example config file which can by accessed
+# via the config API calls of the vci library.
+# Keys and the values must beginn with a letter or a digit.
 #
+
+#
+# the parser ignores lines beginning with a '#'
+#
+;
+; same goes for lines with a ';'
+;
 
 ShoppingList Drinks
 
@@ -16,8 +25,18 @@ Distillery      Talisker Distillery
 
 [HerbLiqueur]
 
-Name    Jägermeister
+#
+# assignments also works!
+#
+
+Name = Jägermeister
 
 [Booze]
 
-Name Absolut Wodka
+#
+# In fact spaces, the equal signs, tabs and newline characters are all ignored
+# if they occur between a key and a value.
+# It is up to u the keep the config file readable!
+#
+Name =  ==              
+Absolut Wodka
