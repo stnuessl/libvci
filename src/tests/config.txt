@@ -36,7 +36,7 @@ Name = Jägermeister
 #
 # In fact spaces, the equal signs, tabs and newline characters are all ignored
 # if they occur between a key and a value.
-# It is up to u the keep the config file readable!
+# It is up to you the keep the config file readable!
 #
 Name =  ==              
 Absolut Wodka

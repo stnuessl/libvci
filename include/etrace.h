@@ -6,6 +6,8 @@ int etrace_init(int size, const char *__restrict path);
 
 void etrace_destroy(void);
 
+inline void etrace_set_file(FILE *__restrict f);
+
 void etrace_backtrace(int skip);
 
 void etrace_write(const char *__restrict fmt, ...) 

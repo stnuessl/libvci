@@ -41,17 +41,9 @@ int etrace_init(int size, const char *__restrict path)
     flags = LOG_PRINT_DATE | LOG_PRINT_TIMESTAMP | LOG_PRINT_PID | 
             LOG_PRINT_NAME | LOG_PRINT_LEVEL;
     
-    if(!path) {
-        _log = log_new("/dev/null", "etrace", flags);
-        if(!_log)
-            return -errno;
-    
-        log_set_file(_log, stderr);
-    } else {
-        _log = log_new(path, "etrace", flags);
-        if(!_log)
-            return -errno;
-    }
+    _log = log_new(path, "etrace", flags);
+    if(!_log)
+        return -errno;
     
     _fd = log_fd(_log);
 
@@ -80,6 +72,11 @@ void etrace_destroy(void)
     
     if(_buffer)
         free(_buffer);
+}
+
+inline void etrace_set_file(FILE *__restrict f)
+{
+    log_set_file(_log, f);
 }
 
 void etrace_backtrace(int skip)

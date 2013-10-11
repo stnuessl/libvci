@@ -48,8 +48,10 @@ int main(int argc, char *argv[])
     int err;
     char *s;
     
-    if(etrace_init(16, NULL) < 0)
+    if(etrace_init(16, "/dev/null") < 0)
         abort();
+    
+    etrace_set_file(stderr);
     
     if(argc > 2) {
         etrace_write("Aborting: Too many arguments.\n");
