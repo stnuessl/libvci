@@ -1,5 +1,5 @@
-
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 
 #include "item.h"
@@ -42,6 +42,7 @@ void stack_delete(struct stack *__restrict stack)
 
 void stack_init(struct stack *__restrict stack)
 {
+    memset(stack, 0, sizeof(*stack));
     list_init(&stack->_list);
 }
 

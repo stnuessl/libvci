@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <stdbool.h>
 
@@ -27,6 +28,7 @@ void queue_delete(struct queue *__restrict queue)
 
 void queue_init(struct queue *__restrict queue)
 {
+    memset(queue, 0, sizeof(*queue));
     list_init(&queue->_list);
 }
 
