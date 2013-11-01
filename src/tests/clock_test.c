@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <clock.h>
+#include <macros.h>
 
 void do_task(struct clock *__restrict c)
 {
@@ -12,7 +13,7 @@ void do_task(struct clock *__restrict c)
 
 int main(int argc, char *argv[])
 {
-    struct clock c;
+    struct clock c __on_return(clock_destroy);
     int loops, err;
     
     err = clock_init(&c, CLOCK_MONOTONIC);
@@ -64,8 +65,6 @@ int main(int argc, char *argv[])
         /* time for other tasks */
         usleep(100000);
     }
-    
-    clock_destroy(&c);
     
     return EXIT_SUCCESS;
 }

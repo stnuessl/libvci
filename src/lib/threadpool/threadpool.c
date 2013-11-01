@@ -189,7 +189,6 @@ out:
 
 void threadpool_destroy(struct threadpool *__restrict pool)
 {
-    
     map_destroy(&pool->_map_threads);
     queue_destroy(&pool->_queue_out);
     queue_destroy(&pool->_queue_in);

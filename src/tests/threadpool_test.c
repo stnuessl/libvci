@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
     /*
      * it seems that the threads need actually some time to clean themselves up
      * a small sleep makes valgrind (and me) happy ;-)
+     * That's why I don't use  __on_return()-macro.
      */
     sleep(1);
     

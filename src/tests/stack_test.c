@@ -7,49 +7,40 @@
 #include <item.h>
 #include <stack.h>
 
+#include <macros.h>
 
 void push_string(struct stack *__restrict stack, const char *str)
 {
     int err;
-    char *c;
     
     while(*str != '\0') {
-        c = malloc(sizeof(*c));
-        assert(c);
-        
-        *c = *str++;
-        
-        err = stack_push(stack, c, NULL);
-        assert(!(err < 0));
+        /* surpress warnings ;-) */
+        err = stack_push(stack, (void *)(unsigned long) *str++, NULL);
+        assert(err == 0);
     }
 }
 
 bool is_palindrome(const char *str)
 {
-    struct stack stack;
+    struct stack stack __on_return(stack_destroy);
     struct item *item;
     char c;
     
     stack_init(&stack);
     
-    c = EOF;
-    
-    stack_set_data_delete(&stack, &free);
     push_string(&stack, str);
     
     while(!stack_empty(&stack)) {
         item = stack_pop_item(&stack);
-        c = *(char *)item_data(item);
+        c = (unsigned long) item_data(item);
         
-        item_delete(item, &free, NULL);
+        item_delete(item, NULL, NULL);
        
         if(c != *str++)
-            break;
+            return false;
     }
 
-    stack_destroy(&stack);
-
-    return c == *--str;
+    return true;
 }
 
 int main(int argc, char *argv[])
@@ -61,6 +52,10 @@ int main(int argc, char *argv[])
                         "Usage:\n\t./stack_test string1 string2 string3 ...\n");
         return EXIT_SUCCESS;
     }
+    
+    /* skip name of the program */
+    argv += 1;
+    argc -= 1;
     
     while(argc--) {
         str = *argv++;
