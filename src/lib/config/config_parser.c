@@ -246,6 +246,12 @@ struct config_parser *config_parser_new(struct config *config)
     
     p->fsize = file_info.st_size;
     
+    /* 512 MB */
+    if(p->fsize > (1 << 29)) {
+        errno = EINVAL;
+        goto cleanup4;
+    }
+    
     p->file = mmap(NULL, p->fsize, PROT_READ, MAP_SHARED, p->fd, 0);
     if(!p->file)
         goto cleanup4;
