@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.6)
 project(libvci C)
 
 add_definitions(-Wall)
-add_definitions(-O2)
-#add_definitions(-g3)
+#add_definitions(-O2)
+add_definitions(-g3)
 
 find_package(Threads)
 
@@ -25,6 +25,7 @@ add_library(vci
             src/lib/container/queue.c
             src/lib/container/stack.c
             src/lib/container/tree.c
+            src/lib/container/vector.c
             src/lib/log/log.c
             src/lib/etrace/etrace.c
             src/lib/mempool/mempool.c
@@ -55,6 +56,7 @@ install(FILES
         include/task.h
         include/threadpool.h
         include/tree.h
+        include/vector.h
         DESTINATION
         ${CMAKE_CURRENT_SOURCE_DIR}/build/include
         )

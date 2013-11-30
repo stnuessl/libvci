@@ -5,8 +5,8 @@ project(libvci_tests C)
 
 add_definitions(-DETRACE_DEBUG=2)
 add_definitions(-Wall)
-add_definitions(-O2)
-#add_definitions(-g3)
+#add_definitions(-O2)
+add_definitions(-g3)
 
 find_package(Threads)
 
@@ -55,3 +55,6 @@ target_link_libraries(log_test vci)
 
 add_executable(allocator_test allocator_test.c)
 target_link_libraries(allocator_test vci)
+
+add_executable(vector_test vector_test.c)
+target_link_libraries(vector_test vci)
