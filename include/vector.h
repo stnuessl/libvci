@@ -20,8 +20,6 @@ void vector_destroy(struct vector *__restrict vec, void (*data_delete)(void *));
 
 void vector_clear(struct vector *__restrict vec, void (*data_delete)(void *));
 
-int vector_resize(struct vector *__restrict vec, unsigned int size);
-
 void vector_sort(struct vector *__restrict vec,
                  int (*data_compare)(const void *, const void *));
 
@@ -29,7 +27,11 @@ inline unsigned int vector_size(const struct vector *__restrict vec);
 
 inline bool vector_empty(const struct vector *__restrict vec);
 
+int vector_set_capacity(struct vector *__restrict vec, unsigned int size);
+
 inline unsigned int vector_capacity(const struct vector *__restrict vec);
+
+int vector_squeeze(struct vector *__restrict vec);
 
 int vector_insert_back(struct vector *__restrict vec, void *data);
 

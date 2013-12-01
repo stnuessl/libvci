@@ -5,8 +5,8 @@ project(libvci_tests C)
 
 add_definitions(-DETRACE_DEBUG=2)
 add_definitions(-Wall)
-#add_definitions(-O2)
-add_definitions(-g3)
+add_definitions(-O2)
+#add_definitions(-g3)
 
 find_package(Threads)
 

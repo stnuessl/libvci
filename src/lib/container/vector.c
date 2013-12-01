@@ -72,20 +72,6 @@ void vector_clear(struct vector *__restrict vec, void (*data_delete)(void *))
     }
 }
 
-int vector_resize(struct vector *__restrict vec, unsigned int size)
-{
-    void **data;
-    
-    data = realloc(vec->_data, size * sizeof(*data));
-    if(!data)
-        return -errno;
-    
-    vec->_data = data;
-    vec->_capacity = size;
-    
-    return 0;
-}
-
 void vector_sort(struct vector *__restrict vec,
                  int (*data_compare)(const void *, const void *))
 {
@@ -102,9 +88,31 @@ inline bool vector_empty(const struct vector *__restrict vec)
     return vec->_size == 0;
 }
 
+int vector_set_capacity(struct vector *__restrict vec, unsigned int capacity)
+{
+    void **data;
+    
+    data = realloc(vec->_data, capacity * sizeof(*data));
+    if(!data)
+        return -errno;
+    
+    if(vec->_size > capacity)
+        vec->_size = capacity;
+    
+    vec->_data = data;
+    vec->_capacity = capacity;
+    
+    return 0;
+}
+
 inline unsigned int vector_capacity(const struct vector *__restrict vec)
 {
     return vec->_capacity;
+}
+
+int vector_squeeze(struct vector *__restrict vec)
+{
+    return vector_set_capacity(vec, vec->_size);
 }
 
 int vector_insert_back(struct vector *__restrict vec, void *data)
@@ -112,7 +120,7 @@ int vector_insert_back(struct vector *__restrict vec, void *data)
     int err;
     
     if(vec->_size >= vec->_capacity) {
-        err = vector_resize(vec, vec->_capacity << 1);
+        err = vector_set_capacity(vec, vec->_capacity << 1);
         if(err < 0)
             return err;
     }
