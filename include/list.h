@@ -2,115 +2,38 @@
 #ifndef _LIST_H_
 #define _LIST_H_
 
-#include "item.h"
-
 #include <stdbool.h>
 
 struct list {
-    struct item *_head;
-    struct item *_tail;
-    
-    int _size;
+    struct list *prev;
+    struct list *next;
 };
 
-struct list *list_new(void);
 
-void list_delete(struct list *__restrict list, 
-                 void (*data_delete)(void *),
-                 void (*key_delete)(void *));
+inline void list_init(struct list *__restrict list);
 
-void list_init(struct list *__restrict list);
+inline void list_insert(struct list *list, struct list *item);
 
-void list_destroy(struct list *__restrict list,
-                  void (*data_delete)(void *),
-                  void (*key_delete)(void *));
-
-void list_clear(struct list *__restrict list,
-                void (*data_delete)(void *),
-                void (*key_delete)(void *));
-
-int list_insert_front(struct list *__restrict list, 
-                      void *__restrict data, 
-                      void *__restrict key);
-
-int list_insert_back(struct list *__restrict list, 
-                     void *__restrict data, 
-                     void *__restrict key);
-
-void list_insert_item_front(struct list *__restrict list, 
-                            struct item *__restrict item);
-
-void list_insert_item_back(struct list *__restrict list, 
-                           struct item *__restrict item);
-
-void *list_take_front(struct list *__restrict list, void (*key_delete)(void *));
-
-void *list_take_back(struct list *__restrict list, void (*key_delete)(void *));
-
-struct item *list_take_item_front(struct list *__restrict list);
-
-struct item *list_take_item_back(struct list *__restrict list);
-
-void *list_take(struct list *__restrict list, 
-                void *__restrict key, 
-                int (*key_compare)(const void *, const void *), 
-                void (*key_delete)(void *));
-
-struct item *list_take_item(struct list *__restrict list, 
-                       const void *__restrict key, 
-                       int (*key_compare)(const void *, const void *));
-
-void *list_retrieve(struct list *__restrict, 
-                    const void *__restrict key,
-                    int (*key_compare)(const void *, const void *));
-
-struct item *list_retrieve_item(struct list *__restrict list, 
-                                const void *__restrict key,
-                                int (*key_compare)(const void *, const void *));
-
-void list_delete_item(struct list *__restrict list,
-                      const void *__restrict key,
-                      int (*key_compare)(const void *, const void *),
-                      void (*data_delete)(void *),
-                      void (*key_delete)(void *));
-
-struct item *list_begin(struct list *__restrict list);
-
-struct item *list_end(struct list *__restrict list);
-
-inline int list_size(const struct list *__restrict list);
+inline void list_take(struct list *__restrict item);
 
 inline bool list_empty(const struct list *__restrict list);
 
-void list_sort(struct list *__restrict list, 
-               int (*key_compare)(const void *, const void *));
+void list_insert_list(struct list *list, struct list *other);
 
-int sorted_list_insert(struct list *__restrict list, 
-                       void *__restrict data, 
-                       void *__restrict key,
-                       int (*key_compare)(const void *, const void *));
-
-void sorted_list_insert_item(struct list *__restrict list,
-                             struct item *__restrict item,
-                             int (*key_compare)(const void *, const void *));
-
-void *sorted_list_retrieve(struct list *__restrict list,
-                              const void * __restrict key,
-                              int (*key_compare)(const void *, const void *));
-
-struct item *sorted_list_retrieve_item(struct list *__restrict list,
-                                     const void *__restrict key,
-                                int (*key_compare)(const void *, const void *));
-
-void *sorted_list_take(struct list *__restrict list, 
-                       void *__restrict key,
-                       int(*key_compare)(const void *, const void *),
-                       void (*key_delete)(void *));
-
-struct item *sorted_list_take_item(struct list *__restrict list, 
-                                   void *__restrict key,                        
-                                int (*key_compare)(const void *, const void *));
 #define list_for_each(list, item)                                              \
-for((item) = list_begin((list)); (item); (item) = item_next((item)))
-
+for((item) = (list)->next; (item) != (list); (item) = (item)->next)
+    
+#define list_for_each_safe(list, item, tmp)                                    \
+    for((item) = (list)->next, (tmp) = (item)->next;                           \
+        (item) != (list);                                                      \
+        (item) = (tmp), (tmp) = (tmp)->next)
+        
+#define list_for_each_reverse(list, item)                                      \
+        for((item) = (list)->prev; (item) != (list); (item) = (item)->prev)
+            
+#define list_for_each_reverse_safe(list, item, tmp)                            \
+    for((item) = (list)->prev; (tmp) = (item)->prev;                           \
+        (item) != (list);                                                      \
+        (item) = (tmp), (tmp) = (tmp)->prev)
+                
 #endif /* _LIST_H_ */

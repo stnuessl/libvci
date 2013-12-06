@@ -1,6 +1,8 @@
 #ifndef _MACROS_H_
 #define _MACROS_H_
 
+#include <stddef.h>
+
 /* some useful macro definitions */
 
 #define min(a, b)                                                              \

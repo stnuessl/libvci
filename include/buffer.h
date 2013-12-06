@@ -5,10 +5,10 @@
 #include <stdbool.h>
 
 struct buffer {
-    void *_data;
-    size_t _accessed;
-    size_t _used;
-    size_t _size;
+    void *data;
+    size_t accessed;
+    size_t used;
+    size_t size;
 };
 
 

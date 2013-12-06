@@ -4,17 +4,17 @@
 #include <stdbool.h>
 
 struct vector {
-    void **_data;
-    unsigned int _size;
-    unsigned int _capacity;
+    void **data;
+    unsigned int size;
+    unsigned int capacity;
 };
 
 
-struct vector *vector_new(unsigned int size);
+struct vector *vector_new(unsigned int capacity);
 
 void vector_delete(struct vector *__restrict vec, void (*data_delete)(void *));
 
-int vector_init(struct vector *__restrict vec, unsigned int size);
+int vector_init(struct vector *__restrict vec, unsigned int capacity);
 
 void vector_destroy(struct vector *__restrict vec, void (*data_delete)(void *));
 

@@ -1,130 +1,130 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <errno.h>
 
-#include "item.h"
-#include "list.h"
+#include "container_util.h"
 #include "stack.h"
 
+#define STACK_DEFAULT_CAPACITY 32
 
-#define STACK_DEFINE_STATIC_SETGET(name, type)                                 \
-                                                                               \
-static inline void _stack_set_##name(struct stack *__restrict stack, type name)\
-{                                                                              \
-    stack->_##name = name;                                                     \
-}                                                                              \
-                                                                               \
-static inline type _stack_get_##name(struct stack *__restrict stack)           \
-{                                                                              \
-    return stack->_##name;                                                     \
-}                                                                              \
-
-#undef STACK_DEFINE_STATIC_SETGET
-
-struct stack *stack_new(void)
+struct stack *stack_new(unsigned int capacity)
 {
     struct stack *stack;
+    int err;
     
     stack = malloc(sizeof(*stack));
     if(!stack)
         return NULL;
-
-    stack_init(stack);
+    
+    err = stack_init(stack, capacity);
+    if(err < 0) {
+        free(stack);
+        return NULL;
+    }
     
     return stack;
 }
 
-void stack_delete(struct stack *__restrict stack)
+void stack_delete(struct stack *__restrict stack, void (*data_delete)(void *))
 {
-    stack_destroy(stack);
+    stack_destroy(stack, data_delete);
     free(stack);
 }
 
-void stack_init(struct stack *__restrict stack)
+int stack_init(struct stack *__restrict stack, unsigned int capacity)
 {
-    memset(stack, 0, sizeof(*stack));
-    list_init(&stack->_list);
-}
-
-void stack_destroy(struct stack *__restrict stack)
-{
-    list_destroy(&stack->_list, stack->_data_delete, stack->_key_delete);
-}
-
-int stack_push(struct stack *__restrict stack, 
-                    void *__restrict data, 
-                    void *__restrict key)
-{
-    struct item *item;
+    capacity = adjust(capacity, STACK_DEFAULT_CAPACITY);
     
-    item = item_new(data, key);
-    if(!item)
+    stack->data = calloc(capacity, sizeof(*stack->data));
+    if(!stack->data)
         return -errno;
     
-    stack_push_item(stack, item);
+    stack->size = 0;
+    stack->capacity = capacity;
     
     return 0;
 }
 
-void stack_push_item(struct stack *__restrict stack, 
-                     struct item *__restrict item)
+void stack_destroy(struct stack *__restrict stack, void (*data_delete)(void *))
 {
-    list_insert_item_front(&stack->_list, item);
+    stack_clear(stack, data_delete);
+    free(stack->data);
 }
 
+void stack_clear(struct stack *__restrict stack, void (*data_delete)(void *))
+{
+    if(!data_delete) {
+        stack->size = 0;
+        return;
+    }
+    
+    while(stack->size--)
+        data_delete(stack->data[stack->size]);
+}
+
+
+int stack_push(struct stack *__restrict stack, void *data)
+{
+    int err;
+    
+    if(stack->size >= stack->capacity) {
+        err = stack_set_capacity(stack, stack->capacity << 1);
+        if(err < 0)
+            return err;
+    }
+    
+    stack->data[stack->size] = data;
+    stack->size += 1;
+    
+    return 0;
+}
+// 
 void *stack_pop(struct stack *__restrict stack)
 {
-    struct item *item;
-    void *data;
+    stack->size -= 1;
     
-    item = stack_pop_item(stack);
+    return stack->data[stack->size];
+}
+
+inline void *stack_top(struct stack *__restrict stack)
+{
+    return stack->data[stack->size - 1];
+}
+
+inline int stack_size(const struct stack *__restrict stack)
+{
+    return stack->size;
+}
+
+inline bool stack_empty(const struct stack *__restrict stack)
+{
+    return stack->size == 0;
+}
+
+int stack_set_capacity(struct stack *__restrict stack, unsigned int capacity)
+{
+    void **data;
     
-    data = item_data(item);
+    capacity = adjust(capacity, STACK_DEFAULT_CAPACITY);
     
-    item_delete(item, NULL, stack->_key_delete);
+    if(capacity == stack->capacity)
+        return 0;
     
-    return data;
+    data = realloc(stack->data, capacity * sizeof(*stack->data));
+    if(!data)
+        return -errno;
+    
+    if(stack->size > capacity)
+        stack->size = capacity;
+    
+    stack->data = data;
+    stack->capacity = capacity;
+    
+    return 0;
 }
 
-struct item *stack_pop_item(struct stack *__restrict stack)
+int stack_squeeze(struct stack *__restrict stack)
 {
-    return list_take_item_front(&stack->_list);
+    return stack_set_capacity(stack, stack->size);
 }
-
-void *stack_top(struct stack *__restrict stack)
-{
-    return item_data(stack_top_item(stack));
-}
-
-struct item *stack_top_item(struct stack *__restrict stack)
-{
-    return list_begin(&stack->_list);
-}
-
-void stack_delete_top(struct stack *__restrict stack)
-{
-    item_delete(stack_pop_item(stack), stack->_data_delete, stack->_key_delete);
-}
-
-int stack_size(const struct stack *__restrict stack)
-{
-    return list_size(&stack->_list);
-}
-
-bool stack_empty(const struct stack *__restrict stack)
-{
-    return list_empty(&stack->_list);
-}
-
-#define STACK_DEFINE_SET_CALLBACK(name, type, param)                           \
-                                                                               \
-inline void stack_set_##name(struct stack *__restrict stack,                   \
-                             type (*name)param)                                \
-{                                                                              \
-    stack->_##name = name;                                                     \
-}
-
-STACK_DEFINE_SET_CALLBACK(key_delete, void, (void *))
-STACK_DEFINE_SET_CALLBACK(data_delete, void, (void *))
-
-#undef STACK_DEFINE_SET_CALLBACK

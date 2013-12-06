@@ -6,7 +6,7 @@
 #include <tree.h>
 #include <heap.h>
 
-int my_key_compare(const void *a, const void *b)
+int int_compare(const void *a, const void *b)
 {
     return *(int *)a - *(int *)b;
 }
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     
     tree_set_data_delete(heap, &free);
     tree_set_key_delete(heap, &free);
-    tree_set_key_compare(heap, &my_key_compare);
+    tree_set_key_compare(heap, &int_compare);
     tree_set_callback(heap, &my_print);
     
     for(i = 0; i < NELEMENTS; ++i) {

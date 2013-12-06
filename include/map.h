@@ -5,98 +5,64 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "item.h"
-#include "list.h"
-
-struct map {
-    struct list *_table;
-    
-    int _size;
-    int _num_lists;
-    
-    uint64_t (*_key_hash)(const void *, size_t);
-    int (*_key_compare)(const void *, const void *);
-    size_t (*_key_length)(const void *);
-    void (*_key_delete)(void *);
-    void (*_data_delete)(void *);
-    
-    size_t _key_size;
+enum data_state {
+    DATA_EMPTY          = 0x00,
+    DATA_AVAILABLE      = 0x01,
+    DATA_REMOVED        = 0x02
 };
 
-struct map *map_new(int size, size_t key_size);
+struct map_entry {
+    unsigned int hash;
+    
+    void *data;
+    const void *key;
+    enum data_state state;
+};
+
+struct map {
+    struct map_entry *table;
+    unsigned int entries;
+    unsigned int capacity;
+
+    int (*key_compare)(const void *, const void *);
+    unsigned int (*key_hash)(const void *);
+    void (*data_delete)(void *);
+};
+
+struct map *map_new(unsigned int capacity,
+                    int (*key_compare)(const void *, const void *),
+                    unsigned int (*data_hash)(const void *));
 
 void map_delete(struct map *__restrict map);
 
-int map_init(struct map *__restrict map, int size, size_t key_size);
+int map_init(struct map *__restrict map,
+             unsigned int capacity,
+             int (*key_compare)(const void *, const void *),
+             unsigned int (*data_hash)(const void *));
 
 void map_destroy(struct map *__restrict map);
 
-int map_insert(struct map *__restrict map, 
-               void *__restrict data, 
-               void *__restrict key);
+void map_clear(struct map *__restrict map);
 
-void map_insert_item(struct map *__restrict map, 
-                     struct item *__restrict item);
+int map_insert(struct map *__restrict map, void *data, const void *key);
 
-void *map_take(struct map *__restrict map, const void *__restrict key);
+void *map_retrieve(struct map *__restrict map, const void *key);
 
-struct item *map_take_item(struct map *__restrict map, 
-                           const void *__restrict key);
+void *map_take(struct map *__restrict map, const void *key);
 
-void *map_retrieve(struct map *__restrict map, const void *__restrict key);
+bool map_contains(struct map *__restrict map, const void *key);
 
-struct item *map_retrieve_item(struct map *__restrict map, 
-                                const void *__restrict key);
-
-void map_delete_item(struct map *__restrict map, 
-                      const void *__restrict key);
-
-inline int map_size(const struct map *__restrict map);
-
-int map_resize(struct map *__restrict map, int size);
-
-bool map_contains(struct map *__restrict map, const void *__restrict key);
+inline unsigned int map_count(const struct map *__restrict map);
 
 inline bool map_empty(const struct map *__restrict map);
 
-struct item *map_begin(struct map *__restrict map);
+inline void map_set_key_compare(struct map *__restrict map,
+                                int (*key_compare)(const void *, const void *));
 
-struct item *map_end(struct map *__restrict map);
+inline void map_set_key_hash(struct map *__restrict map, 
+                              unsigned int (*data_hash)(const void *));
 
-struct item *map_item_prev(struct map *__restrict map, 
-                            struct item *__restrict item);
-
-struct item *map_item_next(struct map *__restrict map,
-                           struct item *__restrict item);
-
-
-#define MAP_DEFINE_SETGET(name, type)                                          \
-                                                                               \
-inline void map_set_##name(struct map *__restrict map, type name);             \
-                                                                               \
-inline type map_##name(const struct map *__restrict map);
-
-MAP_DEFINE_SETGET(key_size, size_t)
-
-#undef MAP_DEFINE_SETGET
-
-
-#define MAP_DEFINE_SET_CALLBACK(name, type, param)                             \
-                                                                               \
-inline void map_set_##name(struct map *__restrict map, type (*name)param);
-
-MAP_DEFINE_SET_CALLBACK(key_hash, uint64_t, (const void *, size_t))
-MAP_DEFINE_SET_CALLBACK(key_compare, int, (const void *, const void *))
-MAP_DEFINE_SET_CALLBACK(key_length, size_t, (const void *))
-MAP_DEFINE_SET_CALLBACK(key_delete, void, (void *))
-MAP_DEFINE_SET_CALLBACK(data_delete, void, (void *))
-
-#undef MAP_DEFINE_SET_CALLBACK
-
-
-#define map_for_each(map, item)                                                \
-for((item) = map_begin((map));                                                 \
-    (item);                                                                    \
-    (item) = map_item_next((map), (item)))
+inline void map_set_data_delete(struct map *__restrict map,
+                                void (*data_delete)(void *));
 
 #endif /* _MAP_H_ */

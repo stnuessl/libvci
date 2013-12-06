@@ -7,7 +7,7 @@
 #include <bintree.h>
 #include <item.h>
 
-int my_key_compare(const void *a, const void *b)
+int int_compare(const void *a, const void *b)
 {
     return *(int *)a - *(int *)b;
 }
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     
     tree_init(&tree);
     
-    tree_set_key_compare(&tree, &my_key_compare);
+    tree_set_key_compare(&tree, &int_compare);
     tree_set_data_delete(&tree, &free);
     tree_set_key_delete(&tree, &free);
     

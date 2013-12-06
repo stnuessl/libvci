@@ -1,104 +1,125 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <stdint.h>
+#include <stdbool.h>
 
-#include "item.h"
-#include "list.h"
 #include "map.h"
+#include "container_util.h"
 
-#define MAP_DEFAULT_START_SIZE 10
-#define MAP_DEFAUT_MIN_SIZE    10
+#define MAP_DEFAULT_CAPACITY 32
 
-#define MAP_UPPER_FILLING_EDGE 75
-#define MAP_LOWER_FILLING_EDGE 25
+#define MAP_UPPER_TABLE_BOUND 60
+#define MAP_LOWER_TABLE_BOUND 10
 
-
-inline static uint64_t _default_key_hash(const void *data, size_t size)
-{
-    const unsigned char *buf;
-    unsigned long hval;
-
-    buf  = data;
-    hval = 1;
+#define _map_should_grow(map)                                                   \
+    (100 * (map)->entries / (map)->capacity) >= MAP_UPPER_TABLE_BOUND
     
-    while(size--) {
-        hval += *buf++;
-        hval += (hval << 10);
-        hval ^= (hval >> 6);
-        hval &= 0x0fffffff;
+#define _map_should_shrink(map)                                                 \
+    (100 * (map)->entries / (map)->capacity) < MAP_LOWER_TABLE_BOUND
+
+
+static int _map_rehash(struct map *__restrict map)
+{
+    struct map_entry *old_table;
+    void *data;
+    const void *key;
+    unsigned int i, old_capacity, old_entries;
+    int err;
+    
+    old_entries  = map->entries;
+    old_capacity = map->capacity;
+    old_table    = map->table;
+    
+    map->entries  = 0;
+    map->capacity = adjust(old_entries << 1, MAP_DEFAULT_CAPACITY);
+    map->table = calloc(map->capacity, sizeof(*map->table));
+
+    if(!map->table)
+        return -errno;
+    
+    for(i = 0; i < old_capacity; ++i) {
+        if(old_table[i].state == DATA_AVAILABLE) {
+            data = old_table[i].data;
+            key  = old_table[i].key;
+            
+            err = map_insert(map, data, key);
+            if(err < 0) {
+                /* revert to old table, which wasn't changed */
+                free(map->table);
+                map->entries  = old_entries;
+                map->capacity = old_capacity;
+                map->table    = old_table;
+                return err;
+            }
+        }
     }
     
+    free(old_table);
     
-    hval += (hval << 3);
-    hval ^= (hval >> 11);
-    hval += (hval << 15);
+    return 0;
+}
+
+/*
+ * Search for an map_entry with the given 'key'.
+ * If the state field of the map_entry states
+ * 'DATA_EMPTY' we couldn't find an entry with 'key'.
+ * If the state is 'DATA_AVAILABLE' we have to check if this is
+ * the data we are searching for.
+ * If it isn't we keep searching for it on the next possible position.
+ * If state is 'DATA_REMOVED' it also means we have to search on the 
+ * next possible position.
+ */
+static struct map_entry *_map_lookup(struct map *__restrict map,
+                                     const void *__restrict key)
+{
+    unsigned int hash, index, offset;
     
-    return hval;
-}
+    hash = map->key_hash(key);
 
-inline static int _map_hash_key(const struct map *__restrict map, 
-                                const void *__restrict key)
-{
-    uint64_t hval;
-    size_t key_size;
+    index = hash % map->capacity;
+    offset = 1;
     
-    key_size = (map->_key_length) ? map->_key_length(key) : map->_key_size;
+    while(offset < map->capacity) {
+
+        switch(map->table[index].state) {
+            case DATA_AVAILABLE:
+                if(map->table[index].hash != hash )
+                    break;
+                
+                if(map->key_compare(map->table[index].key, key) == 0)
+                    return map->table + index;
+                
+                break;
+            case DATA_EMPTY:
+                /* 'key' does not exist within the table */
+                return NULL;
+            default:
+                break;
+        }
+        
+        index  += offset;
+        offset += 2;
+        
+        if(index > map->capacity)
+            index -= map->capacity;
+    }
     
-    if(map->_key_hash)
-        hval = map->_key_hash(key, key_size);
-    else
-        hval = _default_key_hash(key, key_size);
-    
-    return hval % map->_num_lists;
+    return NULL;
 }
 
-inline static void _map_adjust_size(struct map *__restrict map, int adj)
-{
-    map->_size += adj;
-}
-
-static void _map_insert(struct map *__restrict map, 
-                        struct item *__restrict item)
-{
-    int index;
-
-    index = _map_hash_key(map, item_key(item));
-
-    list_insert_item_front(map->_table + index, item);
-}
-
-
-inline static int _map_occupation(const struct map *__restrict map)
-{
-    return 100 * map->_size / map->_num_lists;
-}
-
-inline static bool _map_should_grow(const struct map *__restrict map)
-{
-    return _map_occupation(map) > MAP_UPPER_FILLING_EDGE;
-}
-
-inline static bool _map_should_shrink(const struct map *__restrict map)
-{
-    return _map_occupation(map) < MAP_LOWER_FILLING_EDGE;
-}
-
-inline static int _map_get_best_size(const struct map *__restrict map)
-{
-    /* new occupation will be 50% */
-    return (map->_size > 4) ?  map->_size << 1 : MAP_DEFAUT_MIN_SIZE;
-}
-
-struct map *map_new(int size, size_t key_size)
+struct map *map_new(unsigned int capacity,
+                    int (*key_compare)(const void *, const void *),
+                    unsigned int (*data_hash)(const void *))
 {
     struct map *map;
+    int err;
     
     map = malloc(sizeof(*map));
     if(!map)
         return NULL;
     
-    if(map_init(map, size, key_size) < 0) {
+    err = map_init(map, capacity, key_compare, data_hash);
+    if(err < 0) {
         free(map);
         return NULL;
     }
@@ -112,272 +133,152 @@ void map_delete(struct map *__restrict map)
     free(map);
 }
 
-
-int map_init(struct map *__restrict map, int size, size_t key_size)
+int map_init(struct map *__restrict map,
+             unsigned int capacity,
+             int (*key_compare)(const void *, const void *),
+             unsigned int (*data_hash)(const void *))
 {
-    if(size <= 0)
-        size = MAP_DEFAULT_START_SIZE;
+    capacity = adjust(capacity, MAP_DEFAULT_CAPACITY);
     
-    memset(map, 0, sizeof(*map));
-    
-    map->_table = calloc(size, sizeof(*map->_table));
-    if(!map->_table)
+    map->table = calloc(capacity, sizeof(*map->table));
+    if(!map->table)
         return -errno;
     
-    map->_num_lists = size;
-    map->_key_size  = key_size;
+    map->capacity = capacity;
+    map->entries = 0;
     
-    /* lists are already initialized: calloc() zeroes the returned memory */
-
+    map->key_compare = key_compare;
+    map->key_hash   = data_hash;
+    map->data_delete = NULL;
+    
     return 0;
 }
 
 void map_destroy(struct map *__restrict map)
 {
+    map_clear(map);
+    free(map->table);
+}
+
+void map_clear(struct map *__restrict map)
+{
     int i;
-    void (*data_delete)(void *);
-    void (*key_delete)(void *);
     
-    data_delete = map->_data_delete;
-    key_delete  = map->_key_delete;
+    map->entries = 0;
     
-    for(i = 0; i < map->_num_lists; ++i)
-        list_destroy(map->_table + i, data_delete, key_delete);
+    if(!map->data_delete) {
+        memset(map->table, 0, sizeof(*map->table) * map->capacity);
+        return;
+    }
     
-    free(map->_table);
+    for(i = 0; i < map->capacity; ++i) {
+        if(map->table[i].state == DATA_AVAILABLE) {
+            map->data_delete(map->table[i].data);
+            
+            map->table[i].data  = NULL;
+            map->table[i].key   = NULL;
+            map->table[i].state = DATA_EMPTY;
+        }
+    }
 }
 
-int map_insert(struct map *__restrict map, 
-               void *__restrict data, 
-               void *__restrict key)
+int map_insert(struct map *__restrict map, void *data, const void *key)
 {
-    struct item *item;
+    unsigned int hash, index, offset;
     
-    item = item_new(data, key);
-    if(!item)
-        return -errno;
-    
-    map_insert_item(map, item);
-    
-    return 0;
-}
-
-void map_insert_item(struct map *__restrict map, 
-                     struct item *__restrict item)
-{
     if(_map_should_grow(map))
-        map_resize(map, 0);
+        _map_rehash(map);
     
-    _map_insert(map, item);
+    hash = map->key_hash(key);
     
-    _map_adjust_size(map, 1);
+    index = hash % map->capacity;
+    offset = 1;
+    
+    while(offset < map->capacity) {
+        if(map->table[index].state != DATA_AVAILABLE) {
+            map->table[index].hash  = hash;
+            map->table[index].data  = data;
+            map->table[index].key   = key;
+            map->table[index].state = DATA_AVAILABLE;
+            
+            map->entries += 1;
+            
+            return 0;
+        }
+
+        index  += offset;
+        offset += 2;
+        
+        if(index > map->capacity)
+            index -= map->capacity;
+    }
+    
+    return -1;
 }
 
-void *map_take(struct map *__restrict map, const void *__restrict key)
+void *map_retrieve(struct map *__restrict map, const void *key)
 {
-    struct item *item;
+    struct map_entry *entry;
+    
+    entry = _map_lookup(map, key);
+    
+    return (entry) ? entry->data : NULL;
+}
+
+void *map_take(struct map *__restrict map, const void *key)
+{
+    struct map_entry *entry;
     void *data;
     
-    item = map_take_item(map, key);
-    if(!item)
+    entry = _map_lookup(map, key);
+    if(!entry)
         return NULL;
+
+    data = entry->data;
     
-    data = item_data(item);
+    entry->hash = 0;
+    entry->data = NULL;
+    entry->key  = NULL;
+    entry->state = DATA_REMOVED;
     
-    item_delete(item, NULL, map->_key_delete);
+    map->entries -= 1;
+    
+    if(_map_should_shrink(map))
+        _map_rehash(map);
     
     return data;
 }
 
-struct item *map_take_item(struct map *__restrict map, 
-                           const void *__restrict key)
+bool map_contains(struct map *__restrict map, const void *key)
 {
-    struct item *item;
-    int index;
-
-    index = _map_hash_key(map, key);
-
-    item = list_take_item(map->_table + index, key, map->_key_compare);
-    if(!item)
-        return NULL;
-    
-    _map_adjust_size(map, -1);
-    
-    if(_map_should_shrink(map))
-        map_resize(map, 0);
-    
-    return item;
+    return map_retrieve(map, key) != NULL;
 }
 
-void *map_retrieve(struct map *__restrict map, const void *__restrict key)
+inline unsigned int map_count(const struct map *__restrict map)
 {
-    struct item *item;
-    
-    item = map_retrieve_item(map, key);
-    
-    return (item) ? item_data(item) : NULL;
-}
-
-struct item *map_retrieve_item(struct map *__restrict map, 
-                               const void *__restrict key)
-{
-    int index;
-    
-    index = _map_hash_key(map, key);
-    
-    return list_retrieve_item(map->_table + index, key, map->_key_compare);
-}
-
-inline int map_size(const struct map *__restrict map)
-{
-    return map->_size;
-}
-
-void map_delete_item(struct map *__restrict map, 
-                     const void *__restrict key)
-{
-    struct item *item;
-    
-    item = map_take_item(map, key);
-    
-    item_delete(item, map->_data_delete, map->_key_delete);
-}
-
-int map_resize(struct map *__restrict map, int size)
-{
-    struct list *old_lists;
-    int old_size;
-    
-    if(size <= 0)
-        size = _map_get_best_size(map);
-    
-    old_lists = map->_table;
-    old_size  = map->_num_lists;
-    
-    map->_table = calloc(size, sizeof(*map->_table));
-    if(!map->_table) {
-        map->_table = old_lists;
-        return -errno;
-    }
-    
-    map->_num_lists = size;
-    
-    while(old_size--) {
-        while(!list_empty(old_lists + old_size))
-            _map_insert(map, list_take_item_front(old_lists + old_size));
-    }
-    /* delete list object, list is empty anyway */
-    free(old_lists);
-    
-    return 0;
-}
-
-bool map_contains(struct map *__restrict map, const void *__restrict key)
-{
-    return map_retrieve_item(map, key) != NULL;
+    return map->entries;
 }
 
 inline bool map_empty(const struct map *__restrict map)
 {
-    return map_size(map) == 0;
+    return map->entries == 0;
 }
 
-struct item *map_begin(struct map *__restrict map)
+inline void map_set_key_compare(struct map *__restrict map,
+                                int (*key_compare)(const void *, const void *))
 {
-    int i;
-    
-    for(i = 0; i < map->_num_lists; ++i) {
-        if(!list_empty(map->_table + i))
-            return list_begin(map->_table + i);
-    }
-    
-    return NULL;
+    map->key_compare = key_compare;
 }
 
-struct item *map_end(struct map *__restrict map)
+inline void map_set_key_hash(struct map *__restrict map, 
+                              unsigned int (*data_hash)(const void *))
 {
-    int i; 
-    
-    for(i = map->_num_lists - 1; i >= 0; --i) {
-        if(!list_empty(map->_table + i))
-            return list_end(map->_table + i);
-    }
-    
-    return NULL;
+    map->key_hash = data_hash;
 }
 
-struct item *map_item_prev(struct map *__restrict map, 
-                           struct item *__restrict item)
+inline void map_set_data_delete(struct map *__restrict map,
+                                void (*data_delete)(void *))
 {
-    int index;
-    
-    if(!map_contains(map, item_key(item)))
-        return NULL;
-    
-    if(item_prev(item))
-        return item_prev(item);
-    
-    index = _map_hash_key(map, item_key(item));
-    
-    while(index--) {
-        if(!list_empty(map->_table + index))
-            return list_end(map->_table + index);
-    }
-    
-    return NULL;
+    map->data_delete = data_delete;
 }
-
-struct item *map_item_next(struct map *__restrict map,
-                           struct item *__restrict item)
-{
-    int index;
-    
-    if(!map_contains(map, item_key(item)))
-        return NULL;
-    
-    if(item_next(item))
-        return item_next(item);
-    
-    index = _map_hash_key(map, item_key(item));
-    
-    while(++index < map->_num_lists) {
-        if(!list_empty(map->_table + index))
-            return list_begin(map->_table + index);
-    }
-    
-    return NULL;
-}
-
-
-#define MAP_DEFINE_SETGET(name, type)                                          \
-                                                                               \
-inline void map_set_##name(struct map *__restrict map, type name)              \
-{                                                                              \
-    map->_##name = name;                                                       \
-}                                                                              \
-                                                                               \
-inline type map_##name(const struct map *__restrict map)                       \
-{                                                                              \
-    return map->_##name;                                                       \
-}
-
-MAP_DEFINE_SETGET(key_size, size_t)
-
-#undef MAP_DEFINE_SETGET
-
-#define MAP_DEFINE_SET_CALLBACK(name, type, param)                             \
-                                                                               \
-inline void map_set_##name(struct map *__restrict map, type (*name)param)     \
-{                                                                              \
-    map->_##name = name;                                                       \
-}
-
-
-MAP_DEFINE_SET_CALLBACK(key_hash, uint64_t, (const void *, size_t))
-MAP_DEFINE_SET_CALLBACK(key_compare, int, (const void *, const void *))
-MAP_DEFINE_SET_CALLBACK(key_length, size_t, (const void *))
-MAP_DEFINE_SET_CALLBACK(key_delete, void, (void *))
-MAP_DEFINE_SET_CALLBACK(data_delete, void, (void *))
-
-#undef MAP_DEFINE_SET_CALLBACK
 
