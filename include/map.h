@@ -60,7 +60,7 @@ inline void map_set_key_compare(struct map *__restrict map,
                                 int (*key_compare)(const void *, const void *));
 
 inline void map_set_key_hash(struct map *__restrict map, 
-                              unsigned int (*data_hash)(const void *));
+                              unsigned int (*key_hash)(const void *));
 
 inline void map_set_data_delete(struct map *__restrict map,
                                 void (*data_delete)(void *));

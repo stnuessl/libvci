@@ -21,8 +21,6 @@
 static int _map_rehash(struct map *__restrict map)
 {
     struct map_entry *old_table;
-    void *data;
-    const void *key;
     unsigned int i, old_capacity, old_entries;
     int err;
     
@@ -39,10 +37,8 @@ static int _map_rehash(struct map *__restrict map)
     
     for(i = 0; i < old_capacity; ++i) {
         if(old_table[i].state == DATA_AVAILABLE) {
-            data = old_table[i].data;
-            key  = old_table[i].key;
-            
-            err = map_insert(map, data, key);
+
+            err = map_insert(map, old_table[i].data, old_table[i].key);
             if(err < 0) {
                 /* revert to old table, which wasn't changed */
                 free(map->table);
@@ -68,6 +64,10 @@ static int _map_rehash(struct map *__restrict map)
  * If it isn't we keep searching for it on the next possible position.
  * If state is 'DATA_REMOVED' it also means we have to search on the 
  * next possible position.
+ * 
+ * Note:
+ * If there is a bug in this function it is very likely that
+ * map_insert() suffers from the same bug.
  */
 static struct map_entry *_map_lookup(struct map *__restrict map,
                                      const void *__restrict key)
@@ -100,7 +100,7 @@ static struct map_entry *_map_lookup(struct map *__restrict map,
         index  += offset;
         offset += 2;
         
-        if(index > map->capacity)
+        if(index >= map->capacity)
             index -= map->capacity;
     }
     
@@ -182,6 +182,11 @@ void map_clear(struct map *__restrict map)
     }
 }
 
+/*
+ * Note:
+ * If there is a bug in this function it is very likely that
+ * _map_lookup() suffers from the same bug.
+ */
 int map_insert(struct map *__restrict map, void *data, const void *key)
 {
     unsigned int hash, index, offset;
@@ -209,7 +214,7 @@ int map_insert(struct map *__restrict map, void *data, const void *key)
         index  += offset;
         offset += 2;
         
-        if(index > map->capacity)
+        if(index >= map->capacity)
             index -= map->capacity;
     }
     
@@ -271,9 +276,9 @@ inline void map_set_key_compare(struct map *__restrict map,
 }
 
 inline void map_set_key_hash(struct map *__restrict map, 
-                              unsigned int (*data_hash)(const void *))
+                              unsigned int (*key_hash)(const void *))
 {
-    map->key_hash = data_hash;
+    map->key_hash = key_hash;
 }
 
 inline void map_set_data_delete(struct map *__restrict map,

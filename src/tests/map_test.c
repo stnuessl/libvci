@@ -3,6 +3,10 @@
 #include <string.h>
 #include <assert.h>
 
+#include <fcntl.h>
+#include <sys/stat.h>
+
+
 #include <map.h>
 #include <clock.h>
 
@@ -118,7 +122,7 @@ void map_test_performance(unsigned int num)
     map = map_new(0, &int_compare, &hash);
     c   = clock_new(CLOCK_MONOTONIC);
     assert(map);
-    assert(map);
+    assert(c);
     
     clock_start(c);
     
@@ -127,38 +131,63 @@ void map_test_performance(unsigned int num)
         assert(err == 0);
     }
     
-    clock_stop(c);
-    
-    fprintf(stdout, "Elapsed time for %u insertions: %lu\n",
+    fprintf(stdout, "Elapsed time for %u insertions: %lu ms\n",
             num, 
             clock_elapsed_ms(c));
     
     clock_reset(c);
     
-    clock_start(c);
-    
     for(i = 0; i < num; ++i)
         assert((int)(long) map_retrieve(map, (void *)(long) i) == i);
     
-    clock_stop(c);
-    
-    fprintf(stdout, "Elapsed time for %u lookups: %lu\n",
+    fprintf(stdout, "Elapsed time for %u lookups: %lu ms\n",
             num,
-            clock_elapsed_us(c));
+            clock_elapsed_ms(c));
     
     clock_reset(c);
-    clock_start(c);
     
     for(i = 0; i < num; ++i)
         assert((int)(long) map_take(map, (void *)(long) i) == i);
     
-    clock_stop(c);
-    
-    fprintf(stdout, "Elapsed time for %u removals: %lu\n",
+    fprintf(stdout, "Elapsed time for %u removals: %lu ms\n",
             num,
-            clock_elapsed_us(c));
+            clock_elapsed_ms(c));
     
     clock_delete(c);
+    map_delete(map);
+}
+
+void stress_test(void)
+{
+    struct map *map;
+    int err, i, num_elements, loops;
+    
+    map = map_new(0, &int_compare, &hash);
+    assert(map);
+    
+    loops = 1000;
+    num_elements = 100000;
+    
+    while(loops--) {
+        for(i = 0; i < num_elements / 2; ++i) {            
+            err = map_insert(map, (void *)(long)i, (void *)(long) i);
+            assert(err == 0);
+        }
+        
+        for(i = 0; i < num_elements / 4; i += 4)
+            assert((int)(long)map_take(map, (void *)(long)i) == i);
+        
+        for(i = num_elements / 2; i < num_elements; ++i) {
+            err = map_insert(map, (void *)(long)i, (void *)(long) i);
+            assert(err == 0);
+        }
+        
+        for(i = num_elements / 2; i < num_elements / 4; i += 4)
+            assert((int)(long)map_take(map, (void *)(long)i) == i);
+        
+        map_clear(map);
+    }
+    
     map_delete(map);
 }
 
@@ -166,10 +195,18 @@ int main(int argc, char *argv[])
 {
     unsigned int num;
     
+    if(argc != 2) {
+        fprintf(stderr, "fatal: Missing argument(s).\n"   
+                        "Usage: %s <number of elements>\n",
+                argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    
     num = (unsigned int) atoi(argv[1]);
     
-    map_test_performance(num);
     map_test_insert_remove();
+    map_test_performance(num);
+    stress_test();
     
     return EXIT_SUCCESS;
 }
