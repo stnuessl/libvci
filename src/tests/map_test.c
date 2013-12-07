@@ -6,23 +6,13 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-
 #include <map.h>
 #include <clock.h>
+#include <macros.h>
 
 int int_compare(const void *a, const void *b)
 {
     return (long)a - (long)b;
-}
-
-size_t string_length(const void *a)
-{
-    return strlen(a);
-}
-
-int string_compare(const void *a, const void *b)
-{
-    return strcmp(a, b);
 }
 
 unsigned int hash(const void *key)
@@ -47,25 +37,25 @@ unsigned int hash(const void *key)
     return hval;
 }
 
-char *strings[] = {
-    "I",
-    "hope",
-    "this",
-    "map",
-    "thing",
-    "works",
-    NULL
-};
 
-char *keys[] = {
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    NULL
-};
+unsigned int string_hash(const void *key)
+{
+    const char *s;
+    unsigned int hval;
+    
+    s = key;
+    hval = 0;
+    
+    while(*s != '\0')
+        hval += hash((void *)(long) *s++);
+    
+    return hval;
+}
+
+int string_compare(const void *a, const void *b)
+{
+    return strcmp(a, b);
+}
 
 void inspect_map(const struct map *__restrict map)
 {
@@ -77,8 +67,7 @@ void inspect_map(const struct map *__restrict map)
                     i,
                     (int)(long) map->table[i].key,
                     (int)(long) map->table[i].data,
-                    map->table[i].hash
-                   );
+                    map->table[i].hash);
     }
     
     fprintf(stdout, "Map entries: %u.\n"
@@ -157,56 +146,91 @@ void map_test_performance(unsigned int num)
     map_delete(map);
 }
 
-void stress_test(void)
+void map_stress_test(void)
 {
     struct map *map;
-    int err, i, num_elements, loops;
+    int err, i, num_elements;
     
     map = map_new(0, &int_compare, &hash);
     assert(map);
     
-    loops = 1000;
-    num_elements = 100000;
+    num_elements = 1000000;
     
-    while(loops--) {
-        for(i = 0; i < num_elements / 2; ++i) {            
-            err = map_insert(map, (void *)(long)i, (void *)(long) i);
-            assert(err == 0);
-        }
-        
-        for(i = 0; i < num_elements / 4; i += 4)
-            assert((int)(long)map_take(map, (void *)(long)i) == i);
-        
-        for(i = num_elements / 2; i < num_elements; ++i) {
-            err = map_insert(map, (void *)(long)i, (void *)(long) i);
-            assert(err == 0);
-        }
-        
-        for(i = num_elements / 2; i < num_elements / 4; i += 4)
-            assert((int)(long)map_take(map, (void *)(long)i) == i);
-        
-        map_clear(map);
+    for(i = 0; i < num_elements / 2; ++i) {            
+        err = map_insert(map, (void *)(long)i, (void *)(long) i);
+        assert(err == 0);
     }
     
+    for(i = 0; i < num_elements / 4; i += 3)
+        assert((int)(long)map_take(map, (void *)(long)i) == i);
+    
+    for(i = 0; i < num_elements / 4; i += 3) {
+        if((i % 3) == 0)
+            assert((int)(long)map_retrieve(map, (void *)(long) i) == 0);
+        else
+            assert((int)(long)map_retrieve(map, (void *)(long) i) == i);
+    }
+    
+    for(i = num_elements / 2; i < num_elements; ++i) {
+        err = map_insert(map, (void *)(long)i, (void *)(long) i);
+        assert(err == 0);
+    }
+    
+    for(i = num_elements / 2; i < num_elements / 4; i += 3)
+        assert((int)(long)map_take(map, (void *)(long)i) == i);
+    
+    for(i = num_elements / 2; i < num_elements / 4; i += 3) {
+        if((i % 3) == 0)
+            assert((int)(long)map_retrieve(map, (void *)(long) i) == 0);
+        else
+            assert((int)(long)map_retrieve(map, (void *)(long) i) == i);
+    }
+    
+    map_clear(map);
+    
+    map_delete(map);
+}
+
+void map_string_test(void)
+{
+    char *strings[] = {
+        "I",            "1",
+        "hope",         "2",
+        "this",         "3",
+        "map",          "4",
+        "thing",        "5",
+        "works",        "6"
+    };
+    
+    struct map *map;
+    int err, i;
+    
+    map = map_new(0, &string_compare, &string_hash);
+    assert(map);
+    
+    for(i = 0; i < ARRAY_SIZE(strings); i += 2) {
+        err = map_insert(map, strings[i], strings[i + 1]);
+        assert(err == 0);
+    }
+    
+    for(i = 0; i < ARRAY_SIZE(strings); i += 2)
+        fprintf(stdout, "%s ", (char *)map_retrieve(map, strings[i + 1]));
+    
+    fprintf(stdout, "\n");
+     
     map_delete(map);
 }
 
 int main(int argc, char *argv[])
 {
-    unsigned int num;
-    
-    if(argc != 2) {
-        fprintf(stderr, "fatal: Missing argument(s).\n"   
-                        "Usage: %s <number of elements>\n",
-                argv[0]);
-        exit(EXIT_FAILURE);
-    }
-    
-    num = (unsigned int) atoi(argv[1]);
-    
+
     map_test_insert_remove();
-    map_test_performance(num);
-    stress_test();
+    
+    if(argc == 2)
+        map_test_performance((unsigned int) atoi(argv[1]));
+    
+    map_stress_test();
+    map_string_test();
     
     return EXIT_SUCCESS;
 }
