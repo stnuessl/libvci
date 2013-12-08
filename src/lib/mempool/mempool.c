@@ -5,52 +5,13 @@
 #include "macros.h"
 #include "mempool.h"
 
+
 struct chunk {
     struct chunk *next;
 };
 
-static int _mempool_grow(struct mempool *__restrict pool, int size)
-{
-    void **mem;
-    void *chunk;
-    int num, i, err;
-    
-    mem = realloc(pool->_mem, size * sizeof(*mem));
-    if(!mem)
-        return -errno;
-    
-    for(i = pool->_size; i < size; ++i) {
-        mem[i]     = calloc(pool->_num_chunks, pool->_chunk_size);
-        if(!mem[i]) {
-            err = -errno;
-            goto cleanup1;
-        }
-        
-        chunk = mem[i];
-        num   = pool->_num_chunks;
-        
-        while(num--) {
-            /* add 'chunk' to list */
-            ((struct chunk *)chunk)->next = pool->_free_chunks;
-            pool->_free_chunks = chunk;
-            
-            chunk += pool->_chunk_size;
-        }
-    }
-    
-    pool->_mem  = mem;
-    pool->_size = size;
-    
-    return 0;
-    
-cleanup1:
-    while(i-- > pool->_size)
-        free(mem[i]);
-    
-    return err;
-}
 
-struct mempool *mempool_new(int num_chunks, size_t chunk_size)
+struct mempool *mempool_new(void *mem, size_t size, size_t chunk_size)
 {
     struct mempool *pool;
     int err;
@@ -59,7 +20,7 @@ struct mempool *mempool_new(int num_chunks, size_t chunk_size)
     if(!pool)
         return NULL;
     
-    err = mempool_init(pool, num_chunks, chunk_size);
+    err = mempool_init(pool, mem, size, chunk_size);
     if(err < 0) {
         free(pool);
         return NULL;
@@ -74,51 +35,67 @@ void mempool_delete(struct mempool *__restrict pool)
     free(pool);
 }
 
-
 int mempool_init(struct mempool *__restrict pool, 
-                 int num_chunks, 
+                 void *mem, 
+                 size_t size, 
                  size_t chunk_size)
 {
-    memset(pool, 0, sizeof(*pool));
+    pool->mem         = mem;
+    pool->size        = size;
+    pool->chunk_size  = max(sizeof(struct chunk), chunk_size);
+    pool->mem_used    = 0;
+    pool->list_chunks = NULL;
     
-    pool->_num_chunks = num_chunks;
-    pool->_chunk_size = max(sizeof(struct chunk), chunk_size);
-    
-    return _mempool_grow(pool, 1);
+    return 0;
 }
 
 void mempool_destroy(struct mempool *__restrict pool)
 {
-    while(pool->_size--)
-        free(pool->_mem[pool->_size]);
-
-    free(pool->_mem);
+    /* make the pool unusable */
+    memset(pool, 0, sizeof(*pool));
 }
 
-void *mempool_alloc_chunk(struct mempool *__restrict pool)
+void* mempool_alloc_chunk(struct mempool *__restrict pool)
 {
-    struct chunk *chunk;
+    void *chunk;
     
-    if(mempool_empty(pool)) {
-        if(_mempool_grow(pool, pool->_size << 1) < 0)
-            return NULL;
+    if(pool->list_chunks != NULL) {
+        /* remove chunk from list */
+        chunk = pool->list_chunks;
+        pool->list_chunks = ((struct chunk *)pool->list_chunks)->next;
+        
+        return chunk;
     }
     
-    /* remove 'chunk' from the list */
-    chunk = pool->_free_chunks;
-    pool->_free_chunks = ((struct chunk *)pool->_free_chunks)->next;
+    if(unlikely(pool->mem_used >= pool->size))
+        return malloc(pool->chunk_size);
+    
+    chunk = pool->mem + pool->mem_used;    
+    pool->mem_used += pool->chunk_size;
     
     return chunk;
 }
 
 void mempool_free_chunk(struct mempool *__restrict pool, void *chunk)
 {
-    /* add 'chunk' to the list */
-    ((struct chunk *)chunk)->next = pool->_free_chunks;
-    pool->_free_chunks = chunk;
+    /* 
+     * We can risk to further trash the performance for an empty mempool
+     * (therefore getting a slighty better performance for non-empty pools)
+     * because the programmer should be able to detect this 
+     * (e.g. 'mempool_empty()') and increase to memory size of the pool 
+     * accordingly.
+     */
+    if(unlikely(chunk < pool->mem || chunk >= pool->mem + pool->size)) {
+        free(chunk);
+        return;
+    }
+    
+    /* insert again into list */
+    ((struct chunk *)chunk)->next = pool->list_chunks;
+    pool->list_chunks = chunk;
 }
 
-inline bool mempool_empty(struct mempool *__restrict pool)
+inline bool mempool_empty(const struct mempool *__restrict pool)
 {
-    return pool->_free_chunks == NULL;
+    return pool->mem_used >= pool->size && pool->list_chunks == NULL;
 }
