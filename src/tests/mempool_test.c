@@ -5,6 +5,8 @@
 #include <time.h>
 
 #include <mempool.h>
+#include <clock.h>
+#include <macros.h>
 
 #define LOOPS 1
 #define POOL_CHUNKS 2000
@@ -17,24 +19,21 @@ struct a {
 
 #define TYPE struct a
 
-#define timespec_to_double(ts)                                                 \
-    (double) ((ts).tv_sec + (ts).tv_nsec * 1e-9)
-    
-#define timespec_diff(end, start)                                              \
-    timespec_to_double(end) - timespec_to_double(start)
+char mem[POOL_CHUNKS * sizeof(TYPE)];
 
 void test_with_mempool(void)
 {
     struct mempool *p;
+    struct clock *c;
     TYPE *chunks[USED_CHUNKS];
-    int i, j, err;
-    struct timespec start, end;
+    int i, j;
     
-    err = clock_gettime(CLOCK_MONOTONIC, &start);
-    assert(err == 0);
-    
-    p = mempool_new(POOL_CHUNKS, sizeof(TYPE));
+    p = mempool_new(mem, ARRAY_SIZE(mem), sizeof(TYPE));
+    c = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(p);
+    assert(c);
+    
+    clock_start(c);
 
     for(i = 0; i < LOOPS; ++i) {
 
@@ -50,20 +49,21 @@ void test_with_mempool(void)
 
     mempool_delete(p);
     
-    err = clock_gettime(CLOCK_MONOTONIC, &end);
-    assert(err == 0);
+    printf("Test with Memory Pool: %lu us\n", clock_elapsed_us(c));
     
-    printf("Test with Memory Pool: %lf\n", timespec_diff(end, start));
+    clock_delete(c);
 }
 
 void test_without_mempool(void)
 {
     TYPE *chunks[USED_CHUNKS];
-    int i, j, err;
-    struct timespec start, end;
+    struct clock *c;
+    int i, j;
     
-    err = clock_gettime(CLOCK_MONOTONIC, &start);
-    assert(err == 0);
+    c = clock_new(CLOCK_PROCESS_CPUTIME_ID);
+    assert(c);
+    
+    clock_start(c);
     
     for(i = 0; i < LOOPS; ++i) {
         
@@ -78,10 +78,9 @@ void test_without_mempool(void)
             free(chunks[j]);
     }
     
-    err = clock_gettime(CLOCK_MONOTONIC, &end);
-    assert(err == 0);
+    printf("Test without Memory Pool: %lu us\n", clock_elapsed_us(c));
     
-    printf("Test without Memory Pool: %lf\n", timespec_diff(end, start));
+    clock_delete(c);
 }
 
 int main(int argc, char *argv[])
