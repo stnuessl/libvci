@@ -30,14 +30,4 @@ void mempool_free_chunk(struct mempool *__restrict pool, void *chunk);
 
 inline bool mempool_empty(const struct mempool *__restrict pool);
 
-
-struct mempool_old {
-    void *_free_chunks;
-    void **_mem;
-    size_t _chunk_size;
-    int _num_chunks;
-    
-    int _size;
-};
-
 #endif /* _MEMPOOL_H_ */
