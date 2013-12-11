@@ -36,7 +36,7 @@ target_link_libraries(stack_test vci)
 # 
 # add_executable(threadpool_test threadpool_test.c)
 # target_link_libraries(threadpool_test vci)
-# 
+#
 # add_executable(clock_test clock_test.c)
 # target_link_libraries(clock_test vci)
 # 

@@ -254,19 +254,6 @@ void *map_take(struct map *__restrict map, const void *key)
     return data;
 }
 
-int map_replace(struct map *__restrict map, const void *key, void *data)
-{
-    struct map_entry *entry;
-    
-    entry = _map_lookup(map, key);
-    if(!entry)
-        return -EINVAL;
-    
-    entry->data = data;
-    
-    return 0;
-}
-
 bool map_contains(struct map *__restrict map, const void *key)
 {
     return map_retrieve(map, key) != NULL;
