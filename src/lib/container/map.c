@@ -38,7 +38,7 @@ static int _map_rehash(struct map *__restrict map)
     for(i = 0; i < old_capacity; ++i) {
         if(old_table[i].state == DATA_AVAILABLE) {
 
-            err = map_insert(map, old_table[i].data, old_table[i].key);
+            err = map_insert(map, old_table[i].key, old_table[i].data);
             if(err < 0) {
                 /* revert to old table, which wasn't changed */
                 free(map->table);
@@ -187,7 +187,7 @@ void map_clear(struct map *__restrict map)
  * If there is a bug in this function it is very likely that
  * _map_lookup() suffers from the same bug.
  */
-int map_insert(struct map *__restrict map, void *data, const void *key)
+int map_insert(struct map *__restrict map, const void *key, void *data)
 {
     unsigned int hash, index, offset;
     
@@ -252,6 +252,19 @@ void *map_take(struct map *__restrict map, const void *key)
         _map_rehash(map);
     
     return data;
+}
+
+int map_replace(struct map *__restrict map, const void *key, void *data)
+{
+    struct map_entry *entry;
+    
+    entry = _map_lookup(map, key);
+    if(!entry)
+        return -EINVAL;
+    
+    entry->data = data;
+    
+    return 0;
 }
 
 bool map_contains(struct map *__restrict map, const void *key)

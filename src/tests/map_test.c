@@ -209,7 +209,7 @@ void map_string_test(void)
     assert(map);
     
     for(i = 0; i < ARRAY_SIZE(strings); i += 2) {
-        err = map_insert(map, strings[i], strings[i + 1]);
+        err = map_insert(map, strings[i + 1], strings[i]);
         assert(err == 0);
     }
     

@@ -44,11 +44,13 @@ void map_destroy(struct map *__restrict map);
 
 void map_clear(struct map *__restrict map);
 
-int map_insert(struct map *__restrict map, void *data, const void *key);
+int map_insert(struct map *__restrict map, const void *key, void *data);
 
 void *map_retrieve(struct map *__restrict map, const void *key);
 
 void *map_take(struct map *__restrict map, const void *key);
+
+int map_replace(struct map *__restrict map, const void *key, void *data);
 
 bool map_contains(struct map *__restrict map, const void *key);
 
