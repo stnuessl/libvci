@@ -175,8 +175,8 @@ void map_clear(struct map *__restrict map)
         if(map->table[i].state == DATA_AVAILABLE) {
             map->data_delete(map->table[i].data);
             
-            map->table[i].data  = NULL;
             map->table[i].key   = NULL;
+            map->table[i].data  = NULL;
             map->table[i].state = DATA_EMPTY;
         }
     }
@@ -202,8 +202,8 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
     while(offset < map->capacity) {
         if(map->table[index].state != DATA_AVAILABLE) {
             map->table[index].hash  = hash;
-            map->table[index].data  = data;
             map->table[index].key   = key;
+            map->table[index].data  = data;
             map->table[index].state = DATA_AVAILABLE;
             
             map->entries += 1;
@@ -242,8 +242,8 @@ void *map_take(struct map *__restrict map, const void *key)
     data = entry->data;
     
     entry->hash = 0;
-    entry->data = NULL;
     entry->key  = NULL;
+    entry->data = NULL;
     entry->state = DATA_REMOVED;
     
     map->entries -= 1;

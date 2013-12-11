@@ -14,8 +14,8 @@ enum data_state {
 struct map_entry {
     unsigned int hash;
     
-    void *data;
     const void *key;
+    void *data;
     enum data_state state;
 };
 
