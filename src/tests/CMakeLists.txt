@@ -46,10 +46,10 @@ target_link_libraries(stack_test vci)
 # 
 # add_executable(etrace_test etrace_test.c)
 # target_link_libraries(etrace_test vci)
-# 
-# add_executable(mempool_test mempool_test.c)
-# target_link_libraries(mempool_test vci)
-# 
+
+add_executable(mempool_test mempool_test.c)
+target_link_libraries(mempool_test vci)
+
 # add_executable(log_test log_test.c)
 # target_link_libraries(log_test vci)
 # 

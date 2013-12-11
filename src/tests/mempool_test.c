@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
         else if(strcmp(argv[1], "--mempool") == 0)
             test_with_mempool();
     } else {
-        test_with_mempool();
         test_without_mempool();
+        test_with_mempool();
     }
 
     return EXIT_SUCCESS;
