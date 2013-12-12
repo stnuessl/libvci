@@ -6,11 +6,12 @@
 
 struct mempool {
     void *mem;
+    void *init;
+    void *next;
+    
     size_t size;
     size_t chunk_size;
-    
-    size_t mem_used;
-    void *list_chunks;
+    unsigned int chunks;
 };
 
 struct mempool *mempool_new(void *mem, size_t size, size_t chunk_size);

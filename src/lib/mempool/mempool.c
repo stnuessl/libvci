@@ -6,10 +6,6 @@
 #include "mempool.h"
 
 
-struct chunk {
-    struct chunk *next;
-};
-
 
 struct mempool *mempool_new(void *mem, size_t size, size_t chunk_size)
 {
@@ -40,11 +36,18 @@ int mempool_init(struct mempool *__restrict pool,
                  size_t size, 
                  size_t chunk_size)
 {
-    pool->mem         = mem;
-    pool->size        = size;
-    pool->chunk_size  = max(sizeof(struct chunk), chunk_size);
-    pool->mem_used    = 0;
-    pool->list_chunks = NULL;
+    unsigned long *last;
+    
+    pool->mem        = mem;
+    pool->init       = mem;
+    pool->next       = mem;
+    pool->size       = size;
+    pool->chunk_size = max(sizeof(unsigned long), chunk_size);
+    pool->chunks     = pool->size / pool->chunk_size; 
+    
+    last = pool->mem + (pool->chunk_size * (pool->chunks - 1));
+    
+    *last = (unsigned long) NULL;
     
     return 0;
 }
@@ -57,27 +60,28 @@ void mempool_destroy(struct mempool *__restrict pool)
 
 void* mempool_alloc_chunk(struct mempool *__restrict pool)
 {
-    void *chunk;
+    unsigned long *chunk;
     
-    if(pool->list_chunks != NULL) {
-        /* remove chunk from list */
-        chunk = pool->list_chunks;
-        pool->list_chunks = ((struct chunk *)pool->list_chunks)->next;
-        
-        return chunk;
+    if(pool->init < pool->mem + pool->size) {
+        chunk = pool->init;
+        *chunk = (unsigned long) pool->init + pool->chunk_size;
+        pool->init += pool->chunk_size;
     }
     
-    if(unlikely(pool->mem_used >= pool->size))
+    if(unlikely(mempool_empty(pool)))
         return malloc(pool->chunk_size);
     
-    chunk = pool->mem + pool->mem_used;    
-    pool->mem_used += pool->chunk_size;
+    pool->chunks -= 1;
+    
+    chunk = pool->next;
+    pool->next = (void *)*chunk;
     
     return chunk;
 }
 
 void mempool_free_chunk(struct mempool *__restrict pool, void *chunk)
 {
+    unsigned long *next;
     /* 
      * We can risk to further trash the performance for an empty mempool
      * (therefore getting a slighty better performance for non-empty pools)
@@ -90,12 +94,15 @@ void mempool_free_chunk(struct mempool *__restrict pool, void *chunk)
         return;
     }
     
-    /* insert again into list */
-    ((struct chunk *)chunk)->next = pool->list_chunks;
-    pool->list_chunks = chunk;
+    pool->chunks += 1;
+    
+    next = chunk;
+    
+    *next = (unsigned long) pool->next;
+    pool->next = next;
 }
 
 inline bool mempool_empty(const struct mempool *__restrict pool)
 {
-    return pool->mem_used >= pool->size && pool->list_chunks == NULL;
+    return pool->chunks == 0;
 }

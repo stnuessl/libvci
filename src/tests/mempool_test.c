@@ -85,8 +85,16 @@ void test_without_mempool(void)
 
 int main(int argc, char *argv[])
 {
-    test_without_mempool();
-    test_with_mempool();
-    
+
+    if(argc == 2) {
+        if(strcmp(argv[1], "--no-mempool") == 0)
+            test_without_mempool();
+        else if(strcmp(argv[1], "--mempool") == 0)
+            test_with_mempool();
+    } else {
+        test_without_mempool();
+        test_with_mempool();
+    }
+
     return EXIT_SUCCESS;
 }

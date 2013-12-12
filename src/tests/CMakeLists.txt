@@ -5,8 +5,8 @@ project(libvci_tests C)
 
 add_definitions(-DETRACE_DEBUG=2)
 add_definitions(-Wall)
-#add_definitions(-O2)
-add_definitions(-g3)
+add_definitions(-O2)
+#add_definitions(-g3)
 
 find_package(Threads)
 
@@ -46,10 +46,10 @@ target_link_libraries(stack_test vci)
 # 
 # add_executable(etrace_test etrace_test.c)
 # target_link_libraries(etrace_test vci)
-# 
-# add_executable(mempool_test mempool_test.c)
-# target_link_libraries(mempool_test vci)
-# 
+
+add_executable(mempool_test mempool_test.c)
+target_link_libraries(mempool_test vci)
+
 # add_executable(log_test log_test.c)
 # target_link_libraries(log_test vci)
 # 
