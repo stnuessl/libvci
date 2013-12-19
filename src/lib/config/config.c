@@ -14,6 +14,7 @@
 #include "config_parser.h"
 #include "key.h"
 
+
 struct config *config_new(const char *__restrict path)
 {
     struct config *config;
@@ -42,27 +43,25 @@ int config_init(struct config *__restrict config, const char *__restrict path)
 {
     int err;
     
-    config->_path = strdup(path);
-    if(!config->_path)
+    config->path = strdup(path);
+    if(!config->path)
         return -errno;
     
-    err = map_init(&config->_map, 0, sizeof(uint64_t));
+    err = map_init(&config->map, 0, &key_compare, &key_hash);
     if(err < 0) {
-        free(config->_path);
+        free(config->path);
         return err;
     }
     
-    map_set_data_delete(&config->_map, &free);
-    map_set_key_delete(&config->_map, &free);
-    map_set_key_compare(&config->_map, &key_compare);
+    map_set_data_delete(&config->map, &free);
     
     return 0;
 }
 
 void config_destroy(struct config *__restrict config)
 {
-    free(config->_path);
-    map_destroy(&config->_map);
+    free(config->path);
+    map_destroy(&config->map);
 }
 
 int config_parse(struct config *__restrict config)
@@ -90,18 +89,18 @@ const char *config_value(struct config *__restrict config,
     if(!section)
         section = _NO_SECTION_;
     
-    key_merge(&merged_key, sizeof(merged_key), section, key);
+    merged_key = key_merge(section, key);
     
-    return map_retrieve(&config->_map, &merged_key);
+    return map_retrieve(&config->map, (void *) merged_key);
 }
 
 int config_set_path(struct config *__restrict config, 
                      const char *__restrict path)
 {
-    free(config->_path);
+    free(config->path);
    
-    config->_path = strdup(path);
-    if(!config->_path)
+    config->path = strdup(path);
+    if(!config->path)
         return -errno;
     
     return 0;
@@ -109,5 +108,5 @@ int config_set_path(struct config *__restrict config,
 
 const char *config_path(struct config *__restrict config)
 {
-    return config->_path;
+    return config->path;
 }

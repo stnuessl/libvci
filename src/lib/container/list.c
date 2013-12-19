@@ -3,41 +3,107 @@
 #include <errno.h>
 #include <stdbool.h>
 
+#include "link.h"
 #include "list.h"
 /*
  * Thanks to the wayland devs for this slick list implementation.
  */
 
-inline void list_init(struct list *__restrict list)
+inline void list_init(struct link *__restrict list)
 {
     list->prev = list;
     list->next = list;
 }
 
-inline void list_insert(struct list *list, struct list *item)
+void list_destroy(struct link *__restrict list,
+                  void (*data_delete)(struct link *))
 {
-    item->prev = list;
-    item->next = list->next;
-
-    list->next = item;
-    item->prev->next = item;
+    list_clear(list, data_delete);
 }
 
-inline void list_take(struct list *__restrict item)
+void list_clear(struct link *__restrict list,
+                void (*data_delete)(struct link *))
 {
-    item->prev->next = item->next;
-    item->next->prev = item->prev;
+    struct link *link;
     
-    item->next = NULL;
-    item->prev = NULL;
+    if(!data_delete) {
+        list_init(list);
+        return;
+    }
+    
+    while(!list_empty(list)) {
+        link = list_take_front(list);
+        
+        data_delete(link);
+    }
 }
 
-inline bool list_empty(const struct list *__restrict list)
+inline void list_insert(struct link *list, struct link *link)
+{
+    link->prev = list;
+    link->next = list->next;
+
+    list->next = link;
+    link->next->prev = link;
+}
+
+inline void list_take(struct link *__restrict link)
+{
+    link->prev->next = link->next;
+    link->next->prev = link->prev;
+    
+    link->next = NULL;
+    link->prev = NULL;
+}
+
+inline void list_insert_front(struct link *__restrict list, struct link *link)
+{
+    list_insert(list, link);
+}
+
+inline void list_insert_back(struct link *__restrict list, struct link *link)
+{
+    list_insert(list->prev, link);
+}
+
+inline struct link *list_front(struct link *__restrict list)
+{
+    return list->next;
+}
+
+inline struct link *list_back(struct link *__restrict list)
+{
+    return list->prev;
+}
+
+struct link *list_take_front(struct link *__restrict list)
+{
+    struct link *link;
+    
+    link = list_front(list);
+    
+    list_take(link);
+    
+    return link;
+}
+
+struct link *list_take_back(struct link *__restrict list)
+{
+    struct link *link;
+    
+    link = list_back(list);
+    
+    list_take(link);
+    
+    return link;
+}
+
+inline bool list_empty(const struct link *__restrict list)
 {
     return list->next == list;
 }
 
-void list_insert_list(struct list *list, struct list *other)
+void list_insert_list(struct link *list, struct link *other)
 {
     if(list_empty(other))
         return;

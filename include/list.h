@@ -4,36 +4,41 @@
 
 #include <stdbool.h>
 
-struct list {
-    struct list *prev;
-    struct list *next;
-};
+#include "link.h"
+
+inline void list_init(struct link *__restrict list);
+
+void list_destroy(struct link *__restrict list,
+                  void (*data_delete)(struct link *));
+
+void list_clear(struct link *__restrict list,
+                void (*data_delete)(struct link *));
+
+inline void list_insert(struct link *list, struct link *link);
+
+inline void list_take(struct link *__restrict link);
+
+inline void list_insert_front(struct link *__restrict list, struct link *link);
+
+inline void list_insert_back(struct link *__restrict list, struct link *link);
+
+inline struct link *list_front(struct link *__restrict list);
+
+inline struct link *list_back(struct link *__restrict list);
+
+struct link *list_take_front(struct link *__restrict list);
+
+struct link *list_take_back(struct link *__restrict list);
+
+inline bool list_empty(const struct link *__restrict list);
+
+void list_insert_list(struct link *list, struct link *other);
+
+#define list_for_each(list, link)                                              \
+    for((link) = (list)->next; (link) != (list); (link) = (link)->next)
+
+#define list_for_each_reverse(list, link)                                      \
+    for((link) = (list)->prev; (link) != (list); (link) = (link)->prev)
 
 
-inline void list_init(struct list *__restrict list);
-
-inline void list_insert(struct list *list, struct list *item);
-
-inline void list_take(struct list *__restrict item);
-
-inline bool list_empty(const struct list *__restrict list);
-
-void list_insert_list(struct list *list, struct list *other);
-
-#define list_for_each(list, item)                                              \
-for((item) = (list)->next; (item) != (list); (item) = (item)->next)
-    
-#define list_for_each_safe(list, item, tmp)                                    \
-    for((item) = (list)->next, (tmp) = (item)->next;                           \
-        (item) != (list);                                                      \
-        (item) = (tmp), (tmp) = (tmp)->next)
-        
-#define list_for_each_reverse(list, item)                                      \
-        for((item) = (list)->prev; (item) != (list); (item) = (item)->prev)
-            
-#define list_for_each_reverse_safe(list, item, tmp)                            \
-    for((item) = (list)->prev; (tmp) = (item)->prev;                           \
-        (item) != (list);                                                      \
-        (item) = (tmp), (tmp) = (tmp)->prev)
-                
 #endif /* _LIST_H_ */

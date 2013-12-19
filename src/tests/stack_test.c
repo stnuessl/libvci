@@ -4,35 +4,53 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#include <link.h>
 #include <stack.h>
+#include <macros.h>
 
-void push_string(struct stack *__restrict stack, const char *str)
-{
-    int err;
-    
-    while(*str != '\0') {
-        /* surpress warnings ;-) */
-        err = stack_push(stack, (void *)(unsigned long) *str++);
-        assert(err == 0);
-    }
-}
+struct data {
+    char data;
+    struct link link;
+};
+
+char *words[] = {
+    "hannah",
+    "maniac",
+    "deified",
+    "haha",
+    "i",
+    "kayak"
+};
 
 bool is_palindrome(struct stack *__restrict stack, const char *str)
 {
+    struct data *data, *tmp;
     char c;
-
-    push_string(stack, str);
+    int len, i;
+    
+    len = strlen(str);
+    
+    data = calloc(len, sizeof(*data));
+    
+    for(i = 0; i < len; ++i) {
+        data[i].data = str[i];
+        
+        stack_push(stack, &data[i].link);
+    }
     
     c = EOF;
-    
+
     while(!stack_empty(stack)) {
-        c = (unsigned long) stack_pop(stack);
-               
+        tmp = container_of(stack_pop(stack), struct data, link);
+        
+        c = tmp->data;
+        
         if(c != *str++)
             break;
     }
     
     stack_clear(stack, NULL);
+    free(data);
 
     return c == *--str;
 }
@@ -43,16 +61,15 @@ int main(int argc, char *argv[])
     char *str;
     
     if(argc < 2) {
-        fprintf(stdout, "*WARNING* :: missing argument(s).\n"
-                        "Usage:\n\t./stack_test string1 string2 string3 ...\n");
-        return EXIT_FAILURE;
+        argv = words;
+        argc = ARRAY_SIZE(words);
     }
     
     /* skip name of the program */
     argv += 1;
     argc -= 1;
     
-    stack = stack_new(strlen(argv[0]));
+    stack = stack_new();
     assert(stack);
     
     while(argc--) {

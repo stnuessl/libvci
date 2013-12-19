@@ -8,8 +8,8 @@
 #include "list.h"
 
 struct config {
-    char *_path;
-    struct map _map;
+    char *path;
+    struct map map;
 };
 
 struct config *config_new(const char *__restrict path);

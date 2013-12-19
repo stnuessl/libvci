@@ -8,12 +8,12 @@
 
 struct data {
     int a;
-    struct list link;
+    struct link link;
 };
 
 int main(int argc, char *argv[])
 {
-    struct list list, *tmp;
+    struct link list, *tmp;
     struct data a = {
         .a = 10
     }, b = {

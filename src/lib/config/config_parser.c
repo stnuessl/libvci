@@ -139,11 +139,7 @@ static int _config_parser_handle_key(struct config_parser *__restrict parser)
             if(!s)
                 return -errno;
             
-            parser->key = malloc(sizeof(*parser->key));
-            if(!parser->key)
-                return -errno;
-            
-            key_merge(parser->key, sizeof(*parser->key), parser->section, s);
+            parser->key = key_merge(parser->section, s);
             break;
         default:
             if(!isalnum(c))
@@ -158,7 +154,7 @@ static int _config_parser_handle_key(struct config_parser *__restrict parser)
         }
     }
     
-    return (parser->key) ? 0 : -EINVAL;
+    return 0;
 }
 
 static int _config_parser_handle_values(struct config_parser *__restrict parser)
@@ -199,13 +195,13 @@ static int _config_parser_handle_values(struct config_parser *__restrict parser)
     if(!values)
         return -errno;
     
-    err = map_insert(&parser->config->_map, values, parser->key);
+    err = map_insert(&parser->config->map, (void *)parser->key, values);
     if(err < 0) {
         free(values);
         return -errno;
     }
-    
-    parser->key = NULL;
+
+    parser->key = 0;
     
     return 0;
 }
@@ -236,7 +232,7 @@ struct config_parser *config_parser_new(struct config *config)
     if(!p->section)
         goto cleanup2;
     
-    p->fd = open(config->_path, O_RDWR);
+    p->fd = open(config->path, O_RDWR);
     if(p->fd < 0)
         goto cleanup3;
     
@@ -316,7 +312,6 @@ void config_parser_delete(struct config_parser *__restrict parser)
     close(parser->fd);
     
     free(parser->section);
-    free(parser->key);
     
     buffer_delete(parser->buf);
     free(parser);

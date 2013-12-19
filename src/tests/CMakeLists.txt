@@ -5,8 +5,8 @@ project(libvci_tests C)
 
 add_definitions(-DETRACE_DEBUG=2)
 add_definitions(-Wall)
-add_definitions(-O2)
-#add_definitions(-g3)
+#add_definitions(-O2)
+add_definitions(-g3)
 
 find_package(Threads)
 
@@ -24,6 +24,9 @@ target_link_libraries(map_test vci)
 
 add_executable(stack_test stack_test.c)
 target_link_libraries(stack_test vci)
+
+add_executable(queue_test queue_test.c)
+target_link_libraries(queue_test vci)
 # 
 # add_executable(bintree_test bintree_test.c)
 # target_link_libraries(bintree_test vci)
@@ -33,17 +36,17 @@ target_link_libraries(stack_test vci)
 # 
 # add_executable(buffer_test buffer_test.c)
 # target_link_libraries(buffer_test vci)
-# 
-# add_executable(threadpool_test threadpool_test.c)
-# target_link_libraries(threadpool_test vci)
-#
+
+add_executable(threadpool_test threadpool_test.c)
+target_link_libraries(threadpool_test vci)
+
 # add_executable(clock_test clock_test.c)
 # target_link_libraries(clock_test vci)
-# 
-# add_executable(config_test config_test.c)
-# target_link_libraries(config_test vci)
-# target_link_libraries(config_test ${CMAKE_THREAD_LIBS_INIT})
-# 
+
+add_executable(config_test config_test.c)
+target_link_libraries(config_test vci)
+target_link_libraries(config_test ${CMAKE_THREAD_LIBS_INIT})
+
 # add_executable(etrace_test etrace_test.c)
 # target_link_libraries(etrace_test vci)
 

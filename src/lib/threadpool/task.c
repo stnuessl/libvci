@@ -4,8 +4,9 @@
 #include <stdbool.h>
 
 #include "task.h"
+#include "macros.h"
 
-struct task *task_new(void *(*func)(void *), void *arg)
+struct task *task_new(void *(*func)(void *), void *arg, bool cleanup)
 {
     struct task *task;
     
@@ -15,62 +16,34 @@ struct task *task_new(void *(*func)(void *), void *arg)
     
     memset(task, 0, sizeof(*task));
     
-    task->_func = func;
-    task->_arg  = arg;
+    task->func = func;
+    task->arg  = arg;
+    task->cleanup = cleanup;
     
     return task;
 }
 
 void task_delete(struct task *__restrict task)
-{   
-    if(task->_arg_delete)
-        task->_arg_delete(task->_arg);
-    
+{
     free(task);
 }
 
-#define TASK_DEFINE_GET(name, type)                                            \
-                                                                               \
-inline type task_##name(struct task *__restrict task)                          \
-{                                                                              \
-    return task->_##name;                                                      \
+void task_delete_by_link(struct link *link)
+{
+    task_delete(container_of(link, struct task, link));
 }
 
-TASK_DEFINE_GET(return_value, void *)
-TASK_DEFINE_GET(arg, void *)
-TASK_DEFINE_GET(key, void *)
-
-#undef TASK_DEFINE_GET
-
-#define TASK_DEFINE_SET(name, type)                                            \
-                                                                               \
-inline void task_set_##name(struct task *__restrict task, type name)           \
-{                                                                              \
-    task->_##name = name;                                                      \
+inline void task_set_key(struct task *__restrict task, void *key)
+{
+    task->key = key;
 }
 
-TASK_DEFINE_SET(key, void *)
-
-#undef TASK_DEFINE_SET
-
-#define TASK_DEFINE_CALLBACK_GET(name, type, args)                             \
-                                                                               \
-inline type (*task_##name(struct task *__restrict task))args                   \
-{                                                                              \
-    return task->_##name;                                                      \
+inline void *task_key(struct task *__restrict task)
+{
+    return task->key;
 }
 
-TASK_DEFINE_CALLBACK_GET(func, void *, (void *))
-
-#undef TASK_DEFINE_CALLBACK_GET
-
-#define TASK_DEFINE_CALLBACK_SET(name, type, args)                             \
-                                                                               \
-inline void task_set_##name(struct task *__restrict task, type (*name)args)    \
-{                                                                              \
-    task->_##name = name;                                                      \
+inline void *task_return_value(struct task *__restrict task)
+{
+    return task->ret_val;
 }
-
-TASK_DEFINE_CALLBACK_SET(arg_delete, void, (void *))
-
-#undef TASK_DEFINE_CALLBACK_SET

@@ -18,11 +18,11 @@ enum parser_state {
 };
 
 struct config_parser {
-    struct config  *config;
-    struct buffer  *buf;
+    struct config *config;
+    struct buffer *buf;
     int fd;
     char *section;
-    uint64_t *key;
+    unsigned long key;
     char *file;
     size_t fsize;
     char *fpos;

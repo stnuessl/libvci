@@ -4,35 +4,36 @@
 
 #include <stdbool.h>
 
+#include "link.h"
+
 struct stack {
-    void **data;
+    struct link list;
+    
     unsigned int size;
-    unsigned int capacity;
 };
 
 
-struct stack *stack_new(unsigned int capacity);
+struct stack *stack_new(void);
 
-void stack_delete(struct stack *__restrict stack, void (*data_delete)(void *));
+void stack_delete(struct stack *__restrict stack, 
+                  void (*data_delete)(struct link *));
 
-int stack_init(struct stack *__restrict stack, unsigned int capacity);
+void stack_init(struct stack *__restrict stack);
 
-void stack_destroy(struct stack *__restrict stack, void (*data_delete)(void *));
+void stack_destroy(struct stack *__restrict stack, 
+                   void (*data_delete)(struct link *));
 
-void stack_clear(struct stack *__restrict stack, void (*data_delete)(void *));
+void stack_clear(struct stack *__restrict stack, 
+                 void (*data_delete)(struct link *));
 
-int stack_push(struct stack *__restrict stack, void *data);
+void stack_push(struct stack *__restrict stack, struct link *link);
 
-void *stack_pop(struct stack *__restrict stack);
+struct link *stack_pop(struct stack *__restrict stack);
 
-inline void *stack_top(struct stack *__restrict stack);
+struct link *stack_top(struct stack *__restrict stack);
 
-inline int stack_size(const struct stack *__restrict stack);
+int stack_size(const struct stack *__restrict stack);
 
-inline bool stack_empty(const struct stack *__restrict stack);
-
-int stack_set_capacity(struct stack *__restrict stack, unsigned int capacity);
-
-int stack_squeeze(struct stack *__restrict stack);
+bool stack_empty(const struct stack *__restrict stack);
 
 #endif /* _STACK_H_ */

@@ -31,14 +31,14 @@ struct map {
 
 struct map *map_new(unsigned int capacity,
                     int (*key_compare)(const void *, const void *),
-                    unsigned int (*data_hash)(const void *));
+                    unsigned int (*key_hash)(const void *));
 
 void map_delete(struct map *__restrict map);
 
 int map_init(struct map *__restrict map,
              unsigned int capacity,
              int (*key_compare)(const void *, const void *),
-             unsigned int (*data_hash)(const void *));
+             unsigned int (*key_hash)(const void *));
 
 void map_destroy(struct map *__restrict map);
 
