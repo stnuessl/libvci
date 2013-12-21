@@ -6,7 +6,7 @@
 #include "task.h"
 #include "macros.h"
 
-struct task *task_new(void *(*func)(void *), void *arg, bool cleanup)
+struct task *task_new(void *(*func)(void *), void *arg)
 {
     struct task *task;
     
@@ -18,7 +18,6 @@ struct task *task_new(void *(*func)(void *), void *arg, bool cleanup)
     
     task->func = func;
     task->arg  = arg;
-    task->cleanup = cleanup;
     
     return task;
 }

@@ -1,11 +1,10 @@
-
 #ifndef _TASK_H_
 #define _TASK_H_
 
 #include <pthread.h>
 #include <stdbool.h>
 
-#include <link.h>
+#include "link.h"
 
 struct task {
     void *(*func)(void *);
@@ -13,12 +12,11 @@ struct task {
     
     void *ret_val;
     void *key;
-    bool cleanup;
     
     struct link link;
 };
 
-struct task *task_new(void *(*func)(void *), void *arg, bool cleanup);
+struct task *task_new(void *(*func)(void *), void *arg);
 
 void task_delete(struct task *__restrict task);
 

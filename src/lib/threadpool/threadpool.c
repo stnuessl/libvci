@@ -47,24 +47,43 @@ static int _thread_compare(const void *a, const void *b)
 static void _thread_delete(void *thread)
 {
     pthread_cancel(*(pthread_t *)thread);
-    pthread_join(*(pthread_t *)thread);
+    pthread_join(*(pthread_t *)thread, NULL);
     free(thread);
 }
 
-static void _thread_exit(struct threadpool *__restrict pool)
+static void _thread_exit(void *arg)
 {
-    pthread_t *t, thread;
+    struct threadpool *pool;
+    pthread_t *thread, self;
     
-    thread = pthread_self();
+    pool = arg;
+    
+    /*
+     * This semaphore makes sure that no race conditions with
+     * threadpool_destroy() can occur, so if this thread is the first to lock
+     * this semaphore we are safe to detach and exit this thread.
+     * If threadpool_destroy() locks this semaphore first
+     * we wait here until we get picked up by pthread_cancel()
+     * and pthread_join()
+     */
+    sem_wait(&pool->sem_exit);
+    
+    self = pthread_self();
     
     pthread_mutex_lock(&pool->mutex_map);
-
-    t = map_take(&pool->thread_map, &thread);
-    
+    thread = map_take(&pool->thread_map, &self);
     pthread_mutex_unlock(&pool->mutex_map);
     
-    free(t);
+    sem_post(&pool->sem_exit);
     
+    if(thread) {
+        /* 
+         * This means another thread did not try to cancel this thread
+         * => it is now responsible to clean itself up
+         */
+        pthread_detach(self);
+        free(thread);
+    }
     pthread_exit(NULL);
 }
 
@@ -78,16 +97,6 @@ static void *_thread_handle_tasks(void *arg)
     pool = arg;
     
     while(1) {
-        pthread_mutex_lock(&pool->mutex_data);
-        
-        if(pool->threads_to_exit > 0) {
-            pool->threads_to_exit -= 1;
-            pthread_mutex_unlock(&pool->mutex_data);
-            _thread_exit(pool);
-        }
-        
-        pthread_mutex_unlock(&pool->mutex_data);
-
         err = sem_wait(&pool->sem_queue_in);
         if(err < 0) {
             if(errno == EINTR)
@@ -97,13 +106,12 @@ static void *_thread_handle_tasks(void *arg)
         }
         
         pthread_mutex_lock(&pool->mutex_queue_in);
-        
         link = queue_take(&pool->task_queue_in);
-        task = container_of(link, struct task, link);
-        
-        pthread_cleanup_push((void(*)(void *)) &task_delete, task);
-        
         pthread_mutex_unlock(&pool->mutex_queue_in);
+
+        task = container_of(link, struct task, link);
+                
+        pthread_cleanup_push((void(*)(void *)) &task_delete, task);
 
         task->ret_val = task->func(task->arg);
         
@@ -131,12 +139,14 @@ static void *_thread_handle_tasks(void *arg)
 struct threadpool *threadpool_new(int threads)
 {
     struct threadpool *pool;
+    int err;
     
     pool = malloc(sizeof(*pool));
     if(!pool)
         return NULL;
     
-    if(threadpool_init(pool, threads) < 0) {
+    err = threadpool_init(pool, threads);
+    if(err < 0) {
         free(pool);
         return NULL;
     }
@@ -173,16 +183,16 @@ int threadpool_init(struct threadpool *__restrict pool, int threads)
     err = pthread_mutex_init(&pool->mutex_map, NULL);
     if(err)
         goto cleanup3;
-    
-    err = pthread_mutex_init(&pool->mutex_data, NULL);
-    if(err)
-        goto cleanup4;
 
     err = sem_init(&pool->sem_queue_in, 0, 0);
     if(err < 0)
-        goto cleanup5;
+        goto cleanup4;
     
     err = sem_init(&pool->sem_queue_out, 0, 0);
+    if(err < 0)
+        goto cleanup5;
+    
+    err = sem_init(&pool->sem_exit, 0, 1);
     if(err < 0)
         goto cleanup6;
     
@@ -207,11 +217,11 @@ int threadpool_init(struct threadpool *__restrict pool, int threads)
 cleanup8:
     map_destroy(&pool->thread_map);
 cleanup7:
-    sem_destroy(&pool->sem_queue_out);
+    sem_destroy(&pool->sem_exit);
 cleanup6:
-    sem_destroy(&pool->sem_queue_in);
+    sem_destroy(&pool->sem_queue_out);
 cleanup5:
-    pthread_mutex_destroy(&pool->mutex_data);
+    sem_destroy(&pool->sem_queue_in);
 cleanup4:
     pthread_mutex_destroy(&pool->mutex_map);
 cleanup3:
@@ -228,14 +238,28 @@ void threadpool_destroy(struct threadpool *__restrict pool)
 {
     close(pool->event_fd);
     
+    /* stop threads from exiting */
+    sem_wait(&pool->sem_exit);
+    
+    pthread_mutex_lock(&pool->mutex_map);
     map_destroy(&pool->thread_map);
+    pthread_mutex_unlock(&pool->mutex_map);
+    
+    sem_post(&pool->sem_exit);
+    
+    /*
+     * all threads within the pool were canceled and joined
+     * => no more locking needed,
+     * Multiple threads outside the threadpool shall not
+     * operate on the threadpool when it gets destroyed.
+     */
     queue_destroy(&pool->task_queue_out, &task_delete_by_link);
     queue_destroy(&pool->task_queue_in, &task_delete_by_link);
-    
+
+    sem_destroy(&pool->sem_exit);
     sem_destroy(&pool->sem_queue_out);
     sem_destroy(&pool->sem_queue_in);
     
-    pthread_mutex_destroy(&pool->mutex_data);
     pthread_mutex_destroy(&pool->mutex_map);
     pthread_mutex_destroy(&pool->mutex_queue_out);
     pthread_mutex_destroy(&pool->mutex_queue_in);
@@ -262,10 +286,6 @@ int threadpool_add_thread(struct threadpool *__restrict pool)
     if(err)
         goto cleanup1;
     
-    err = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    if(err)
-        goto cleanup2;
-    
     err = pthread_create(thread, &attr, &_thread_handle_tasks, pool);
     if(err)
         goto cleanup2;
@@ -283,6 +303,7 @@ int threadpool_add_thread(struct threadpool *__restrict pool)
 
 cleanup3:
     pthread_cancel(*thread);
+    pthread_join(*thread, NULL);
 cleanup2:
     pthread_attr_destroy(&attr);
 cleanup1:
@@ -291,13 +312,15 @@ out:
     return (err > 0) ? -err : err;
 }
 
-void threadpool_remove_thread(struct threadpool *__restrict pool)
+int threadpool_remove_thread(struct threadpool *__restrict pool)
 {
-    pthread_mutex_lock(&pool->mutex_data);
+    struct task *task;
     
-    pool->threads_to_exit += 1;
+    task = task_new((void *(*)(void *))&_thread_exit, pool);
+    if(!task)
+        return -errno;
     
-    pthread_mutex_unlock(&pool->mutex_data);
+    return threadpool_add_task(pool, task);
 }
 
 int threadpool_add_task(struct threadpool *__restrict pool, 
@@ -315,10 +338,6 @@ int threadpool_add_task(struct threadpool *__restrict pool,
     
     queue_insert(&pool->task_queue_in, &task->link);
     pthread_mutex_unlock(&pool->mutex_queue_in);
-    
-    pthread_mutex_lock(&pool->mutex_data);
-    pool->tasks_inserted += 1;
-    pthread_mutex_unlock(&pool->mutex_data);
     
     return err;
 }
@@ -341,48 +360,18 @@ again:
     link = queue_take(&pool->task_queue_out);
     pthread_mutex_unlock(&pool->mutex_queue_out);
     
-    pthread_mutex_lock(&pool->mutex_data);
-    pool->tasks_taken += 1;
-    pthread_mutex_unlock(&pool->mutex_data);
-    
     return container_of(link, struct task, link);
 }
 
-bool threadpool_has_completed_task(struct threadpool *__restrict pool)
+unsigned int threadpool_tasks_queued(struct threadpool *pool)
 {
-    bool ret;
+    unsigned int ret;
     
-    pthread_mutex_lock(&pool->mutex_queue_out);
+    pthread_mutex_lock(&pool->mutex_queue_in);
     
-    ret = queue_size(&pool->task_queue_out) != 0;
+    ret = queue_size(&pool->task_queue_in);
     
     pthread_mutex_unlock(&pool->mutex_queue_out);
-    
-    return ret;
-}
-
-bool threadpool_idle(struct threadpool *__restrict pool)
-{
-    bool ret;
-    
-    pthread_mutex_lock(&pool->mutex_data);
-    
-    ret = pool->tasks_taken == pool->tasks_inserted;
-    
-    pthread_mutex_unlock(&pool->mutex_data);
-    
-    return ret;
-}
-
-int threadpool_threads_available(struct threadpool *__restrict pool)
-{
-    int ret;
-    
-    pthread_mutex_lock(&pool->mutex_data);
-    
-    ret = map_count(&pool->thread_map);
-    
-    pthread_mutex_unlock(&pool->mutex_data);
     
     return ret;
 }

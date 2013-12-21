@@ -14,7 +14,7 @@
 
 void *my_task(void *arg)
 {
-    fprintf(stdout, "Task%li running...\n", (long) arg);
+    fprintf(stdout, "INFO: Task%li running...\n", (long) arg);
 
     return arg;
 }
@@ -50,7 +50,7 @@ void insert_tasks(int num_tasks)
     int i, err;
     
     for(i = 0; i < num_tasks; ++i) {
-        task = task_new(&my_task, (void *)(long) i, true);
+        task = task_new(&my_task, (void *)(long) i);
         assert(task);
         
         task_set_key(task, (void *)(long)i);
@@ -60,7 +60,37 @@ void insert_tasks(int num_tasks)
     }
 }
 
-int main(int argc, char *argv[])
+void test_adding_removing_threads(void)
+{
+    struct threadpool *pool;
+    int threads, i, err;
+    
+    threads = 4;
+    
+    pool = threadpool_new(threads);
+    assert(pool);
+    
+    for(i = 0; i< threads; ++i) {
+        err = threadpool_add_thread(pool);
+        assert(err == 0);
+    }
+    
+    for(i = 0; i < threads; ++i) {
+        err = threadpool_remove_thread(pool);
+        assert(err == 0);
+    }
+    
+    for(i = 0; i < threads; ++i) {
+        err = threadpool_add_thread(pool);
+        assert(err == 0);
+        err = threadpool_remove_thread(pool);
+        assert(err == 0);
+    }
+
+    threadpool_delete(pool);
+}
+
+void test_usage(int argc, char *argv[])
 {
     struct task *task;
     eventfd_t tasks_done;
@@ -82,7 +112,7 @@ int main(int argc, char *argv[])
     
     for(i = 0; i < num_tasks;) {
         fds = epoll_wait(epoll_fd, epoll_events, MAX_EPOLL_EVENTS, -1);
-
+        
         while(fds--) {
             assert(epoll_events[fds].data.fd == threadpool_event_fd(pool));
             
@@ -96,7 +126,7 @@ int main(int argc, char *argv[])
             while(tasks_done--) {
                 task = threadpool_take_completed_task(pool);
                 
-                fprintf(stdout, "Task%d finished with %d.\n",
+                fprintf(stdout, "INFO: Task%d finished with %d.\n",
                         (int)(long) task_key(task), 
                         (int)(long) task_return_value(task));
                 
@@ -104,16 +134,16 @@ int main(int argc, char *argv[])
             }
         }
     }
-
+    
     close(epoll_fd);
     threadpool_delete(pool);
+}
+
+int main(int argc, char *argv[])
+{
+    test_adding_removing_threads();
+    test_usage(argc, argv);
     
-    /*
-     * it seems that the threads need actually some time to clean themselves up
-     * a small sleep makes valgrind (and me) happy ;-)
-     * That's why I don't use  __on_return()-macro.
-     */
-    sleep(1);
     
     return EXIT_SUCCESS;
 }
