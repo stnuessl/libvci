@@ -15,21 +15,19 @@ add_library(vci
 	    src/lib/config/config.c
 	    src/lib/config/config_parser.c
 	    src/lib/config/key.c
-#             src/lib/container/bintree.c
             src/lib/container/buffer.c
+            src/lib/container/cache.c
+            src/lib/container/container_util.c
             src/lib/container/map.c
-#             src/lib/container/heap.c
             src/lib/container/list.c
             src/lib/container/queue.c
             src/lib/container/stack.c
-#             src/lib/container/tree.c
             src/lib/container/vector.c
             src/lib/log/log.c
             src/lib/etrace/etrace.c
             src/lib/mempool/mempool.c
             src/lib/threadpool/threadpool.c
             src/lib/threadpool/task.c
-            src/lib/container/container_util.c
             )
             
 target_link_libraries(vci ${CMAKE_THREAD_LIBS_INIT})
@@ -37,13 +35,12 @@ target_link_libraries(vci ${CMAKE_THREAD_LIBS_INIT})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 install(FILES
-        include/bintree.h
         include/buffer.h
+        include/cache.h
         include/clock.h
         include/config.h
         include/etrace.h
         include/map.h
-        include/heap.h
         include/link.h
         include/list.h
         include/log.h
@@ -53,7 +50,6 @@ install(FILES
         include/stack.h
         include/task.h
         include/threadpool.h
-        include/tree.h
         include/vector.h
         DESTINATION
         ${CMAKE_CURRENT_SOURCE_DIR}/build/include
