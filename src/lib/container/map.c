@@ -11,10 +11,10 @@
 #define MAP_UPPER_TABLE_BOUND 60
 #define MAP_LOWER_TABLE_BOUND 10
 
-#define _map_should_grow(map)                                                   \
+#define _map_should_grow(map)                                                  \
     (100 * (map)->entries / (map)->capacity) >= MAP_UPPER_TABLE_BOUND
     
-#define _map_should_shrink(map)                                                 \
+#define _map_should_shrink(map)                                                \
     (100 * (map)->entries / (map)->capacity) < MAP_LOWER_TABLE_BOUND
 
 
@@ -287,3 +287,17 @@ inline void map_set_data_delete(struct map *__restrict map,
     map->data_delete = data_delete;
 }
 
+int (*map_key_compare(struct map *__restrict map))(const void *, const void *)
+{
+    return map->key_compare;
+}
+
+unsigned int (*map_key_hash(struct map *__restrict map))(const void *)
+{
+    return map->key_hash;
+}
+
+void (*map_data_delete(struct map *__restrict map))(void *)
+{
+    return map->data_delete;
+}

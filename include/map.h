@@ -65,4 +65,11 @@ inline void map_set_key_hash(struct map *__restrict map,
 inline void map_set_data_delete(struct map *__restrict map,
                                 void (*data_delete)(void *));
 
+int (*map_key_compare(struct map *__restrict map))(const void *, const void *);
+
+unsigned int (*map_key_hash(struct map *__restrict map))(const void *);
+
+void (*map_data_delete(struct map *__restrict map))(void *);
+
+
 #endif /* _MAP_H_ */
