@@ -173,16 +173,22 @@ int threadpool_init(struct threadpool *__restrict pool, int threads)
     }
     
     err = pthread_mutex_init(&pool->mutex_queue_in, NULL);
-    if(err)
+    if(err) {
+        errno = err;
         goto cleanup1;
+    }
     
     err = pthread_mutex_init(&pool->mutex_queue_out, NULL);
-    if(err)
+    if(err) {
+        errno = err;
         goto cleanup2;
+    }
     
     err = pthread_mutex_init(&pool->mutex_map, NULL);
-    if(err)
+    if(err) {
+        errno = err;
         goto cleanup3;
+    }
 
     err = sem_init(&pool->sem_queue_in, 0, 0);
     if(err < 0)
