@@ -259,7 +259,7 @@ bool map_contains(struct map *__restrict map, const void *key)
     return map_retrieve(map, key) != NULL;
 }
 
-inline unsigned int map_count(const struct map *__restrict map)
+inline unsigned int map_size(const struct map *__restrict map)
 {
     return map->entries;
 }
