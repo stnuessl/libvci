@@ -1,43 +1,59 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <assert.h>
+#include <limits.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <cache.h>
 
 
-#define N_ELEMENTS 1000
-#define CACHE_SIZE 1000
+#define N_ELEMENTS 1000000
 
-
+unsigned int int_hash(const void *key)
+{
+    return (long)key;
+}
 
 int int_compare(const void *a, const void *b)
 {
-    return (int) a - (int) b;
+    return (long) a - (long) b;
 }
 
 int main(int argc, char *argv[])
 {
     struct cache *cache;
-    int i, j;
+    int fd, i, data, err;
+    unsigned char key;
+    unsigned int hit, miss;
     
-    cache = cache_new(CACHE_SIZE, &int_compare, NULL);
+    hit = 0;
+    miss = 0;
+    
+    cache = cache_new(UCHAR_MAX / 2, &int_compare, &int_hash);
     assert(cache);
     
-    for(i = 1; i < N_ELEMENTS; ++i)
-        cache_insert(cache, (void *)(long)i, (void *)(long)i);
+    fd = open("/dev/urandom", O_RDONLY);
+    assert(fd >= 0);
     
-    
-    for(i = 1; i < N_ELEMENTS; ++i) {
-        j = (int)(long) cache_retrieve(cache, (void *)(long)i);
+    for(i = 0; i < UCHAR_MAX; i += 2)
+        cache_insert(cache, (void *)(long)i, (void *)1);
         
-        if(j)
-            fprintf(stdout, "Cache HIT\n");
+    for(i = 0; i < N_ELEMENTS; ++i) {
+        err = read(fd, &key, sizeof(key));
+        assert(err == sizeof(key));
+        
+        data = (int)(long) cache_retrieve(cache, (void *)(long)key);
+        if(data)
+            hit += 1;
         else
-            fprintf(stdout, "Cache MISS\n");
+            miss += 1;
     }
     
-    fprintf(stdout, "Cache performance %d %%\n", cache_performance(cache));
+    fprintf(stdout, "Cache performance %d %%\n", 100 * hit / (hit + miss));
     
+    close(fd);
     cache_delete(cache);
     
     return EXIT_SUCCESS;

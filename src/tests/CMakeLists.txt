@@ -34,6 +34,10 @@ target_link_libraries(queue_test vci)
 add_executable(buffer_test container/buffer_test.c)
 target_link_libraries(buffer_test vci)
 
+add_executable(ringbuffer_test container/ringbuffer_test.c)
+target_link_libraries(ringbuffer_test vci)
+target_link_libraries(ringbuffer_test ${CMAKE_THREAD_LIBS_INIT})
+
 add_executable(threadpool_test threadpool/threadpool_test.c)
 target_link_libraries(threadpool_test vci)
 
@@ -52,7 +56,6 @@ target_link_libraries(mempool_test vci)
 
 add_executable(log_test log/log_test.c)
 target_link_libraries(log_test vci)
-
 
 add_executable(vector_test container/vector_test.c)
 target_link_libraries(vector_test vci)
