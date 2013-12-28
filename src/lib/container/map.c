@@ -12,10 +12,10 @@
 #define MAP_LOWER_TABLE_BOUND 10
 
 #define _map_should_grow(map)                                                  \
-    (100 * (map)->entries / (map)->capacity) >= MAP_UPPER_TABLE_BOUND
+    (100 * (map)->size / (map)->capacity) >= MAP_UPPER_TABLE_BOUND
     
 #define _map_should_shrink(map)                                                \
-    (100 * (map)->entries / (map)->capacity) < MAP_LOWER_TABLE_BOUND
+    (100 * (map)->size / (map)->capacity) < MAP_LOWER_TABLE_BOUND
 
 
 static int _map_rehash(struct map *__restrict map)
@@ -24,11 +24,11 @@ static int _map_rehash(struct map *__restrict map)
     unsigned int i, old_capacity, old_entries;
     int err;
     
-    old_entries  = map->entries;
+    old_entries  = map->size;
     old_capacity = map->capacity;
     old_table    = map->table;
     
-    map->entries  = 0;
+    map->size  = 0;
     map->capacity = adjust(old_entries << 1, MAP_DEFAULT_CAPACITY);
     map->table = calloc(map->capacity, sizeof(*map->table));
 
@@ -42,7 +42,7 @@ static int _map_rehash(struct map *__restrict map)
             if(err < 0) {
                 /* revert to old table, which wasn't changed */
                 free(map->table);
-                map->entries  = old_entries;
+                map->size  = old_entries;
                 map->capacity = old_capacity;
                 map->table    = old_table;
                 return err;
@@ -145,7 +145,7 @@ int map_init(struct map *__restrict map,
         return -errno;
     
     map->capacity = capacity;
-    map->entries = 0;
+    map->size = 0;
     
     map->key_compare = key_compare;
     map->key_hash    = key_hash;
@@ -164,7 +164,7 @@ void map_clear(struct map *__restrict map)
 {
     int i;
     
-    map->entries = 0;
+    map->size = 0;
     
     if(!map->data_delete) {
         memset(map->table, 0, sizeof(*map->table) * map->capacity);
@@ -174,9 +174,7 @@ void map_clear(struct map *__restrict map)
     for(i = 0; i < map->capacity; ++i) {
         if(map->table[i].state == DATA_AVAILABLE) {
             map->data_delete(map->table[i].data);
-            
-            map->table[i].key   = NULL;
-            map->table[i].data  = NULL;
+
             map->table[i].state = DATA_EMPTY;
         }
     }
@@ -206,7 +204,7 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
             map->table[index].data  = data;
             map->table[index].state = DATA_AVAILABLE;
             
-            map->entries += 1;
+            map->size += 1;
             
             return 0;
         }
@@ -240,13 +238,10 @@ void *map_take(struct map *__restrict map, const void *key)
         return NULL;
 
     data = entry->data;
-    
-    entry->hash = 0;
-    entry->key  = NULL;
-    entry->data = NULL;
+
     entry->state = DATA_REMOVED;
     
-    map->entries -= 1;
+    map->size -= 1;
     
     if(_map_should_shrink(map))
         _map_rehash(map);
@@ -261,12 +256,12 @@ bool map_contains(struct map *__restrict map, const void *key)
 
 inline unsigned int map_size(const struct map *__restrict map)
 {
-    return map->entries;
+    return map->size;
 }
 
 inline bool map_empty(const struct map *__restrict map)
 {
-    return map->entries == 0;
+    return map->size == 0;
 }
 
 inline void map_set_key_compare(struct map *__restrict map,

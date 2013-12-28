@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-enum data_state {
+enum map_data_state {
     DATA_EMPTY          = 0x00,
     DATA_AVAILABLE      = 0x01,
     DATA_REMOVED        = 0x02
@@ -16,12 +16,12 @@ struct map_entry {
     
     const void *key;
     void *data;
-    enum data_state state;
+    enum map_data_state state;
 };
 
 struct map {
     struct map_entry *table;
-    unsigned int entries;
+    unsigned int size;
     unsigned int capacity;
 
     int (*key_compare)(const void *, const void *);
