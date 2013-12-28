@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 struct buffer {
-    void *data;
+    char *data;
     size_t accessed;
     size_t used;
     size_t size;
