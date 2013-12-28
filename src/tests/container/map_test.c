@@ -73,9 +73,9 @@ void inspect_map(const struct map *__restrict map)
     fprintf(stdout, "Map entries: %u.\n"
                     "Map capacity: %u.\n"
                     "Map occupation is %d %%.\n",
-            map->entries, 
+            map->size, 
             map->capacity,
-            100 * map->entries / map->capacity);
+            100 * map->size / map->capacity);
 }
 
 void map_test_insert_remove(void)
