@@ -55,6 +55,7 @@ static void _thread_exit(void *arg)
 {
     struct threadpool *pool;
     pthread_t *thread, self;
+    int err;
     
     pool = arg;
     
@@ -66,7 +67,15 @@ static void _thread_exit(void *arg)
      * we wait here until we get picked up by pthread_cancel()
      * and pthread_join()
      */
-    sem_wait(&pool->sem_exit);
+again:
+    err = sem_wait(&pool->sem_exit);
+    if(err < 0) {
+        if(errno == EINTR)
+            goto again;
+        
+        /* thread got lucky and wont exit */
+        return;
+    }
     
     self = pthread_self();
     
