@@ -8,9 +8,13 @@
 
 struct ringbuffer {
     char *data;
-    sem_t sem_write;
-    sem_t sem_read;
+    
     pthread_mutex_t mutex;
+    pthread_mutex_t mutex_write_cond;
+    pthread_mutex_t mutex_read_cond;
+    
+    pthread_cond_t cond_write;
+    pthread_cond_t cond_read;
     
     bool write_blocked;
     bool read_blocked;
@@ -34,10 +38,16 @@ int ringbuffer_write(struct ringbuffer *__restrict rb,
                      const void *__restrict data, 
                      size_t size);
 
-int ringbuffer_read(struct ringbuffer *__restrict rb, void *data, size_t size);
+int ringbuffer_try_write(struct ringbuffer *__restrict rb,
+                         const void *__restrict data,
+                         size_t size);
+
+int ringbuffer_read(struct ringbuffer *__restrict rb,
+                    void *__restrict data, 
+                    size_t size);
 
 int ringbuffer_try_read(struct ringbuffer *__restrict rb, 
-                        void *data, 
+                        void *__restrict data, 
                         size_t size);
 
 bool ringbuffer_empty(struct ringbuffer *__restrict rb);
