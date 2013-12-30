@@ -1,7 +1,8 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <semaphore.h>
+#include <sys/eventfd.h>
 #include <stdbool.h>
 
 #include "ringbuffer.h"
@@ -94,35 +95,7 @@ int ringbuffer_init(struct ringbuffer *__restrict rb, size_t capacity)
         err = -errno;
         goto cleanup1;
     }
-    
-    err = pthread_mutex_init(&rb->mutex_write_cond, NULL);
-    if(err) {
-        errno = err;
-        err = -errno;
-        goto cleanup2;
-    }
-    
-    err = pthread_mutex_init(&rb->mutex_read_cond, NULL);
-    if(err) {
-        errno = err;
-        err = -errno;
-        goto cleanup3;
-    }
-    
-    err = pthread_cond_init(&rb->cond_write, NULL);
-    if(err) {
-        errno = err;
-        err = -errno;
-        goto cleanup4;
-    }
-    
-    err = pthread_cond_init(&rb->cond_read, NULL);
-    if(err) {
-        errno = err;
-        err = -errno;
-        goto cleanup5;
-    }
-    
+
     rb->size     = 0;
     rb->capacity = capacity;
     rb->i_read   = 0;
@@ -130,14 +103,6 @@ int ringbuffer_init(struct ringbuffer *__restrict rb, size_t capacity)
     
     return 0;
 
-cleanup5:
-    pthread_cond_destroy(&rb->cond_write);
-cleanup4:
-    pthread_mutex_destroy(&rb->mutex_read_cond);
-cleanup3:
-    pthread_mutex_destroy(&rb->mutex_write_cond);
-cleanup2:
-    pthread_mutex_destroy(&rb->mutex);
 cleanup1:
     free(rb->data);
 out:
@@ -146,110 +111,32 @@ out:
 
 void ringbuffer_destroy(struct ringbuffer *__restrict rb)
 {
-    pthread_cond_destroy(&rb->cond_read);
-    pthread_cond_destroy(&rb->cond_write);
-    
-    pthread_mutex_destroy(&rb->mutex_read_cond);
-    pthread_mutex_destroy(&rb->mutex_write_cond);    
     pthread_mutex_destroy(&rb->mutex);
     
     free(rb->data);
 }
 
-int ringbuffer_write(struct ringbuffer *__restrict rb,
+void ringbuffer_write(struct ringbuffer *__restrict rb,
                      const void *__restrict data,
                      size_t size)
 {
-    int err;
-    
     pthread_mutex_lock(&rb->mutex);
-    
-    while(rb->size + size >= rb->capacity) {
-        rb->write_blocked = true;
-        pthread_mutex_unlock(&rb->mutex);
 
-        pthread_mutex_lock(&rb->mutex_write_cond);
-        err = pthread_cond_wait(&rb->cond_write, &rb->mutex_write_cond);
-        pthread_mutex_unlock(&rb->mutex_write_cond);
-        
-        if(err)
-            return -err;
-        
-        pthread_mutex_lock(&rb->mutex);
-    }
     _ringbuffer_write(rb, data, size);
-    
+
     pthread_mutex_unlock(&rb->mutex);
-    
-    pthread_cond_broadcast(&rb->cond_read);
-    return 0;
 }
 
-int ringbuffer_try_write(struct ringbuffer *__restrict rb,
-                         const void *__restrict data,
-                         size_t size)
-{
-    pthread_mutex_lock(&rb->mutex);
-    
-    if(rb->size + size >= rb->capacity) {
-        pthread_mutex_unlock(&rb->mutex);
-        return EBUSY;
-    }
-    
-    _ringbuffer_write(rb, data, size);
-    
-    pthread_mutex_unlock(&rb->mutex);
-    
-    pthread_cond_broadcast(&rb->cond_read);
-    return 0;
-}
 
-int ringbuffer_read(struct ringbuffer *__restrict rb, 
+void ringbuffer_read(struct ringbuffer *__restrict rb, 
                     void *__restrict data, 
                     size_t size)
 {
-    int err;
-    
     pthread_mutex_lock(&rb->mutex);
-    
-    while(size > rb->size) {
-        pthread_mutex_unlock(&rb->mutex);
-        
-        pthread_mutex_lock(&rb->mutex_read_cond);
-        err = pthread_cond_wait(&rb->cond_read, &rb->mutex_read_cond);
-        pthread_mutex_unlock(&rb->mutex_read_cond);
-        
-        if(err)
-            return -err;
-        
-        pthread_mutex_lock(&rb->mutex);
-    }
     
     _ringbuffer_read(rb, data, size);
     
     pthread_mutex_unlock(&rb->mutex);
-
-    pthread_cond_broadcast(&rb->cond_write);
-    return 0;
-}
-
-int ringbuffer_try_read(struct ringbuffer *__restrict rb, 
-                        void *data, 
-                        size_t size)
-{
-    pthread_mutex_lock(&rb->mutex);
-    
-    if(rb->size < size) {
-        pthread_mutex_unlock(&rb->mutex);
-        return EBUSY;
-    }
-    
-    _ringbuffer_read(rb, data, size);
-    
-    pthread_mutex_unlock(&rb->mutex);
-    
-    pthread_cond_broadcast(&rb->cond_write);
-    return 0;
 }
 
 bool ringbuffer_empty(struct ringbuffer *__restrict rb)
