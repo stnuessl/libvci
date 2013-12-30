@@ -73,7 +73,7 @@ void test_blocking(void)
         pthread_join(threads[i], NULL);
     }
     
-    fprintf(stdout, "Last item (blocking): %d\n", last_item);
+    fprintf(stdout, "Last item: %d\n", last_item);
     
     ringbuffer_delete(rb);
 }
