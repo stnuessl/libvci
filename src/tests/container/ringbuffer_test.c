@@ -17,11 +17,23 @@
 
 int last_item;
 
+struct thread_arg {
+    struct ringbuffer rb;
+    pthread_mutex_t mutex;
+};
+
 void *consumer(void *arg)
 {
+    struct thread_arg *tmp;
+
+    tmp= arg;
+    
     while(1) {
+        pthread_mutex_lock(&tmp->mutex);
         if(ringbuffer_size(arg) >= sizeof(last_item))
             ringbuffer_read(arg, &last_item, sizeof(last_item));
+        pthread_mutex_unlock(&tmp->mutex);
+
         
         pthread_testcancel();
         pthread_yield();
@@ -32,12 +44,16 @@ void *consumer(void *arg)
 
 void *producer(void *arg)
 {
+    struct thread_arg *tmp; 
     int item;
     
+    tmp = arg;
     item = 1;
     
     while(1) {
-        ringbuffer_write(arg, &item, sizeof(item));
+        pthread_mutex_lock(&tmp->mutex);
+        ringbuffer_write(&tmp->rb, &item, sizeof(item));
+        pthread_mutex_unlock(&tmp->mutex);
         
         item += 1;
         
@@ -48,20 +64,22 @@ void *producer(void *arg)
     return NULL;
 }
 
-void test_blocking(void)
+int main(int argc, char *argv[])
 {
-    struct ringbuffer *rb;
+    struct thread_arg ta;
     pthread_t threads[N_THREADS];
     int i, err;
     
-    rb = ringbuffer_new(RINGBUFFER_SIZE);
-    assert(rb);
+    err = ringbuffer_init(&ta.rb, RINGBUFFER_SIZE);
+    assert(err == 0);
+    err = pthread_mutex_init(&ta.mutex, NULL);
+    assert(err == 0);
     
     for(i = 0; i < N_THREADS; ++i) {
         if(i & 0x01)
-            err = pthread_create(threads + i, NULL, &consumer, rb);
+            err = pthread_create(threads + i, NULL, &consumer, &ta);
         else
-            err = pthread_create(threads + i, NULL, &producer, rb);
+            err = pthread_create(threads + i, NULL, &producer, &ta);
         
         assert(err == 0);
     }
@@ -75,12 +93,8 @@ void test_blocking(void)
     
     fprintf(stdout, "Last item: %d\n", last_item);
     
-    ringbuffer_delete(rb);
-}
-
-int main(int argc, char *argv[])
-{
-    test_blocking();
+    ringbuffer_destroy(&ta.rb);
+    pthread_mutex_destroy(&ta.mutex);
     
     return EXIT_SUCCESS;
 }

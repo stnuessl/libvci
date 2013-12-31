@@ -7,8 +7,6 @@
 
 struct ringbuffer {
     char *data;
-    
-    pthread_mutex_t mutex;
 
     size_t size;
     size_t capacity;
