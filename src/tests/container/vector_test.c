@@ -1,8 +1,7 @@
-
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include <vector.h>
@@ -27,7 +26,7 @@ void print_vector(struct vector *__restrict v)
     fprintf(stdout, "\n");
 }
 
-void sort_vector(void)
+void test_sort_vector(void)
 {
     struct vector *v;
     int a[] = { 13, 20, -7, 55, 42, 111, 76 };
@@ -35,12 +34,7 @@ void sort_vector(void)
     
     v = vector_new(ARRAY_SIZE(a));
     assert(v);
-    
-//     for(i = 0; i < ARRAY_SIZE(a); ++i) {
-//         err = vector_insert_back(v, (void *)(long) a[i]);
-//         assert(err == 0);
-//     }
-    
+        
     for(i = 0; i < ARRAY_SIZE(a); ++i)
         *vector_at(v, i) = (void *)(long) a[i];
     
@@ -54,7 +48,7 @@ void sort_vector(void)
     vector_delete(v, NULL);
 }
 
-void sort_large_vector(void)
+void test_sort_large_vector(void)
 {
 #define N_ELEMENTS 10000000
     struct vector *v;
@@ -78,7 +72,9 @@ void sort_large_vector(void)
     
     clock_stop(c);
     
-    fprintf(stdout, "Elapsed time: %lu us.\n", clock_elapsed_us(c));
+    fprintf(stdout, 
+            "Elapsed sorting time (%u elements): %lu us.\n", 
+            N_ELEMENTS, clock_elapsed_us(c));
     
     for(i = 1; i < N_ELEMENTS; ++i)
         assert((int)(long)*vector_at(v, i - 1) <= (int)(long)*vector_at(v, i));
@@ -87,55 +83,59 @@ void sort_large_vector(void)
     clock_delete(c);
 }
 
-int main(int argc, char *argv[])
+void test_insert(void)
 {
-    struct vector *v;
-    unsigned int size;
-    int i;
-
+    struct vector *vec;
+    int size = 10, i, err;
     
-    if(argc != 2) {
-        fprintf(stderr, "*WARNING*: missing argument.\n"
-                        "Usage: %s <size of vector>.\n",
-                        argv[0]);
-        return EXIT_FAILURE;
-    }
-    
-    size = atoi(argv[1]);
-    
-    v = vector_new(size);
-    assert(v);
+    vec = vector_new(10);
+    assert(vec);
     
     for(i = 0; i < size; ++i)
-        *vector_at(v, i) = (void *)(long) size - i;
+        *vector_at(vec, i) = (void *)(long) i;
     
-    print_vector(v);
+    err = vector_insert_front(vec, (void *) 1000);
+    assert(err == 0);
+    err = vector_insert_at(vec, size / 2, (void *)(long) size + 1);
+    assert(err == 0);
     
-    fprintf(stdout, "First: %d | Last: %d\n", 
-            (int)(long)*vector_start(v), 
-            (int)(long)*vector_end(v));
+    size = vector_size(vec);
     
-    assert((int)(long)vector_take_back(v) == 1);
-    assert((int)(long)vector_take_back(v) == 2);
+    print_vector(vec);
     
-    vector_sort(v, &compare);
-    
-    vector_set_capacity(v, vector_size(v) - 2);
+    vector_delete(vec, NULL);
+}
 
-    print_vector(v);
+void test_take(void)
+{
+    struct vector *vec;
+    int size = 10, i;
+    void **data;
     
-    vector_clear(v, NULL);
-    assert(vector_empty(v));
-    assert(vector_capacity(v) > 0);
+    vec = vector_new(10);
+    assert(vec);
+    
+    i = 0;
+    
+    vector_for_each(vec, data)
+        *data = (void *)(long) i++;
 
-    vector_set_capacity(v, 128);
+    assert((long)vector_take_at(vec, size / 2) == (size / 2));
+    assert((long)vector_take_front(vec) == 0); 
+    assert((long)vector_take_back(vec) == size - 1);
     
-    assert(vector_capacity(v) == 128);
+    assert(vector_size(vec) == size - 3);
     
-    vector_delete(v, NULL);
-    
-    sort_vector();
-    sort_large_vector();
+    print_vector(vec);
+    vector_delete(vec, NULL);
+}
+
+int main(int argc, char *argv[])
+{
+    test_sort_vector();
+    test_sort_large_vector();
+    test_insert();
+    test_take();
     
     return EXIT_SUCCESS;
 }

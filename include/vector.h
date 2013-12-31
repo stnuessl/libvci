@@ -33,15 +33,23 @@ inline unsigned int vector_capacity(const struct vector *__restrict vec);
 
 int vector_squeeze(struct vector *__restrict vec);
 
+int vector_insert_front(struct vector *__restrict vec, void *data);
+
+int vector_insert_at(struct vector *__restrict vec, unsigned int i, void *data);
+
 int vector_insert_back(struct vector *__restrict vec, void *data);
 
-inline void *vector_take_back(struct vector *__restrict vec);
+void *vector_take_front(struct vector *__restrict vec);
 
-inline void **vector_at(struct vector *__restrict vec, unsigned int i);
+void *vector_take_at(struct vector *__restrict vec, unsigned int i);
 
-inline void **vector_start(struct vector *__restrict vec);
+void *vector_take_back(struct vector *__restrict vec);
 
-inline void **vector_end(struct vector *__restrict vec);
+void **vector_at(struct vector *__restrict vec, unsigned int i);
+
+void **vector_start(struct vector *__restrict vec);
+
+void **vector_end(struct vector *__restrict vec);
 
 #define vector_for_each(vec, data)                                             \
     for((data) = (vec)->data; (data) < (vec)->data + (vec)->size; ++(data))

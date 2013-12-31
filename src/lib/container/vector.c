@@ -1,7 +1,7 @@
-
 #include <stdlib.h>
-#include <stdbool.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdbool.h>
 #include <errno.h>
 
 #include "container_util.h"
@@ -9,7 +9,7 @@
 
 #define VECTOR_DEFAULT_CAPACITY 32
 
-struct vector *vector_new(unsigned int size)
+struct vector *vector_new(unsigned int capacity)
 {
     struct vector *vec;
     int err;
@@ -18,7 +18,7 @@ struct vector *vector_new(unsigned int size)
     if(!vec)
         return NULL;
     
-    err = vector_init(vec, size);
+    err = vector_init(vec, capacity);
     if(err < 0) {
         free(vec);
         return NULL;
@@ -35,13 +35,15 @@ void vector_delete(struct vector *__restrict vec, void (*data_delete)(void *))
 
 int vector_init(struct vector *__restrict vec, unsigned int capacity)
 {
+    
+    vec->size = capacity;
+    
     capacity = adjust(capacity, VECTOR_DEFAULT_CAPACITY);
     
     vec->data = calloc(capacity, sizeof(*vec->data));
     if(!vec->data)
         return -errno;
-    
-    vec->size = capacity;
+
     vec->capacity = capacity;
     
     return 0;
@@ -116,6 +118,32 @@ int vector_squeeze(struct vector *__restrict vec)
     return vector_set_capacity(vec, vec->size);
 }
 
+int vector_insert_front(struct vector *__restrict vec, void *data)
+{
+    return vector_insert_at(vec, 0, data);
+}
+
+int vector_insert_at(struct vector *__restrict vec, unsigned int i, void *data)
+{
+    size_t move_size;
+    int err;
+    
+    if(vec->size >= vec->capacity) {
+        err = vector_set_capacity(vec, vec->capacity << 1);
+        if(err < 0)
+            return err;
+    }
+    
+    move_size = (vec->size - i) * sizeof(*vec->data);
+    
+    memmove(vec->data + i + 1, vec->data + i, move_size);
+    
+    vec->data[i] = data;
+    vec->size += 1;
+    
+    return 0;
+}
+
 int vector_insert_back(struct vector *__restrict vec, void *data)
 {
     int err;
@@ -132,29 +160,44 @@ int vector_insert_back(struct vector *__restrict vec, void *data)
     return 0;
 }
 
-inline void *vector_take_back(struct vector *__restrict vec)
+void *vector_take_front(struct vector *__restrict vec)
+{
+    return vector_take_at(vec, 0);
+}
+
+void *vector_take_at(struct vector *__restrict vec, unsigned int i)
 {
     void *data;
+    size_t move_size;
     
+    data = vec->data[i];
+    
+    move_size = (vec->size - i) * sizeof(*vec->data);
     vec->size -= 1;
     
-    data = vec->data[vec->size];
-    vec->data[vec->size] = NULL;
+    memmove(vec->data + i, vec->data + i + 1, move_size);
     
     return data;
 }
 
-inline void **vector_at(struct vector *__restrict vec, unsigned int i)
+void *vector_take_back(struct vector *__restrict vec)
+{
+    vec->size -= 1;
+    
+    return vec->data[vec->size];
+}
+
+void **vector_at(struct vector *__restrict vec, unsigned int i)
 {
     return vec->data + i;
 }
 
-inline void **vector_start(struct vector *__restrict vec)
+void **vector_start(struct vector *__restrict vec)
 {
     return vec->data;
 }
 
-inline void **vector_end(struct vector *__restrict vec)
+void **vector_end(struct vector *__restrict vec)
 {
     return vec->data + vec->size - 1;
 }
