@@ -42,7 +42,7 @@ static int _map_rehash(struct map *__restrict map)
             if(err < 0) {
                 /* revert to old table, which wasn't changed */
                 free(map->table);
-                map->size  = old_entries;
+                map->size     = old_entries;
                 map->capacity = old_capacity;
                 map->table    = old_table;
                 return err;
@@ -76,7 +76,7 @@ static struct map_entry *_map_lookup(struct map *__restrict map,
     
     hash = map->key_hash(key);
 
-    index = hash % map->capacity;
+    index = hash & (map->capacity - 1);
     offset = 1;
     
     while(offset < map->capacity) {
@@ -100,8 +100,7 @@ static struct map_entry *_map_lookup(struct map *__restrict map,
         index  += offset;
         offset += 2;
         
-        if(index >= map->capacity)
-            index -= map->capacity;
+        index &= (map->capacity - 1);
     }
     
     return NULL;
@@ -194,7 +193,7 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
     
     hash = map->key_hash(key);
     
-    index = hash % map->capacity;
+    index = hash & (map->capacity - 1);
     offset = 1;
     
     while(offset < map->capacity) {
@@ -212,8 +211,7 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
         index  += offset;
         offset += 2;
         
-        if(index >= map->capacity)
-            index -= map->capacity;
+        index &= (map->capacity - 1);
     }
     
     return -1;
