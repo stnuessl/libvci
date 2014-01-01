@@ -3,11 +3,13 @@
 #include <errno.h>
 #include <string.h>
 
+#include "container_util.h"
 #include "link.h"
 #include "list.h"
 #include "cache.h"
 #include "macros.h"
 
+#define CACHE_DEFAULT_SIZE 32
 
 static struct cache_entry *_cache_lookup(struct cache *__restrict cache, 
                                          const void *key)
@@ -37,8 +39,7 @@ static struct cache_entry *_cache_lookup(struct cache *__restrict cache,
         
         index += 1;
         
-        if(index >= cache->capacity)
-            index -= cache->capacity;
+        index &= (cache->capacity - 1);
     }
     
     return NULL;
@@ -78,9 +79,9 @@ int cache_init(struct cache *__restrict cache,
 {
     cache->max_size = capacity;
     
-    /* table will be filled to a maximum of 25 % */
-    capacity = capacity << 2;
-    
+    /* table space will be used between 25 % and 50 % */
+    capacity = adjust(capacity, CACHE_DEFAULT_SIZE) << 1;
+
     cache->table = calloc(capacity, sizeof(*cache->table));
     if(!cache->table)
         return -errno;
@@ -161,8 +162,7 @@ void cache_insert(struct cache *__restrict cache, const void *key, void *data)
         
         index += 1;
         
-        if(index >= cache->capacity)
-            index -= cache->capacity;
+        index &= (cache->capacity - 1);
     }
 }
 
