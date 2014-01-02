@@ -106,7 +106,7 @@ static struct map_entry *_map_lookup(struct map *__restrict map,
     return NULL;
 }
 
-struct map *map_new(unsigned int capacity,
+struct map *map_new(unsigned int size,
                     int (*key_compare)(const void *, const void *),
                     unsigned int (*key_hash)(const void *))
 {
@@ -117,7 +117,7 @@ struct map *map_new(unsigned int capacity,
     if(!map)
         return NULL;
     
-    err = map_init(map, capacity, key_compare, key_hash);
+    err = map_init(map, size, key_compare, key_hash);
     if(err < 0) {
         free(map);
         return NULL;
@@ -133,17 +133,17 @@ void map_delete(struct map *__restrict map)
 }
 
 int map_init(struct map *__restrict map,
-             unsigned int capacity,
+             unsigned int size,
              int (*key_compare)(const void *, const void *),
              unsigned int (*key_hash)(const void *))
 {
-    capacity = adjust(capacity, MAP_DEFAULT_CAPACITY);
+    size = adjust(size << 1, MAP_DEFAULT_CAPACITY);
     
-    map->table = calloc(capacity, sizeof(*map->table));
+    map->table = calloc(size, sizeof(*map->table));
     if(!map->table)
         return -errno;
     
-    map->capacity = capacity;
+    map->capacity = size;
     map->size = 0;
     
     map->key_compare = key_compare;

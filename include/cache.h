@@ -33,14 +33,14 @@ struct cache {
     void (*data_delete)(void *);
 };
 
-struct cache *cache_new(unsigned int capacity,
+struct cache *cache_new(unsigned int size,
                         int (*key_compare)(const void *, const void *),
                         unsigned int (*key_hash)(const void *));
 
 void cache_delete(struct cache *__restrict cache);
 
 int cache_init(struct cache *__restrict cache,
-               unsigned int capacity,
+               unsigned int size,
                int (*key_compare)(const void *, const void *),
                unsigned int (*key_hash)(const void *));
 

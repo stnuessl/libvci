@@ -46,7 +46,7 @@ static struct cache_entry *_cache_lookup(struct cache *__restrict cache,
 }
 
 
-struct cache *cache_new(unsigned int capacity,
+struct cache *cache_new(unsigned int size,
                         int (*key_compare)(const void *, const void *),
                         unsigned int (*key_hash)(const void *))
 {
@@ -57,7 +57,7 @@ struct cache *cache_new(unsigned int capacity,
     if(!cache)
         return NULL;
     
-    err = cache_init(cache, capacity, key_compare, key_hash);
+    err = cache_init(cache, size, key_compare, key_hash);
     if(err < 0) {
         free(cache);
         return NULL;
@@ -73,22 +73,22 @@ void cache_delete(struct cache *__restrict cache)
 }
 
 int cache_init(struct cache *__restrict cache,
-               unsigned int capacity,
+               unsigned int size,
                int (*key_compare)(const void *, const void *),
                unsigned int (*key_hash)(const void *))
 {
-    cache->max_size = capacity;
+    cache->max_size = size;
     
     /* table space will be used between 25 % and 50 % */
-    capacity = adjust(capacity, CACHE_DEFAULT_SIZE) << 1;
+    size = adjust(size, CACHE_DEFAULT_SIZE) << 1;
 
-    cache->table = calloc(capacity, sizeof(*cache->table));
+    cache->table = calloc(size, sizeof(*cache->table));
     if(!cache->table)
         return -errno;
         
     list_init(&cache->list);
     
-    cache->capacity    = capacity;
+    cache->capacity    = size;
     cache->size        = 0;
     cache->key_compare = key_compare;
     cache->key_hash    = key_hash;
@@ -214,7 +214,7 @@ inline unsigned int cache_size(const struct cache *__restrict cache)
 
 inline unsigned int cache_capacity(const struct cache *__restrict cache)
 {
-    return cache->capacity;
+    return cache->max_size;
 }
 
 inline void cache_set_data_delete(struct cache *__restrict cache, void (*data_delete)(void *))
