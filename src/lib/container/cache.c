@@ -22,7 +22,7 @@ static struct cache_entry *_cache_lookup(struct cache *__restrict cache,
     
     for(i = 0; i < cache->capacity; ++i) {
         switch(cache->table[index].state) {
-            case DATA_AVAILABLE:
+            case CACHE_DATA_STATE_AVAILABLE:
                 if(cache->table[index].hash != hash)
                     break;
                 
@@ -30,7 +30,7 @@ static struct cache_entry *_cache_lookup(struct cache *__restrict cache,
                     return cache->table + index;
                 
                 break;
-            case DATA_EMPTY:
+            case CACHE_DATA_STATE_EMPTY:
                 /* 'key' does not exist within the table */
                 return NULL;
             default:
@@ -134,7 +134,7 @@ void cache_insert(struct cache *__restrict cache, const void *key, void *data)
         
         entry->hash  = 0;
         entry->key   = NULL;
-        entry->state = DATA_REMOVED;
+        entry->state = CACHE_DATA_STATE_REMOVED;
         
         if(cache->data_delete)
             cache->data_delete(entry->data);
@@ -149,11 +149,11 @@ void cache_insert(struct cache *__restrict cache, const void *key, void *data)
     index = hash % cache->capacity;
     
     while(1) {
-        if(cache->table[index].state != DATA_AVAILABLE) {
+        if(cache->table[index].state != CACHE_DATA_STATE_AVAILABLE) {
             cache->table[index].hash  = hash;
             cache->table[index].key   = key;
             cache->table[index].data  = data;
-            cache->table[index].state = DATA_AVAILABLE;
+            cache->table[index].state = CACHE_DATA_STATE_AVAILABLE;
             
             list_insert_front(&cache->list, &cache->table[index].link);
             
@@ -191,7 +191,7 @@ void* cache_take(struct cache *__restrict cache, const void* key)
     
     list_take(&entry->link);
     
-    entry->state = DATA_REMOVED;
+    entry->state = CACHE_DATA_STATE_REMOVED;
     cache->size -= 1;
     
     return entry->data;
@@ -217,7 +217,8 @@ inline unsigned int cache_capacity(const struct cache *__restrict cache)
     return cache->max_size;
 }
 
-inline void cache_set_data_delete(struct cache *__restrict cache, void (*data_delete)(void *))
+inline void cache_set_data_delete(struct cache *__restrict cache, 
+                                  void (*data_delete)(void *))
 {
     cache->data_delete = data_delete;
 }

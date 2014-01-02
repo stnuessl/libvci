@@ -6,9 +6,9 @@
 #include "link.h"
 
 enum cache_data_state {
-    DATA_EMPTY          = 0x00,
-    DATA_AVAILABLE      = 0x01,
-    DATA_REMOVED        = 0x02
+    CACHE_DATA_STATE_EMPTY      = 0x00,
+    CACHE_DATA_STATE_AVAILABLE  = 0x01,
+    CACHE_DATA_STATE_REMOVED    = 0x02
 };
 
 struct cache_entry {

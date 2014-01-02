@@ -36,7 +36,7 @@ static int _map_rehash(struct map *__restrict map)
         return -errno;
     
     for(i = 0; i < old_capacity; ++i) {
-        if(old_table[i].state == DATA_AVAILABLE) {
+        if(old_table[i].state == MAP_DATA_STATE_AVAILABLE) {
 
             err = map_insert(map, old_table[i].key, old_table[i].data);
             if(err < 0) {
@@ -82,7 +82,7 @@ static struct map_entry *_map_lookup(struct map *__restrict map,
     while(offset < map->capacity) {
 
         switch(map->table[index].state) {
-            case DATA_AVAILABLE:
+            case MAP_DATA_STATE_AVAILABLE:
                 if(map->table[index].hash != hash )
                     break;
                 
@@ -90,7 +90,7 @@ static struct map_entry *_map_lookup(struct map *__restrict map,
                     return map->table + index;
                 
                 break;
-            case DATA_EMPTY:
+            case MAP_DATA_STATE_EMPTY:
                 /* 'key' does not exist within the table */
                 return NULL;
             default:
@@ -171,10 +171,10 @@ void map_clear(struct map *__restrict map)
     }
     
     for(i = 0; i < map->capacity; ++i) {
-        if(map->table[i].state == DATA_AVAILABLE) {
+        if(map->table[i].state == MAP_DATA_STATE_AVAILABLE) {
             map->data_delete(map->table[i].data);
-
-            map->table[i].state = DATA_EMPTY;
+            
+            map->table[i].state = MAP_DATA_STATE_EMPTY;
         }
     }
 }
@@ -197,11 +197,11 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
     offset = 1;
     
     while(offset < map->capacity) {
-        if(map->table[index].state != DATA_AVAILABLE) {
+        if(map->table[index].state != MAP_DATA_STATE_AVAILABLE) {
             map->table[index].hash  = hash;
             map->table[index].key   = key;
             map->table[index].data  = data;
-            map->table[index].state = DATA_AVAILABLE;
+            map->table[index].state = MAP_DATA_STATE_AVAILABLE;
             
             map->size += 1;
             
@@ -237,7 +237,7 @@ void *map_take(struct map *__restrict map, const void *key)
 
     data = entry->data;
 
-    entry->state = DATA_REMOVED;
+    entry->state = MAP_DATA_STATE_REMOVED;
     
     map->size -= 1;
     
