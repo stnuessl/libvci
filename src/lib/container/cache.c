@@ -106,6 +106,8 @@ void cache_destroy(struct cache *__restrict cache)
 void cache_clear(struct cache *__restrict cache)
 {
     unsigned int i;
+    
+    list_init(&cache->list);
 
     if(!cache->data_delete) {
         memset(cache->table, 0, cache->capacity * sizeof(*cache->table));
@@ -115,9 +117,8 @@ void cache_clear(struct cache *__restrict cache)
     for(i = 0; i < cache->capacity; ++i) {
         if(cache->table[i].data != NULL) {
             cache->data_delete(cache->table[i].data);
-            
-            cache->table[i].data = NULL;
-            cache->table[i].key  = NULL;
+
+            cache->table[i].state = CACHE_DATA_STATE_EMPTY;
         }
     }
 }
@@ -132,14 +133,10 @@ void cache_insert(struct cache *__restrict cache, const void *key, void *data)
         link = list_take_back(&cache->list);
         entry = container_of(link, struct cache_entry, link);
         
-        entry->hash  = 0;
-        entry->key   = NULL;
-        entry->state = CACHE_DATA_STATE_REMOVED;
-        
         if(cache->data_delete)
             cache->data_delete(entry->data);
         
-        entry->data = NULL;
+        entry->state = CACHE_DATA_STATE_REMOVED;
     } else {
         cache->size += 1;
     }
@@ -150,9 +147,9 @@ void cache_insert(struct cache *__restrict cache, const void *key, void *data)
     
     while(1) {
         if(cache->table[index].state != CACHE_DATA_STATE_AVAILABLE) {
-            cache->table[index].hash  = hash;
             cache->table[index].key   = key;
             cache->table[index].data  = data;
+            cache->table[index].hash  = hash;
             cache->table[index].state = CACHE_DATA_STATE_AVAILABLE;
             
             list_insert_front(&cache->list, &cache->table[index].link);

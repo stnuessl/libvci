@@ -10,8 +10,6 @@
 #include "task.h"
 
 struct threadpool {
-    int event_fd;
-    
     struct queue task_queue_in;
     struct queue task_queue_out;
     struct map thread_map;
@@ -23,6 +21,8 @@ struct threadpool {
     pthread_mutex_t mutex_queue_in;
     pthread_mutex_t mutex_queue_out;
     pthread_mutex_t mutex_map;
+    
+    int event_fd;
 };
 
 struct threadpool *threadpool_new(int threads);

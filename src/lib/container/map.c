@@ -198,9 +198,9 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
     
     while(offset < map->capacity) {
         if(map->table[index].state != MAP_DATA_STATE_AVAILABLE) {
-            map->table[index].hash  = hash;
             map->table[index].key   = key;
             map->table[index].data  = data;
+            map->table[index].hash  = hash;
             map->table[index].state = MAP_DATA_STATE_AVAILABLE;
             
             map->size += 1;

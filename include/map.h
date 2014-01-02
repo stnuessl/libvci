@@ -12,10 +12,10 @@ enum map_data_state {
 };
 
 struct map_entry {
-    unsigned int hash;
-    
     const void *key;
     void *data;
+    
+    unsigned int hash;
     enum map_data_state state;
 };
 

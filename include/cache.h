@@ -12,12 +12,13 @@ enum cache_data_state {
 };
 
 struct cache_entry {
-    unsigned int hash;
     const void *key;
     void *data;
     
-    enum cache_data_state state;
     struct link link;
+    
+    unsigned int hash;
+    enum cache_data_state state;
 };
 
 struct cache {
