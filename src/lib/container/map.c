@@ -5,6 +5,7 @@
 
 #include "map.h"
 #include "container_util.h"
+#include "macros.h"
 
 #define MAP_DEFAULT_CAPACITY 32
 
@@ -18,7 +19,7 @@
     (100 * (map)->size / (map)->capacity) < MAP_LOWER_TABLE_BOUND
 
 
-static int _map_rehash(struct map *__restrict map)
+static int _map_rehash(struct map *__restrict map, unsigned int capacity)
 {
     struct map_entry *old_table;
     unsigned int i, old_capacity, old_entries;
@@ -29,7 +30,7 @@ static int _map_rehash(struct map *__restrict map)
     old_table    = map->table;
     
     map->size  = 0;
-    map->capacity = adjust(old_entries << 1, MAP_DEFAULT_CAPACITY);
+    map->capacity = max(capacity, MAP_DEFAULT_CAPACITY);
     map->table = calloc(map->capacity, sizeof(*map->table));
 
     if(!map->table)
@@ -189,7 +190,7 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
     unsigned int hash, index, offset;
     
     if(_map_should_grow(map))
-        _map_rehash(map);
+        _map_rehash(map, map->capacity << 1);
     
     hash = map->key_hash(key);
     
@@ -242,7 +243,7 @@ void *map_take(struct map *__restrict map, const void *key)
     map->size -= 1;
     
     if(_map_should_shrink(map))
-        _map_rehash(map);
+        _map_rehash(map, map->capacity >> 2);
     
     return data;
 }
