@@ -51,7 +51,9 @@ void **vector_start(struct vector *__restrict vec);
 
 void **vector_end(struct vector *__restrict vec);
 
-#define vector_for_each(vec, data)                                             \
-    for((data) = (vec)->data; (data) < (vec)->data + (vec)->size; ++(data))
+#define vector_for_each(vec, tmp)                                              \
+    for((tmp) = (__typeof(tmp)) (vec)->data;                                   \
+        (tmp) < (__typeof(tmp)) (vec)->data + (vec)->size;                     \
+        ++(tmp))
 
 #endif /* _VECTOR_H_ */
