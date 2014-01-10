@@ -31,6 +31,9 @@ Logging functions providing configurable line header and severity levels.
 INSTALLING
 ----------
 
+Library needs Linux version >= 2.6.22 (eventfd) and is tested to be 
+compilable with gcc 4.x.x.
+
 	$ git clone git://github.com/stnuessl/libvci
 	$ mkdir libvci/build
 	$ cd libvci/build
