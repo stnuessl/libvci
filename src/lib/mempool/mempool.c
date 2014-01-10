@@ -6,7 +6,6 @@
 #include "mempool.h"
 
 
-
 struct mempool *mempool_new(void *mem, size_t size, size_t chunk_size)
 {
     struct mempool *pool;
