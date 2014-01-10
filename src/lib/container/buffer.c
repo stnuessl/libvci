@@ -9,7 +9,6 @@
 #define BUFFER_DEFAULT_SIZE 128
 
 
-
 static int _buffer_resize(struct buffer *__restrict buf, size_t new_size)
 {
     void *new_data;
