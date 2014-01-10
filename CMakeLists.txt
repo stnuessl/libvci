@@ -27,6 +27,8 @@ add_library(vci
             src/lib/log/log.c
             src/lib/etrace/etrace.c
             src/lib/mempool/mempool.c
+            src/lib/observer/subject.c
+            src/lib/observer/observer.c
             src/lib/threadpool/threadpool.c
             src/lib/threadpool/task.c
             )
@@ -53,6 +55,8 @@ install(FILES
         include/task.h
         include/threadpool.h
         include/vector.h
+        include/observer.h
+        include/subject.h
         DESTINATION
         ${CMAKE_CURRENT_SOURCE_DIR}/build/include
         )

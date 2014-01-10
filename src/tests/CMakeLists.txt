@@ -59,3 +59,6 @@ target_link_libraries(log_test vci)
 
 add_executable(vector_test container/vector_test.c)
 target_link_libraries(vector_test vci)
+
+add_executable(observer_test observer/observer_test.c)
+target_link_libraries(observer_test vci)
