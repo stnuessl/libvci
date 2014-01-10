@@ -7,7 +7,7 @@
 #include "container_util.h"
 #include "vector.h"
 
-#define VECTOR_DEFAULT_CAPACITY 32
+#define VECTOR_DEFAULT_CAPACITY 8
 
 struct vector *vector_new(unsigned int capacity)
 {
