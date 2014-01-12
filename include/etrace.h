@@ -2,11 +2,11 @@
 #ifndef _ETRACE_H_
 #define _ETRACE_H_
 
-int etrace_init(int size, const char *__restrict path);
+int etrace_init(const char *__restrict path);
 
 void etrace_destroy(void);
 
-inline void etrace_set_file(FILE *__restrict f);
+void etrace_set_file(FILE *__restrict f);
 
 void etrace_backtrace(int skip);
 

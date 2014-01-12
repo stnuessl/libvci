@@ -12,8 +12,9 @@
 #include "macros.h"
 #include "etrace.h"
 
-static void **_buffer;
-static int  _size;
+#define BACKTRACE_BUFFER_SIZE 16
+
+static void *_buffer[BACKTRACE_BUFFER_SIZE];
 static struct log *_log;
 static int _fd;
 
@@ -34,7 +35,7 @@ static void _signal_handler(int signal)
     _exit(EXIT_FAILURE);
 }
 
-int etrace_init(int size, const char *__restrict path)
+int etrace_init(const char *__restrict path)
 {
     int flags;
     
@@ -47,36 +48,19 @@ int etrace_init(int size, const char *__restrict path)
     
     _fd = log_fd(_log);
 
-    if(size <= 4) {
-        /* don't use backtrace - mode */
-        _buffer  = NULL;
-        _size    = 0;
-        
-        return 0;
-    }
-    
-    _buffer = calloc(size, sizeof(*_buffer));
-    if(!_buffer) {
-        log_destroy(_log);
-        return -errno;
-    }
-    
-    _size = size;
-    
     return 0;
 }
 
 void etrace_destroy(void)
 {
     log_delete(_log);
-    
-    if(_buffer)
-        free(_buffer);
 }
 
-inline void etrace_set_file(FILE *__restrict f)
+void etrace_set_file(FILE *__restrict f)
 {
     log_set_file(_log, f);
+    
+    _fd = fileno(f);
 }
 
 void etrace_backtrace(int skip)
@@ -84,10 +68,7 @@ void etrace_backtrace(int skip)
     const char *msg = "backtrace():\n";
     int size;
     
-    if(!_size)
-        return;
-    
-    size = backtrace(_buffer, _size);
+    size = backtrace(_buffer, BACKTRACE_BUFFER_SIZE);
     
     /* just print the backtrace down to main() */
     if(size > 3)
@@ -104,7 +85,6 @@ void etrace_backtrace(int skip)
     backtrace_symbols_fd(_buffer + skip, size - skip, _fd);
     
     write(_fd, "\n", 1);
-    
 }
 
 void etrace_write(const char *__restrict fmt, ...)
@@ -127,7 +107,7 @@ int etrace_backtrace_on_signals(bool trace, const int *signals, int size)
         size    = ARRAY_SIZE(def_signals);;
     }
 
-    err  = 0;
+    err = 0;
     
     memset(&sa, 0, sizeof(sa));
     

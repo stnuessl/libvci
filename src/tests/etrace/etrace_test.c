@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     int err;
     char *s;
     
-    if(etrace_init(16, "/dev/null") < 0)
+    if(etrace_init("/dev/null") < 0)
         abort();
     
     etrace_set_file(stderr);
