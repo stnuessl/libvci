@@ -24,13 +24,13 @@
 #define LOG_SEVERITY_ERROR    0
 
 struct log {
-    char *_name;
-    char *_hostname;
-    FILE *_f;
-    struct clock _clock;
+    char *name;
+    char *hostname;
+    FILE *file;
+    struct clock clock;
     
-    uint8_t _flags;
-    uint8_t _severity_cap;
+    uint8_t flags;
+    uint8_t severity_cap;
 };
 
 struct log *log_new(const char *__restrict path, 

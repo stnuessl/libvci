@@ -30,34 +30,34 @@ static void _log_write_line_header(struct log *__restrict l, int level)
     time_t now;
     struct tm ltime;
     
-    if(l->_flags & LOG_PRINT_DATE) {
+    if(l->flags & LOG_PRINT_DATE) {
         now = time(NULL);
         
         localtime_r(&now, &ltime);
         
-        fprintf(l->_f, "%04d-%02d-%02d :: %02d:%02d:%02d ",
+        fprintf(l->file, "%04d-%02d-%02d :: %02d:%02d:%02d ",
                 ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday,
                 ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
     }
     
-    if(l->_flags & LOG_PRINT_HOSTNAME)
-        fprintf(l->_f, "| %s | ", l->_hostname);
+    if(l->flags & LOG_PRINT_HOSTNAME)
+        fprintf(l->file, "| %s | ", l->hostname);
         
-    if(l->_flags & LOG_PRINT_TIMESTAMP) {
-        fprintf(l->_f, "[ %*lf ] ",
-                10, (double) clock_elapsed_us(&l->_clock) / 1e6);
+    if(l->flags & LOG_PRINT_TIMESTAMP) {
+        fprintf(l->file, "[ %*lf ] ",
+                10, (double) clock_elapsed_us(&l->clock) / 1e6);
     }
     
-    if(l->_flags & LOG_PRINT_NAME)
-        fprintf(l->_f,  "< %s > ", l->_name);
+    if(l->flags & LOG_PRINT_NAME)
+        fprintf(l->file,  "< %s > ", l->name);
     
-    if(l->_flags & LOG_PRINT_PID)
-        fprintf(l->_f, "( %*u ) ", 5, getpid());
+    if(l->flags & LOG_PRINT_PID)
+        fprintf(l->file, "( %*u ) ", 5, getpid());
         
-    if(l->_flags & LOG_PRINT_LEVEL)
-        fprintf(l->_f, "{ %*s } ", 9, _log_severity_string(level));
+    if(l->flags & LOG_PRINT_LEVEL)
+        fprintf(l->file, "{ %*s } ", 9, _log_severity_string(level));
     
-    fprintf(l->_f, ": ");
+    fprintf(l->file, ": ");
 }
 
 
@@ -96,24 +96,24 @@ int log_init(struct log *__restrict l,
     char hostname[HOSTNAME_SIZE];
     int err;
     
-    l->_name = strdup(name);
-    if(!l->_name) {
+    l->name = strdup(name);
+    if(!l->name) {
         err = -errno;
         goto out;
     }
     
-    l->_f = fopen(path, "a");
-    if(!l->_f) {
+    l->file = fopen(path, "a");
+    if(!l->file) {
         err = -errno;
         goto cleanup1;
     }
     
     if(flags & LOG_PRINT_TIMESTAMP) {
-        err = clock_init(&l->_clock, CLOCK_MONOTONIC);
+        err = clock_init(&l->clock, CLOCK_MONOTONIC);
         if(err < 0)
             goto cleanup2;
         
-        clock_start(&l->_clock);
+        clock_start(&l->clock);
     }
     
     if(flags & LOG_PRINT_HOSTNAME) {
@@ -123,63 +123,63 @@ int log_init(struct log *__restrict l,
         if(err < 0)
             goto cleanup3;
         
-        l->_hostname = strdup(hostname);
-        if(!l->_hostname) {
+        l->hostname = strdup(hostname);
+        if(!l->hostname) {
             err = -errno;
             goto cleanup3;
         }
     }
 
-    l->_flags = flags;
-    l->_severity_cap = LOG_SEVERITY_INFO;
+    l->flags = flags;
+    l->severity_cap = LOG_SEVERITY_INFO;
     
     return 0;
 
 cleanup3:
     if(flags & LOG_PRINT_TIMESTAMP)
-        clock_destroy(&l->_clock);
+        clock_destroy(&l->clock);
 cleanup2:
-    fclose(l->_f);
+    fclose(l->file);
 cleanup1:
-    free(l->_name);
+    free(l->name);
 out:
     return err;
 }
 
 void log_destroy(struct log *__restrict l)
 {
-    if(l->_flags & LOG_PRINT_TIMESTAMP)
-        clock_destroy(&l->_clock);
+    if(l->flags & LOG_PRINT_TIMESTAMP)
+        clock_destroy(&l->clock);
     
-    if(l->_flags & LOG_PRINT_HOSTNAME)
-        free(l->_hostname);
+    if(l->flags & LOG_PRINT_HOSTNAME)
+        free(l->hostname);
     
-    free(l->_name);
+    free(l->name);
     
-    fclose(l->_f);
+    fclose(l->file);
 }
 
 void log_set_file(struct log *__restrict l, FILE *f)
 {
-    if(l->_f)
-        fclose(l->_f);
+    if(l->file)
+        fclose(l->file);
 
-    l->_f  =  f;
+    l->file  =  f;
 }
 
 inline int log_fd(const struct log *__restrict l)
 {
-    return fileno(l->_f);
+    return fileno(l->file);
 }
 
 inline void log_set_severity_cap(struct log *__restrict l, int severity_cap)
 {
-    l->_severity_cap = severity_cap;
+    l->severity_cap = severity_cap;
 }
 
 inline int log_severity_cap(const struct log *__restrict l)
 {
-    return l->_severity_cap;
+    return l->severity_cap;
 }
 
 static void _log_printf(struct log *__restrict l,
@@ -187,12 +187,12 @@ static void _log_printf(struct log *__restrict l,
                        const char *__restrict fmt,
                        va_list vargs)
 {
-    if(severity > l->_severity_cap)
+    if(severity > l->severity_cap)
         return;
 
     _log_write_line_header(l, severity);
-    vfprintf(l->_f, fmt, vargs);
-    fflush(l->_f);
+    vfprintf(l->file, fmt, vargs);
+    fflush(l->file);
 }
 
 void log_printf(struct log *__restrict l, 

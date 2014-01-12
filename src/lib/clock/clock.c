@@ -29,10 +29,10 @@ _timespec_diff(const struct timespec *__restrict t1,
 
 static struct timespec _clock_elapsed(struct clock *__restrict c)
 {
-    if(c->_active)
-        clock_gettime(c->_clk_id, &c->_current);
+    if(c->active)
+        clock_gettime(c->clk_id, &c->current);
     
-    return _timespec_diff(&c->_current, &c->_start);
+    return _timespec_diff(&c->current, &c->start);
 }
 
 struct clock *clock_new(clockid_t clk_id)
@@ -63,17 +63,17 @@ int clock_init(struct clock *__restrict c, clockid_t clk_id)
      * subsequent calls will also succeed
      */
     
-    err = clock_gettime(clk_id, &c->_start);
+    err = clock_gettime(clk_id, &c->start);
     if(err < 0)
         return -errno;
     
-    err = clock_gettime(clk_id, &c->_current);
+    err = clock_gettime(clk_id, &c->current);
     if(err < 0)
         return -errno;
     
     clock_clear(c);
     
-    c->_clk_id = clk_id;
+    c->clk_id = clk_id;
     
     return 0;
 }
@@ -85,32 +85,32 @@ void clock_destroy(struct clock *__restrict c)
 
 void clock_clear(struct clock *__restrict c)
 {
-    _timespec_reset(&c->_start);
-    _timespec_reset(&c->_current);
+    _timespec_reset(&c->start);
+    _timespec_reset(&c->current);
     
-    c->_active = false;
+    c->active = false;
 }
 
 void clock_reset(struct clock *__restrict c)
 {
-    _timespec_reset(&c->_current);
+    _timespec_reset(&c->current);
     
-    if(c->_active)
+    if(c->active)
         clock_start(c);
     else
-        _timespec_reset(&c->_start);
+        _timespec_reset(&c->start);
 }
 
 void clock_start(struct clock *__restrict c)
 {
-    clock_gettime(c->_clk_id, &c->_start);
-    c->_active = true;
+    clock_gettime(c->clk_id, &c->start);
+    c->active = true;
 }
 
 void clock_stop(struct clock *__restrict c)
 {
-    clock_gettime(c->_clk_id, &c->_current);
-    c->_active = false;
+    clock_gettime(c->clk_id, &c->current);
+    c->active = false;
 }
 
 void clock_continue(struct clock *__restrict c)
@@ -121,11 +121,11 @@ void clock_continue(struct clock *__restrict c)
     ts = _clock_elapsed(c);
     
     /* get new start time */
-    clock_gettime(c->_clk_id, &c->_start);
+    clock_gettime(c->clk_id, &c->start);
     
     /* push the start time further into the past by the already elapsed time */
-    c->_start  = _timespec_diff(&c->_start, &ts);
-    c->_active = true;
+    c->start  = _timespec_diff(&c->start, &ts);
+    c->active = true;
 }
 
 unsigned long clock_elapsed_ms(struct clock *__restrict c)

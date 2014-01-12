@@ -5,12 +5,12 @@
 #include <stdbool.h>
 
 struct clock {
-    struct timespec _start;
-    struct timespec _current;
+    struct timespec start;
+    struct timespec current;
     
-    clockid_t _clk_id;
+    clockid_t clk_id;
     
-    bool _active;
+    bool active;
 };
 
 struct clock *clock_new(clockid_t clk_id);
