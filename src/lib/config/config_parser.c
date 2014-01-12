@@ -216,7 +216,7 @@ struct config_parser *config_parser_new(struct config *config)
 {
     struct config_parser *p;
     struct stat file_info;
-    int err;
+    int fd, err;
     
     p = malloc(sizeof(*p));
     if(!p)
@@ -232,11 +232,11 @@ struct config_parser *config_parser_new(struct config *config)
     if(!p->section)
         goto cleanup2;
     
-    p->fd = open(config->path, O_RDWR);
-    if(p->fd < 0)
+    fd = open(config->path, O_RDWR);
+    if(fd < 0)
         goto cleanup3;
     
-    err = fstat(p->fd, &file_info);
+    err = fstat(fd, &file_info);
     if(err < 0)
         goto cleanup4;
     
@@ -248,9 +248,11 @@ struct config_parser *config_parser_new(struct config *config)
         goto cleanup4;
     }
     
-    p->file = mmap(NULL, p->fsize, PROT_READ, MAP_SHARED, p->fd, 0);
+    p->file = mmap(NULL, p->fsize, PROT_READ, MAP_SHARED, fd, 0);
     if(!p->file)
         goto cleanup4;
+    
+    close(fd);
     
     p->config = config;
     p->state  = PARSER_STATE_START;
@@ -259,7 +261,7 @@ struct config_parser *config_parser_new(struct config *config)
     return p;
 
 cleanup4:
-    close(p->fd);
+    close(fd);
 cleanup3:
     free(p->section);
 cleanup2:
@@ -309,7 +311,6 @@ int config_parser_parse(struct config_parser *__restrict parser)
 void config_parser_delete(struct config_parser *__restrict parser)
 {
     munmap(parser->file, parser->fsize);
-    close(parser->fd);
     
     free(parser->section);
     

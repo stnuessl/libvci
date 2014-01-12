@@ -20,7 +20,6 @@ enum parser_state {
 struct config_parser {
     struct config *config;
     struct buffer *buf;
-    int fd;
     char *section;
     unsigned long key;
     char *file;
