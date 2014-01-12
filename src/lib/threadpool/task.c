@@ -6,43 +6,34 @@
 #include "task.h"
 #include "macros.h"
 
-struct task *task_new(void *(*func)(void *), void *arg)
+
+void task_set_function(struct task *__restrict task, 
+                       void (*func)(struct task *))
 {
-    struct task *task;
-    
-    task = malloc(sizeof(*task));
-    if(!task)
-        return NULL;
-    
-    memset(task, 0, sizeof(*task));
-    
     task->func = func;
-    task->arg  = arg;
-    
-    return task;
 }
 
-void task_delete(struct task *__restrict task)
+void (*task_function(struct task *__restrict task))(struct task *)
 {
-    free(task);
+    return task->func;
 }
 
-void task_delete_by_link(struct link *link)
+void task_set_value(struct task *__restrict task, void *val)
 {
-    task_delete(container_of(link, struct task, link));
+    task->val = val;
 }
 
-inline void task_set_key(struct task *__restrict task, void *key)
+void *task_value(struct task *__restrict task)
 {
-    task->key = key;
+    return task->val;
 }
 
-inline void *task_key(struct task *__restrict task)
+void task_set_return_value(struct task *__restrict task, void *ret)
 {
-    return task->key;
+    task->ret = ret;
 }
 
-inline void *task_return_value(struct task *__restrict task)
+void *task_return_value(struct task *__restrict task)
 {
-    return task->ret_val;
+    return task->ret;
 }

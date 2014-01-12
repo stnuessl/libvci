@@ -9,14 +9,25 @@
 
 #include <task.h>
 #include <threadpool.h>
+#include <macros.h>
 
 #define MAX_EPOLL_EVENTS 10
 
-void *my_task(void *arg)
-{
-    fprintf(stdout, "INFO: Task%li running...\n", (long) arg);
+struct my_task {
+    unsigned int id;
+    struct task task;
+};
 
-    return arg;
+void my_task_run(struct task *task)
+{
+    struct my_task *my_task;
+    
+    my_task = container_of(task, struct my_task, task);
+
+    /* do fancy stuff with my_container */
+    my_task->id = (long) task_value(task);
+
+    task_set_return_value(task, task_value(task));
 }
 
 static const char _usage[] = {
@@ -46,16 +57,18 @@ void epoll_init(void)
 
 void insert_tasks(int num_tasks)
 {
-    struct task *task;
+    struct my_task *my_task;
     int i, err;
     
     for(i = 0; i < num_tasks; ++i) {
-        task = task_new(&my_task, (void *)(long) i);
-        assert(task);
+        my_task = malloc(sizeof(*my_task));
+        assert(my_task);
         
-        task_set_key(task, (void *)(long)i);
+        my_task->id = i;
+        task_set_function(&my_task->task, &my_task_run);
+        task_set_value(&my_task->task, (void *)(long) i);
         
-        err = threadpool_add_task(pool, task);
+        err = threadpool_add_task(pool, &my_task->task);
         assert(err == 0);
     }
 }
@@ -92,6 +105,7 @@ void test_adding_removing_threads(void)
 
 void test_usage(int argc, char *argv[])
 {
+    struct my_task *my_task;
     struct task *task;
     eventfd_t tasks_done;
     int i, err, num_threads, num_tasks, fds;
@@ -126,11 +140,10 @@ void test_usage(int argc, char *argv[])
             while(tasks_done--) {
                 task = threadpool_take_completed_task(pool);
                 
-                fprintf(stdout, "INFO: Task%d finished with %d.\n",
-                        (int)(long) task_key(task), 
-                        (int)(long) task_return_value(task));
+                my_task = container_of(task, struct my_task, task);
                 
-                task_delete(task);
+                assert(my_task->id == (long) task_return_value(task));
+                free(my_task);
             }
         }
     }

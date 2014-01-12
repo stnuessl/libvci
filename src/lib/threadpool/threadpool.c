@@ -56,7 +56,7 @@ static void _thread_exit(void *arg)
     struct threadpool *pool;
     pthread_t *thread, self;
     int err;
-    
+
     pool = arg;
     
     /*
@@ -93,7 +93,18 @@ again:
         pthread_detach(self);
         free(thread);
     }
+    
     pthread_exit(NULL);
+}
+
+static void _task_exit_thread(struct task *__restrict task)
+{
+    struct threadpool *pool;
+    
+    pool = task_value(task);
+    free(task);
+    
+    _thread_exit(pool);
 }
 
 static void *_thread_handle_tasks(void *arg)
@@ -120,18 +131,12 @@ static void *_thread_handle_tasks(void *arg)
 
         task = container_of(link, struct task, link);
                 
-        pthread_cleanup_push((void(*)(void *)) &task_delete, task);
-
-        task->ret_val = task->func(task->arg);
-        
-        pthread_cleanup_pop(0);
+        task->func(task);
 
         pthread_mutex_lock(&pool->mutex_queue_out);
         
         err = sem_post(&pool->sem_queue_out);
-        if(err < 0)
-            task_delete(task);
-        else
+        if(err == 0)
             queue_insert(&pool->task_queue_out, &task->link);
 
         pthread_mutex_unlock(&pool->mutex_queue_out);
@@ -268,8 +273,8 @@ void threadpool_destroy(struct threadpool *__restrict pool)
      * Multiple threads outside the threadpool shall not
      * operate on the threadpool when it gets destroyed.
      */
-    queue_destroy(&pool->task_queue_out, &task_delete_by_link);
-    queue_destroy(&pool->task_queue_in, &task_delete_by_link);
+    queue_destroy(&pool->task_queue_out, NULL);
+    queue_destroy(&pool->task_queue_in, NULL);
 
     sem_destroy(&pool->sem_exit);
     sem_destroy(&pool->sem_queue_out);
@@ -331,9 +336,17 @@ int threadpool_remove_thread(struct threadpool *__restrict pool)
 {
     struct task *task;
     
-    task = task_new((void *(*)(void *))&_thread_exit, pool);
+    /* 
+     * this approach is quite neat since the first thread to take this
+     * task (and therefore was idling) exits.
+     * However, before that it has to deallocate its memory.
+     */
+    task = malloc(sizeof(*task));
     if(!task)
         return -errno;
+    
+    task_set_function(task, &_task_exit_thread);
+    task_set_value(task, pool);
     
     return threadpool_add_task(pool, task);
 }
