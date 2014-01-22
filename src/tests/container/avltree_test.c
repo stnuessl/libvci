@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include <avltree.h>
+#include <clock.h>
 #include <macros.h>
 
 struct node {
@@ -14,42 +15,85 @@ struct node {
 
 int int_compare(const void *a, const void *b)
 {
-    return *(int *)a - *(int *)b;
+    return (long) a - (long) b;
 }
 
-int main(int argc, char *argv[])
+void node_delete_from_avlnode(struct avlnode *avlnode)
 {
-#define NUM_ELEMENTS 100
+    free(container_of(avlnode, struct node, avlnode));
+}
+
+void avltree_test_performance(int num)
+{
     struct avltree *tree;
-    struct node *node;
+    struct clock *c;
     struct avlnode *avlnode;
+    struct node *node;
     int i, err;
     
     tree = avltree_new(&int_compare);
-    assert(tree);
+    c    = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     
-    for(i = 0; i < NUM_ELEMENTS; ++i) {
+    assert(tree);
+    assert(c);
+    
+    avltree_set_data_delete(tree, &node_delete_from_avlnode);
+    
+    clock_start(c);
+    
+    for(i = 0; i < num; ++i) {
         node = malloc(sizeof(*node));
         assert(node);
         
         node->data = i;
         
-        err = avltree_insert(tree, &node->avlnode, &node->data);
+        err = avltree_insert(tree, &node->avlnode, (void *)(long) node->data);
         assert(err == 0);
     }
     
-    for(i = 0; i < NUM_ELEMENTS; ++i) {
-        avlnode = avltree_retrieve(tree, &i);
-        assert(avlnode);
-    }
+    fprintf(stdout, 
+            "Elapsed time for %d insertions is %lu ms.\n", 
+             num, clock_elapsed_ms(c));
     
-    for(i = 0; i < NUM_ELEMENTS; ++i) {
-        avlnode = avltree_take(tree, &i);
+    clock_reset(c);
+    
+    for(i = 0; i < num; ++i) {
+        avlnode = avltree_retrieve(tree, (void *)(long) i);
         node = container_of(avlnode, struct node, avlnode);
-        free(node);
+        assert(node->data == i);
     }
     
+    fprintf(stdout, 
+            "Elapsed time for %d retrievals is %lu ms.\n", 
+            num, clock_elapsed_ms(c));
+    
+    clock_reset(c);
+    
+    for(i = 0; i < num; ++i) {
+        avlnode = avltree_take(tree, (void *)(long) i);
+        node = container_of(avlnode, struct node, avlnode);
+        assert(node->data == i);
+    }
+    
+    fprintf(stdout, 
+            "Elapsed time for %d removals is %lu ms.\n", 
+            num, clock_elapsed_ms(c));
+    
+    
+    clock_delete(c);
     avltree_delete(tree);
+}
+
+int main(int argc, char *argv[])
+{
+    if(argc != 2) {
+        fprintf(stderr, "Usage: %s <number of elements>\n"
+                        "Example: %s 10000\n",
+                        argv[0], argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    
+    avltree_test_performance(atoi(argv[1]));
     
     return EXIT_SUCCESS;
 }

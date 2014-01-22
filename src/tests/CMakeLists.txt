@@ -5,8 +5,8 @@ project(libvci_tests C)
 
 add_definitions(-DETRACE_DEBUG=2)
 add_definitions(-Wall)
-add_definitions(-O2)
-#add_definitions(-g3)
+#add_definitions(-O2)
+add_definitions(-g3)
 
 find_package(Threads)
 
@@ -15,6 +15,9 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../build/)
 
 # project include path
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../build/include)
+
+add_executable(avltree_test container/avltree_test.c)
+target_link_libraries(avltree_test vci)
 
 add_executable(list_test container/list_test.c)
 target_link_libraries(list_test vci)

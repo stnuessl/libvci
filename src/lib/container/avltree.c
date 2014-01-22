@@ -17,7 +17,14 @@ static void _avlnode_rotate_left(struct avlnode **node)
     
     tmp            = (*node)->right;
     (*node)->right = tmp->left;
-    tmp->left     = *node;
+    tmp->left      = *node;
+
+    tmp->parent = (*node)->parent;
+    (*node)->parent = tmp;
+    
+    if(tmp->left)
+        tmp->left->parent = tmp;
+
     
     left_height  = _avlnode_get_height((*node)->left);
     right_height = _avlnode_get_height((*node)->right);
@@ -28,10 +35,7 @@ static void _avlnode_rotate_left(struct avlnode **node)
     right_height = _avlnode_get_height(tmp->right);
     
     tmp->height = max(left_height, right_height) + 1;
-    
-    tmp->parent = (*node)->parent;
-    (*node)->parent = tmp;
-    
+
     *node = tmp;
 }
 
@@ -43,6 +47,12 @@ static void _avlnode_rotate_right(struct avlnode **node)
     tmp           = (*node)->left;
     (*node)->left = tmp->right;
     tmp->right    = *node;
+     
+    tmp->parent = (*node)->parent;
+    (*node)->parent = tmp;
+    
+    if(tmp->right)
+        tmp->right->parent = tmp;
     
     left_height  = _avlnode_get_height((*node)->left);
     right_height = _avlnode_get_height((*node)->right);
@@ -53,9 +63,6 @@ static void _avlnode_rotate_right(struct avlnode **node)
     right_height = _avlnode_get_height(tmp->right);
     
     tmp->height = max(left_height, right_height) + 1;
-    
-    tmp->parent = (*node)->parent;
-    (*node)->parent = tmp;
     
     *node = tmp;
 }
@@ -73,60 +80,106 @@ static int _avlnode_get_balance(struct avlnode *node)
     return right_height - left_height;
 }
 
-static void _avlnode_balance(struct avlnode **node)
+static struct avlnode **
+_avlnode_child_reference(struct avlnode *__restrict node)
 {
+    if(!node->parent)
+        return NULL;
+    
+    if(node->parent->left == node)
+        return &node->parent->left;
+    else
+        return &node->parent->right;
+}
+
+static void _avltree_balance_node(struct avltree *__restrict tree,
+                                  struct avlnode *node)
+{
+    struct avlnode **node_ref;;
     int left_height, right_height, balance;
     
-    left_height  = _avlnode_get_height((*node)->left);
-    right_height = _avlnode_get_height((*node)->right);
-    
-    (*node)->height = max(left_height, right_height) + 1;
-    
-    balance = _avlnode_get_balance(*node);
-    
-    if(balance == -2) {
-        if(_avlnode_get_balance((*node)->left) < 1) {
-            _avlnode_rotate_right(node);
-        } else {
-            _avlnode_rotate_left(&(*node)->left);
-            _avlnode_rotate_right(node);
+    while(node) {
+        left_height  = _avlnode_get_height(node->left);
+        right_height = _avlnode_get_height(node->right);
+        
+        node->height = max(left_height, right_height) + 1;
+        
+        node_ref = _avlnode_child_reference(node);
+        if(!node_ref)
+            node_ref = &tree->root;
+        
+        balance = _avlnode_get_balance(node);
+        
+        if(balance == -2) {
+            if(_avlnode_get_balance(node->left) < 1) {
+                _avlnode_rotate_right(node_ref);
+            } else {
+                _avlnode_rotate_left(&node->left);
+                _avlnode_rotate_right(node_ref);
+            }
+        } else if(balance == 2) {
+            if(_avlnode_get_balance(node->right) > -1) {
+                _avlnode_rotate_left(node_ref);
+            } else {
+                _avlnode_rotate_right(&node->right);
+                _avlnode_rotate_left(node_ref);
+            }
         }
-    } else if(balance == 2) {
-        if(_avlnode_get_balance((*node)->right) > -1) {
-            _avlnode_rotate_left(node);
-        } else {
-            _avlnode_rotate_right(&(*node)->right);
-            _avlnode_rotate_left(node);
-        }
+        
+        node = node->parent;
     }
 }
 
-
-static void _avltree_take_node(struct avltree *__restrict tree,
-                               struct avlnode **node)
+static struct avlnode *_avlnode_take_min(struct avlnode **node)
 {
-    struct avlnode **min, *tmp;
+    struct avlnode *min;
+    
+    while((*node)->left)
+        node = &(*node)->left;
+    
+    min = *node;
+    
+    if((*node)->right) {
+        (*node)->right->parent = (*node)->parent;
+        *node = (*node)->right;
+    } else {
+        *node = NULL;
+    }
+    
+    return min;
+}
+
+static struct avlnode *_avltree_take_node(struct avltree *__restrict tree,
+                                          struct avlnode **node)
+{
+    struct avlnode *tmp, *min;
+    
+    tmp = *node;
     
     if((*node)->left && (*node)->right) {
         /* get reference on minimum node in right 'half'-tree */
-        min = &(*node)->right;
+
+        min = _avlnode_take_min(&(*node)->right);
+
+        min->left   = (*node)->left;
+        min->right  = (*node)->right;
+        min->parent = (*node)->parent;
+        min->height = (*node)->height;
         
-        while((*min)->left)
-            min = &(*min)->left;
-        
-        tmp   = *node;
-        *node = *min;
-        
-        (*min)->parent = tmp->parent;
+        *node = min;
     } else if((*node)->left) {
         (*node)->left->parent = (*node)->parent;
         *node = (*node)->left;
-    } else {
+    } else if((*node)->right) {
         (*node)->right->parent = (*node)->parent;
         *node = (*node)->right;
+    } else {
+        *node = NULL;
     }
     
     tree->size -= 1;
+    
+    return tmp;
 }
 
 
@@ -162,6 +215,9 @@ void avltree_init(struct avltree *__restrict tree,
 
 void avltree_destroy(struct avltree *__restrict tree)
 {
+    if(!tree->data_delete)
+        return;
+    
     
 }
 
@@ -169,7 +225,7 @@ int avltree_insert(struct avltree *__restrict tree,
                    struct avlnode *node, 
                    const void *key)
 {
-    struct avlnode **root, *parent;;
+    struct avlnode **root, *parent;
     int res;
     
     root   = &tree->root;
@@ -182,7 +238,7 @@ int avltree_insert(struct avltree *__restrict tree,
         
         if(res < 0)
             root = &(*root)->left;
-        if(res > 0)
+        else if(res > 0)
             root = &(*root)->right;
         else
             return -EINVAL;
@@ -195,13 +251,9 @@ int avltree_insert(struct avltree *__restrict tree,
     node->height = 0;
     
     *root = node;
+    tree->size += 1;
     
-    root = &node->parent;
-    
-    while(*root) {
-        _avlnode_balance(root);
-        root = &(*root)->parent;
-    }
+    _avltree_balance_node(tree, parent);
     
     return 0;
 }
@@ -231,7 +283,7 @@ struct avlnode *avltree_retrieve(struct avltree *__restrict tree,
 struct avlnode *avltree_take(struct avltree *__restrict tree, 
                              const void *key)
 {
-    struct avlnode **root, **parent;
+    struct avlnode **root, *ret;
     int res;
     
     root = &tree->root;
@@ -250,20 +302,18 @@ struct avlnode *avltree_take(struct avltree *__restrict tree,
     if(!*root)
         return NULL;
     
-    _avltree_take_node(tree, root);
+    ret = _avltree_take_node(tree, root);
     
-    parent = &(*root)->parent;
+    _avltree_balance_node(tree, ret->parent);
     
-    while(*parent) {
-        _avlnode_balance(parent);
-        parent = &(*parent)->parent;
-    }
-    
-    return *root;
+    return ret;
 }
 
 bool avltree_contains(struct avltree *__restrict tree,
-                      const void *key);
+                      const void *key)
+{
+    return avltree_retrieve(tree, key) != NULL;
+}
 
 struct avlnode *avltree_min(struct avltree *__restrict tree)
 {
@@ -297,7 +347,7 @@ struct avlnode *avltree_max(struct avltree *__restrict tree)
 
 struct avlnode *avltree_take_min(struct avltree *__restrict tree)
 {
-    struct avlnode **node, **parent;
+    struct avlnode **node;
     
     node = &tree->root;
     
@@ -307,21 +357,16 @@ struct avlnode *avltree_take_min(struct avltree *__restrict tree)
     while((*node)->left)
         node = &(*node)->left;
     
-    _avltree_take_node(tree, node);
+    *node = _avltree_take_node(tree, node);
     
-    parent = &(*node)->parent;
-    
-    while(*parent) {
-        _avlnode_balance(parent);
-        parent = &(*parent)->parent;
-    }
+//     _avltree_balance(&(*node)->parent);
     
     return *node;
 }
 
 struct avlnode *avltree_take_max(struct avltree *__restrict tree)
 {
-    struct avlnode **node, **parent;
+    struct avlnode **node;
     
     node = &tree->root;
     
@@ -331,14 +376,14 @@ struct avlnode *avltree_take_max(struct avltree *__restrict tree)
     while((*node)->right)
         node = &(*node)->right;
     
-    _avltree_take_node(tree, node);
+    *node = _avltree_take_node(tree, node);
     
-    parent = &(*node)->parent;
+//    parent = &(*node)->parent;
     
-    while(*parent) {
-        _avlnode_balance(parent);
-        parent = &(*parent)->parent;
-    }
+//     while(*parent) {
+//         _avltree_balance(parent);
+//         parent = &(*parent)->parent;
+//     }
     
     return *node;
 }

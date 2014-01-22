@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.6)
 project(libvci C)
 
 add_definitions(-Wall)
-add_definitions(-O2)
-#add_definitions(-g3)
+#add_definitions(-O2)
+add_definitions(-g3)
 
 find_package(Threads)
 
@@ -15,6 +15,7 @@ add_library(vci
 	    src/lib/config/config.c
 	    src/lib/config/config_parser.c
 	    src/lib/config/key.c
+	    src/lib/container/avltree.c
             src/lib/container/buffer.c
             src/lib/container/cache.c
             src/lib/container/container_util.c
@@ -38,6 +39,7 @@ target_link_libraries(vci ${CMAKE_THREAD_LIBS_INIT})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 install(FILES
+        include/avltree.h
         include/buffer.h
         include/cache.h
         include/clock.h
