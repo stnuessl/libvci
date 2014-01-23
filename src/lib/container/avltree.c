@@ -359,7 +359,7 @@ struct avlnode *avltree_take_min(struct avltree *__restrict tree)
     
     min = _avltree_take_node(tree, node);
     
-    _avltree_balance_node(min->parent);
+    _avltree_balance_node(tree, min->parent);
     
     return min;
 }
