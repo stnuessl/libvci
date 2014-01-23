@@ -347,7 +347,7 @@ struct avlnode *avltree_max(struct avltree *__restrict tree)
 
 struct avlnode *avltree_take_min(struct avltree *__restrict tree)
 {
-    struct avlnode **node;
+    struct avlnode **node, *min;
     
     node = &tree->root;
     
@@ -357,16 +357,16 @@ struct avlnode *avltree_take_min(struct avltree *__restrict tree)
     while((*node)->left)
         node = &(*node)->left;
     
-    *node = _avltree_take_node(tree, node);
+    min = _avltree_take_node(tree, node);
     
-//     _avltree_balance(&(*node)->parent);
+    _avltree_balance_node(min->parent);
     
-    return *node;
+    return min;
 }
 
 struct avlnode *avltree_take_max(struct avltree *__restrict tree)
 {
-    struct avlnode **node;
+    struct avlnode **node, *max;
     
     node = &tree->root;
     
@@ -376,14 +376,9 @@ struct avlnode *avltree_take_max(struct avltree *__restrict tree)
     while((*node)->right)
         node = &(*node)->right;
     
-    *node = _avltree_take_node(tree, node);
+    max = _avltree_take_node(tree, node);
     
-//    parent = &(*node)->parent;
-    
-//     while(*parent) {
-//         _avltree_balance(parent);
-//         parent = &(*parent)->parent;
-//     }
+    _avltree_balance_node(tree, max->parent);
     
     return *node;
 }
