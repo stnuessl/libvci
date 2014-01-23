@@ -32,8 +32,6 @@ unsigned int hash(const void *key)
     hval ^= (hval >> 11);
     hval += (hval << 15);
     
-    // fprintf(stdout, "Hash value of %d is %u.\n", val, hval);
-    
     return hval;
 }
 
