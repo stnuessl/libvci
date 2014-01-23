@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <avltree.h>
 #include <clock.h>
@@ -21,6 +24,48 @@ int int_compare(const void *a, const void *b)
 void node_delete_from_avlnode(struct avlnode *avlnode)
 {
     free(container_of(avlnode, struct node, avlnode));
+}
+
+void avltree_test_deletion(void)
+{
+#define NUM_NODES 1000
+    struct avltree *tree;
+    struct node *node;
+    int fd, i, rand, err;
+    
+    fd = open("/dev/urandom", O_RDONLY);
+    if(fd < 0) {
+        fprintf(stderr, "open() failed - %s.\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    
+    tree = avltree_new(&int_compare);
+    assert(tree);
+    
+    avltree_set_data_delete(tree, &node_delete_from_avlnode);
+    
+    for(i = 0; i < NUM_NODES; ++i) {
+        node = malloc(sizeof(*node));
+        assert(node);
+        
+        err = read(fd, &rand, sizeof(rand));
+        assert(err == sizeof(rand));
+        
+        node->data = rand;
+        
+        err = avltree_insert(tree, &node->avlnode, (void *)(long) i);
+        if(err < 0) {
+            if(err == -EINVAL) {
+                fprintf(stdout, "Duplicate key -> %d\n", rand);
+                free(node);
+            } else {
+                fprintf(stderr, "Unkown error ( %d ) on insertion.\n", err);
+            }
+        } 
+    }
+    
+    close(fd);
+    avltree_delete(tree);
 }
 
 void avltree_test_performance(int num)
@@ -93,6 +138,7 @@ int main(int argc, char *argv[])
     }
     
     avltree_test_performance(atoi(argv[1]));
+    avltree_test_deletion();
     
     return EXIT_SUCCESS;
 }
