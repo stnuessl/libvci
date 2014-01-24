@@ -40,5 +40,14 @@ void list_insert_list(struct link *list, struct link *other);
 #define list_for_each_reverse(list, link)                                      \
     for((link) = (list)->prev; (link) != (list); (link) = (link)->prev)
 
+#define list_for_each_safe(list, link, safe)                                   \
+    for((link) = (list)->next, (safe) = (link)->next;                          \
+        (link) != (list);                                                      \
+        (link) = (safe), (safe) = (safe)->next)
+
+#define list_for_each_reverse_safe(list, link, safe)                           \
+    for((link) = (list)->prev, (safe) = (link)->prev;                          \
+        (link) != (list);                                                      \
+        (link) = (safe), (safe) = (safe)->prev)
 
 #endif /* _LIST_H_ */

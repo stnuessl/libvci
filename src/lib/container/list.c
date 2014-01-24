@@ -24,18 +24,15 @@ void list_destroy(struct link *__restrict list,
 void list_clear(struct link *__restrict list,
                 void (*data_delete)(struct link *))
 {
-    struct link *link;
+    struct link *link, *next;
     
     if(!data_delete) {
         list_init(list);
         return;
     }
     
-    while(!list_empty(list)) {
-        link = list_take_front(list);
-        
+    list_for_each_safe(list, link, next)
         data_delete(link);
-    }
 }
 
 inline void list_insert(struct link *list, struct link *link)
