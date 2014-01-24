@@ -29,9 +29,9 @@ static int _map_rehash(struct map *__restrict map, unsigned int capacity)
     old_capacity = map->capacity;
     old_table    = map->table;
     
-    map->size  = 0;
+    map->size     = 0;
     map->capacity = max(capacity, MAP_DEFAULT_CAPACITY);
-    map->table = calloc(map->capacity, sizeof(*map->table));
+    map->table    = calloc(map->capacity, sizeof(*map->table));
 
     if(!map->table)
         return -errno;
@@ -178,6 +178,17 @@ void map_clear(struct map *__restrict map)
             map->table[i].state = MAP_DATA_STATE_EMPTY;
         }
     }
+}
+
+int map_rehash(struct map *__restrict map, unsigned int size)
+{
+    /* ensure that we don't have to rehash for 'size' additional insertions */
+    size = adjust((size + map->size) << 1, MAP_DEFAULT_CAPACITY);
+    
+    if(size == map->capacity)
+        return 0;
+    
+    return _map_rehash(map, size);
 }
 
 /*

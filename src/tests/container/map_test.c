@@ -107,7 +107,7 @@ void map_test_performance(unsigned int num)
     int i, err;
     
     map = map_new(0, &int_compare, &hash);
-    c   = clock_new(CLOCK_MONOTONIC);
+    c   = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(map);
     assert(c);
     
@@ -138,6 +138,30 @@ void map_test_performance(unsigned int num)
     
     fprintf(stdout, "Elapsed time for %u removals: %lu ms\n",
             num,
+            clock_elapsed_ms(c));
+    
+    clock_delete(c);
+    map_delete(map);
+    
+    map = map_new(0, &int_compare, &hash);
+    c   = clock_new(CLOCK_PROCESS_CPUTIME_ID);
+    assert(map);
+    assert(c);
+    
+    clock_start(c);
+    
+    err = map_rehash(map, num);
+    assert(err == 0);
+    
+    for(i = 0; i < num; ++i) {
+        err = map_insert(map, (void *)(long) i, (void *)(long) i);
+        assert(err == 0);
+    }
+    
+    fprintf(stdout, 
+            "Elapsed time for %u insertions with"
+            "preallocated map memory: %lu ms\n",
+            num, 
             clock_elapsed_ms(c));
     
     clock_delete(c);
