@@ -38,13 +38,14 @@ Threadpool implementation for managing tasks and threads.
         --> struct task
         
         Threadpool:     Executes inserted tasks in FIFO Order.
-        -->     struct threadpool
+        --> struct threadpool
 
 ### observer
 Register a list of callbacks that get executed on defined events.
 
         Observer:       Define event and callback which shall get executed.
         --> struct observer
+
         Subject:        Register observer and signal events.
         --> struct subject
         
