@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "avltree.h"
-#include "macros.h"
+#include "macro.h"
 
 static inline int _avlnode_get_height(const struct avlnode *__restrict node)
 {

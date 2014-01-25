@@ -7,7 +7,7 @@
 #include "subject.h"
 #include "observer.h"
 
-#include "macros.h"
+#include "macro.h"
 
 static unsigned int _int_hash(const void *key)
 {

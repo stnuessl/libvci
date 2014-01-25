@@ -2,7 +2,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/eventfd.h>
 #include <stdbool.h>
 
 #include "ringbuffer.h"

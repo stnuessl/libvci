@@ -6,7 +6,7 @@
 
 #include <mempool.h>
 #include <clock.h>
-#include <macros.h>
+#include <macro.h>
 
 #define LOOPS 1
 #define POOL_CHUNKS 2000

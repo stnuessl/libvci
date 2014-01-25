@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include <macros.h>
+#include <macro.h>
 #include <config.h>
 #include <map.h>
 

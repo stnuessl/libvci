@@ -7,7 +7,7 @@
 #include "link.h"
 #include "list.h"
 #include "cache.h"
-#include "macros.h"
+#include "macro.h"
 
 #define CACHE_DEFAULT_SIZE 32
 

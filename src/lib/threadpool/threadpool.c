@@ -12,7 +12,7 @@
 #include "map.h"
 #include "task.h"
 #include "threadpool.h"
-#include "macros.h"
+#include "macro.h"
 
 static unsigned int _thread_hash(const void *thread)
 {

@@ -5,7 +5,7 @@
 
 #include <list.h>
 #include <clock.h>
-#include <macros.h>
+#include <macro.h>
 
 struct data {
     int a;

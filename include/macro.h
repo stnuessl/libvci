@@ -30,9 +30,6 @@
     
 #define unlikely(x)                                                            \
     __builtin_expect(!!(x), 0)
-    
-#define __on_return(func)                                                      \
-    __attribute__((cleanup(func)))
-    
 
+    
 #endif /* _MACROS_H_ */

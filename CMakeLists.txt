@@ -49,7 +49,7 @@ install(FILES
         include/link.h
         include/list.h
         include/log.h
-        include/macros.h
+        include/macro.h
         include/mempool.h
         include/queue.h
         include/stack.h

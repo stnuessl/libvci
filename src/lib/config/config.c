@@ -8,7 +8,7 @@
 #include <map.h>
 #include <list.h>
 #include <buffer.h>
-#include <macros.h>
+#include <macro.h>
 
 #include "config.h"
 #include "config_parser.h"

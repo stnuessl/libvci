@@ -8,7 +8,7 @@
 
 #include <map.h>
 #include <clock.h>
-#include <macros.h>
+#include <macro.h>
 
 int int_compare(const void *a, const void *b)
 {

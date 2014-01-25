@@ -5,11 +5,11 @@
 #include <assert.h>
 
 #include <buffer.h>
-#include <macros.h>
+#include <macro.h>
 
 int main(int argc, char *argv[])
 {
-    struct buffer buf __on_return(buffer_destroy);
+    struct buffer buf;
     int err;
     
     err = buffer_init(&buf, 1);
@@ -32,6 +32,8 @@ int main(int argc, char *argv[])
     
     while(buffer_bytes_accessible(&buf) > 0)
         fprintf(stdout, "%c", buffer_read_char(&buf));
+    
+    buffer_destroy(&buf);
         
     return EXIT_SUCCESS;
 }

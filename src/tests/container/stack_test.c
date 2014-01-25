@@ -6,7 +6,7 @@
 
 #include <link.h>
 #include <stack.h>
-#include <macros.h>
+#include <macro.h>
 
 struct data {
     char data;

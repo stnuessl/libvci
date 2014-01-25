@@ -7,7 +7,7 @@
 #include <subject.h>
 #include <observer.h>
 #include <clock.h>
-#include <macros.h>
+#include <macro.h>
 
 
 struct my_observer {

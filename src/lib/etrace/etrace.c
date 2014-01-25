@@ -9,7 +9,7 @@
 #include <stdarg.h>
 
 #include "log.h"
-#include "macros.h"
+#include "macro.h"
 #include "etrace.h"
 
 #define BACKTRACE_BUFFER_SIZE 16
