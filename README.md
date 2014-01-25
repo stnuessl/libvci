@@ -7,23 +7,47 @@ FEATURES
 --------
 
 ### clock
-Timer interface for messuring elapsed time.
+Clock implementation for messuring elapsed time.
 
 ### config
 Config interface for reading out config files.
 
 ### container
-Interface for various container types.
+Implementation of various container types. Includes:
+
+        AVL Trees               --> struct avltree
+        Serial Buffer           --> struct buffer
+        LRU Cache               --> struct cache
+        List                    --> struct link
+        Hashtable / Hashmap     --> struct map
+        FIFO Queue              --> struct queue
+        Ring-/ Circular Buffer  --> struct ringbuffer
+        LIFO Stack              --> struct stack
+        Dynamic Array           --> struct vector
 
 ### etrace
 Interface for stacktracing on critical errors.
 
 ### mempool
-Mempool interface for fast memory allocation on fixed memory sizes.
+Mempool implementation for fast memory allocation on fixed memory sizes.
 
 ### threadpool
-Threadpool interface for managing tasks and threads.
+Threadpool implementation for managing tasks and threads.
 
+        Task:           Defining callback function and arguments.
+        --> struct task
+        
+        Threadpool:     Executes inserted tasks in FIFO Order.
+        -->     struct threadpool
+
+### observer
+Register a list of callbacks that get executed on defined events.
+
+        Observer:       Define event and callback which shall get executed.
+        --> struct observer
+        Subject:        Register observer and signal events.
+        --> struct subject
+        
 ### log
 Logging functions providing configurable line header and severity levels.
 
