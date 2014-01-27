@@ -159,7 +159,7 @@ void map_test_performance(unsigned int num)
     }
     
     fprintf(stdout, 
-            "Elapsed time for %u insertions with"
+            "Elapsed time for %u insertions with "
             "preallocated map memory: %lu ms\n",
             num, 
             clock_elapsed_ms(c));
