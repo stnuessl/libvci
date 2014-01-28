@@ -20,8 +20,6 @@
 #define ALIGN(x, a)                                                            \
     __ALIGN_MASK(x, (typeof(x))(a)-1)
 
-#undef __ALIGN_MASK
-
 #define container_of(ptr, type, member)                                        \
     (type *)(((char *) ptr) - offsetof(type, member))
 
