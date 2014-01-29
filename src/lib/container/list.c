@@ -48,9 +48,6 @@ inline void list_take(struct link *__restrict link)
 {
     link->prev->next = link->next;
     link->next->prev = link->prev;
-    
-    link->next = NULL;
-    link->prev = NULL;
 }
 
 inline void list_insert_front(struct link *__restrict list, struct link *link)
