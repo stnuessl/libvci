@@ -15,7 +15,7 @@ Config interface for reading out config files.
 ### container
 Implementation of various container types. Includes:
 
-        AVL Trees               --> struct avltree
+        AVL Tree                --> struct avltree
         Serial Buffer           --> struct buffer
         LRU Cache               --> struct cache
         List                    --> struct link
