@@ -34,7 +34,14 @@ void test_sort_vector(void)
     
     v = vector_new(ARRAY_SIZE(a));
     assert(v);
-        
+    
+    /*
+     * vector_at() doesn't work on vector with size 0,
+     * so we artifically increase it.
+     */
+    for(i = 0; i < ARRAY_SIZE(a); ++i)
+        vector_insert_back(v, (void *)(long) 1);
+    
     for(i = 0; i < ARRAY_SIZE(a); ++i)
         *vector_at(v, i) = (void *)(long) a[i];
     
@@ -54,7 +61,6 @@ void test_sort_large_vector(void)
     struct vector *v;
     struct clock *c;
     int i;
-    void **data;
     
     v = vector_new(N_ELEMENTS);
     c = clock_new(CLOCK_MONOTONIC);
@@ -63,8 +69,8 @@ void test_sort_large_vector(void)
     
     i = 0;
     
-    vector_for_each(v, data)
-        *data = (void *)(long) N_ELEMENTS - i++;
+    for(i = 0; i < N_ELEMENTS; ++i)
+        vector_insert_back(v, (void *)(long) N_ELEMENTS - i);
         
     clock_start(c);
     
@@ -73,8 +79,8 @@ void test_sort_large_vector(void)
     clock_stop(c);
     
     fprintf(stdout, 
-            "Elapsed sorting time (%u elements): %lu us.\n", 
-            N_ELEMENTS, clock_elapsed_us(c));
+            "Elapsed sorting time (%u elements): %lu ms.\n", 
+            N_ELEMENTS, clock_elapsed_ms(c));
     
     for(i = 1; i < N_ELEMENTS; ++i)
         assert((int)(long)*vector_at(v, i - 1) <= (int)(long)*vector_at(v, i));
@@ -92,7 +98,7 @@ void test_insert(void)
     assert(vec);
     
     for(i = 0; i < size; ++i)
-        *vector_at(vec, i) = (void *)(long) i;
+        vector_insert_back(vec, (void *)(long) i);
     
     err = vector_insert_front(vec, (void *) 1000);
     assert(err == 0);
@@ -110,15 +116,12 @@ void test_take(void)
 {
     struct vector *vec;
     int size = 10, i;
-    void **data;
     
     vec = vector_new(10);
     assert(vec);
     
-    i = 0;
-    
-    vector_for_each(vec, data)
-        *data = (void *)(long) i++;
+    for(i = 0; i < size; ++i)
+        vector_insert_back(vec, (void *)(long) i);
 
     assert((long)vector_take_at(vec, size / 2) == (size / 2));
     assert((long)vector_take_front(vec) == 0); 
