@@ -21,7 +21,7 @@
     __ALIGN_MASK(x, (typeof(x))(a)-1)
 
 #define container_of(ptr, type, member)                                        \
-    (type *)(((char *) ptr) - offsetof(type, member))
+    ((type *)(((char *) ptr) - offsetof(type, member)))
 
 #define likely(x)                                                              \
     __builtin_expect(!!(x), 1)
