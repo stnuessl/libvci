@@ -47,7 +47,6 @@ void epoll_init(void)
     epoll_fd = epoll_create(1);
     assert(epoll_fd >= 0);
     
-    ev.data.ptr = pool;
     ev.data.fd  = threadpool_event_fd(pool);
     ev.events   = EPOLLIN;
     
