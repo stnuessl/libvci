@@ -5,15 +5,13 @@
 #include <errno.h>
 #include <stdint.h>
 
-#include <map.h>
-#include <list.h>
-#include <buffer.h>
-#include <macro.h>
-
+#include "map.h"
+#include "list.h"
+#include "buffer.h"
+#include "macro.h"
+#include "key.h"
 #include "config.h"
 #include "config_parser.h"
-#include "key.h"
-
 
 struct config *config_new(const char *__restrict path)
 {
