@@ -35,15 +35,13 @@ void vector_delete(struct vector *__restrict vec, void (*data_delete)(void *))
 
 int vector_init(struct vector *__restrict vec, unsigned int capacity)
 {
-    
-    vec->size = capacity;
-    
     capacity = adjust(capacity, VECTOR_DEFAULT_CAPACITY);
     
     vec->data = calloc(capacity, sizeof(*vec->data));
     if(!vec->data)
         return -errno;
 
+    vec->size = 0;
     vec->capacity = capacity;
     
     return 0;
