@@ -68,6 +68,95 @@ void avltree_test_deletion(void)
     avltree_delete(tree);
 }
 
+void avltree_test_iteration_performance(void)
+{
+    struct avltree *tree;
+    struct avlnode *avlnode;
+    struct clock *c;
+    struct node *node;
+    int i, num, err;
+    
+    num = 1000000;
+    
+    tree = avltree_new(&int_compare);
+    c    = clock_new(CLOCK_PROCESS_CPUTIME_ID);
+    assert(tree);
+    assert(c);
+    
+    avltree_set_data_delete(tree, &node_delete_from_avlnode);
+    
+    for(i = 0; i < num; ++i) {
+        node = malloc(sizeof(*node));
+        assert(node);
+        
+        node->data = i + 1;
+        
+        err = avltree_insert(tree, &node->avlnode, (void *)(long)node->data);
+        assert(err == 0);
+    }
+    
+    i = 0;
+    
+    clock_start(c);
+    
+    avltree_for_each_postorder(tree, avlnode) {
+        node = container_of(avlnode, struct node, avlnode);
+        
+        assert(node->data != 0);
+        
+        i += 1;
+    }
+    
+    fprintf(stdout, 
+            "Elapsed time for iteration of %d elements: %lu.\n",
+            i, clock_elapsed_ms(c));
+    
+    assert(i == num);
+    
+    avltree_delete(tree);
+    clock_delete(c);
+}
+
+void avltree_test_iteration_print(void)
+{
+    struct avltree *tree;
+    struct avlnode *avlnode;
+    struct node *node;
+    int i, num, err;
+    
+    num = 10;
+    
+    tree = avltree_new(&int_compare);
+    assert(tree);
+    
+    avltree_set_data_delete(tree, &node_delete_from_avlnode);
+    
+    for(i = 0; i < num; ++i) {
+        node = malloc(sizeof(*node));
+        assert(node);
+        
+        node->data = i + 1;
+        
+        err = avltree_insert(tree, &node->avlnode, (void *)(long)node->data);
+        assert(err == 0);
+        
+        avltree_for_each_postorder(tree, avlnode) {
+            node = container_of(avlnode, struct node, avlnode);
+            
+            fprintf(stdout, "Value: %d\n", node->data);
+        }
+        
+        fprintf(stdout, "\n");
+    }
+    
+    avltree_delete(tree);
+}
+void avltree_test_iteration(void)
+{
+    avltree_test_iteration_print();
+    avltree_test_iteration_performance();
+}
+
 void avltree_test_performance(int num)
 {
     struct avltree *tree;
@@ -139,6 +228,7 @@ int main(int argc, char *argv[])
     
     avltree_test_performance(atoi(argv[1]));
     avltree_test_deletion();
+    avltree_test_iteration();
     
     return EXIT_SUCCESS;
 }

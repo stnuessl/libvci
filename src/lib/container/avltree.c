@@ -18,13 +18,6 @@ static void _avlnode_rotate_left(struct avlnode **node)
     tmp            = (*node)->right;
     (*node)->right = tmp->left;
     tmp->left      = *node;
-
-    tmp->parent = (*node)->parent;
-    (*node)->parent = tmp;
-    
-    if(tmp->left)
-        tmp->left->parent = tmp;
-
     
     left_height  = _avlnode_get_height((*node)->left);
     right_height = _avlnode_get_height((*node)->right);
@@ -36,6 +29,12 @@ static void _avlnode_rotate_left(struct avlnode **node)
     
     tmp->height = max(left_height, right_height) + 1;
 
+    tmp->parent     = (*node)->parent;
+    (*node)->parent = tmp;
+    
+    if((*node)->right)
+        (*node)->right->parent = *node;
+    
     *node = tmp;
 }
 
@@ -47,12 +46,6 @@ static void _avlnode_rotate_right(struct avlnode **node)
     tmp           = (*node)->left;
     (*node)->left = tmp->right;
     tmp->right    = *node;
-     
-    tmp->parent = (*node)->parent;
-    (*node)->parent = tmp;
-    
-    if(tmp->right)
-        tmp->right->parent = tmp;
     
     left_height  = _avlnode_get_height((*node)->left);
     right_height = _avlnode_get_height((*node)->right);
@@ -63,6 +56,12 @@ static void _avlnode_rotate_right(struct avlnode **node)
     right_height = _avlnode_get_height(tmp->right);
     
     tmp->height = max(left_height, right_height) + 1;
+    
+    tmp->parent     = (*node)->parent;
+    (*node)->parent = tmp;
+    
+    if((*node)->left)
+        (*node)->left->parent = *node;
     
     *node = tmp;
 }
@@ -420,4 +419,29 @@ void (*avltree_data_delete(struct avltree *__restrict tree))
                           (struct avlnode *)
 {
     return tree->data_delete;
+}
+
+struct avlnode *avlnode_postorder_first(struct avlnode *node)
+{
+    while(1) {
+        if(node->left)
+            node = node->left;
+        else if(node->right)
+            node = node->right;
+        else
+            break;
+    }
+    
+    return node;
+}
+
+struct avlnode *avlnode_postorder_next(struct avlnode *node)
+{
+    if(unlikely(!node->parent))
+        return NULL;
+        
+    if(node->parent->right && node->parent->left == node)
+        return avlnode_postorder_first(node->parent->right);
+    
+    return node->parent;
 }

@@ -67,4 +67,13 @@ void avltree_set_data_delete(struct avltree *__restrict tree,
 void (*avltree_data_delete(struct avltree *__restrict tree))
                            (struct avlnode *);
 
+struct avlnode *avlnode_postorder_first(struct avlnode *node);
+
+struct avlnode *avlnode_postorder_next(struct avlnode *node);
+
+#define avltree_for_each_postorder(tree, node)                                 \
+    for((node) = avlnode_postorder_first((tree)->root);                        \
+        (node);                                                                \
+        (node) = avlnode_postorder_next((node)))
+                           
 #endif /* _AVLTREE_H_ */
