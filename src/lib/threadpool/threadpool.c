@@ -73,7 +73,7 @@ again:
         if(errno == EINTR)
             goto again;
         
-        /* thread got lucky and wont exit */
+        /* thread got lucky and won't exit */
         return;
     }
     
@@ -339,7 +339,7 @@ int threadpool_remove_thread(struct threadpool *__restrict pool)
     /* 
      * this approach is quite neat since the first thread to take this
      * task (and therefore was idling) exits.
-     * However, before that it has to deallocate its memory.
+     * However, before that it has to deallocate the memory allocated here.
      */
     task = malloc(sizeof(*task));
     if(!task)
