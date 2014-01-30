@@ -70,7 +70,7 @@ void test_sort_large_vector(void)
     i = 0;
     
     for(i = 0; i < N_ELEMENTS; ++i)
-        vector_insert_back(v, (void *)(long) N_ELEMENTS - i);
+        vector_insert_at(v, i, (void *)(long) N_ELEMENTS - i);
         
     clock_start(c);
     
