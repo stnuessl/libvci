@@ -61,7 +61,7 @@ void inspect_map(const struct map *__restrict map)
     
     for(i = 0; i < map->capacity; ++i) {
         if(map->table[i].state == MAP_DATA_STATE_AVAILABLE)
-            fprintf(stdout, "At index %d: Key %d -> Value %d -> Hash %u\n",
+            fprintf(stdout, "At index %2d: Key %d -> Value %d -> Hash %u\n",
                     i,
                     (int)(long) map->table[i].key,
                     (int)(long) map->table[i].data,
