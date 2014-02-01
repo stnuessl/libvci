@@ -143,7 +143,7 @@ void avltree_test_iteration_print(void)
         avltree_for_each_postorder(tree, avlnode) {
             node = container_of(avlnode, struct node, avlnode);
             
-            fprintf(stdout, "Value: %d\n", node->data);
+            fprintf(stdout, "Value: %d\t", node->data);
         }
         
         fprintf(stdout, "\n");
