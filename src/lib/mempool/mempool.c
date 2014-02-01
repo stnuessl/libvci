@@ -35,18 +35,12 @@ int mempool_init(struct mempool *__restrict pool,
                  size_t size, 
                  size_t chunk_size)
 {
-    unsigned long *last;
-    
     pool->mem        = mem;
     pool->init       = mem;
     pool->next       = mem;
     pool->size       = size;
     pool->chunk_size = max(sizeof(unsigned long), chunk_size);
     pool->chunks     = pool->size / pool->chunk_size; 
-    
-    last = pool->mem + (pool->chunk_size * (pool->chunks - 1));
-    
-    *last = (unsigned long) NULL;
     
     return 0;
 }

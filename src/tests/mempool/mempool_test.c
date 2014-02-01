@@ -83,8 +83,52 @@ void test_without_mempool(void)
     clock_delete(c);
 }
 
+void test_stability(void)
+{
+#define BUFFER_SIZE 1000
+    struct mempool *p;
+    char *tmp[BUFFER_SIZE];
+    char mem_buffer[BUFFER_SIZE];
+    int loops, i;
+    
+    p = mempool_new(mem_buffer, BUFFER_SIZE, sizeof(char));
+    assert(p);
+    
+    loops = 1000;
+    
+    while(loops--) {
+        for(i = 0; i < BUFFER_SIZE; ++i) {
+            tmp[i] = mempool_alloc_chunk(p);
+            assert(tmp[i]);
+            
+            memset(tmp[i], 0x55, sizeof(**tmp));
+        }
+        
+        for(i = (BUFFER_SIZE / 2) - 1; i > -1; --i)
+            mempool_free_chunk(p, tmp[i]); 
+        
+        for(i = 0; i < BUFFER_SIZE; ++i) {
+            if(i >= BUFFER_SIZE / 2) {
+                free(mempool_alloc_chunk(p));
+            } else {
+                tmp[i] = mempool_alloc_chunk(p);
+                assert(tmp[i]);
+                
+                memset(tmp[i], 0x55, sizeof(**tmp));
+            }
+        }
+        
+        for(i = 0; i < BUFFER_SIZE; ++i)
+            mempool_free_chunk(p, tmp[i]);
+    }
+    
+    mempool_delete(p);
+}
+
 int main(int argc, char *argv[])
 {
+    
+    test_stability();
 
     if(argc == 2) {
         if(strcmp(argv[1], "--no-mempool") == 0)
