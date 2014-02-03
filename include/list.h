@@ -34,6 +34,8 @@ inline bool list_empty(const struct link *__restrict list);
 
 void list_insert_list(struct link *list, struct link *other);
 
+void list_assert(const struct link *__restrict list);
+
 #define list_for_each(list, link)                                              \
     for((link) = (list)->next; (link) != (list); (link) = (link)->next)
 

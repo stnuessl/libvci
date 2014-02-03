@@ -2,6 +2,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "link.h"
 #include "list.h"
@@ -109,4 +110,14 @@ void list_insert_list(struct link *list, struct link *other)
     list->next = other->next;
     
     list_init(other);
+}
+
+void list_assert(const struct link *__restrict list)
+{
+    const struct link *link;
+    
+    list_for_each(list, link) {
+        assert(link->prev->next == link && "Invalid successor of prev. link.");
+        assert(link->next->prev == link && "Invalid predecessor of next link.");
+    }
 }
