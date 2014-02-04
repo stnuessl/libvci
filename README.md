@@ -1,7 +1,7 @@
-libvci - Library for Various C Interfaces
-=========================================
+libvci
+======
 
-A library with various interfaces for common tasks.
+A C library with implementations for basic everyday stuff.
 
 FEATURES
 --------
