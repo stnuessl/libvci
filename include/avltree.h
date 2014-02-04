@@ -77,5 +77,11 @@ void avltree_assert(struct avltree *__restrict tree);
     for((node) = avlnode_postorder_first((tree)->root);                        \
         (node);                                                                \
         (node) = avlnode_postorder_next((node)))
-                           
+
+#define avltree_for_each_postorder_safe(tree, node, safe)                      \
+    for((node) = avlnode_postorder_first((tree)->root),                        \
+        (safe) = avlnode_postorder_next((node));                               \
+        (node);                                                                \
+        (node) = (safe), (safe) = avlnode_postorder_next((node)))
+
 #endif /* _AVLTREE_H_ */
