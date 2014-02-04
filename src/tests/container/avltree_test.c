@@ -217,43 +217,6 @@ void avltree_test_performance(int num)
     avltree_delete(tree);
 }
 
-void avltree_test_integrity(int num)
-{
-    struct avltree *tree;
-    struct avlnode *avlnode;
-    struct node *node, *tmp;
-    int i, err;
-    
-    tree = avltree_new(&int_compare);
-    assert(tree);
-    
-    avltree_set_data_delete(tree, &node_delete_from_avlnode);
-    
-    node = calloc(num, sizeof(*node));
-    assert(node);
-    
-    for(i = 0; i < num; ++i) {
-        node[i].data = i;
-        err = avltree_insert(tree, &node[i].avlnode, (void *)(long) i);
-        assert(err == 0);
-    }
-
-    for(i = 0; i < num; ++i) {
-        avlnode = avltree_retrieve(tree, (void *)(long) i);
-        tmp = container_of(avlnode, struct node, avlnode);
-        assert(tmp->data == i);
-    }
-
-    
-    for(i = 0; i < num; ++i) {
-        avlnode = avltree_take(tree, (void *)(long) i);
-        tmp = container_of(avlnode, struct node, avlnode);
-        assert(tmp->data == i);
-    }
-
-    free(node);
-    avltree_delete(tree);
-}
 
 int main(int argc, char *argv[])
 {
@@ -265,7 +228,6 @@ int main(int argc, char *argv[])
     }
     
     avltree_test_performance(atoi(argv[1]));
-    avltree_test_integrity(10000);
     avltree_test_deletion();
     avltree_test_iteration();
     
