@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdbool.h>
-#include <assert.h>
 
 #include "avltree.h"
 #include "macro.h"
@@ -424,9 +423,6 @@ void (*avltree_data_delete(struct avltree *__restrict tree))
 
 struct avlnode *avlnode_postorder_first(struct avlnode *node)
 {
-    if(!node)
-        return NULL;
-    
     while(1) {
         if(node->left)
             node = node->left;
@@ -448,41 +444,4 @@ struct avlnode *avlnode_postorder_next(struct avlnode *node)
         return avlnode_postorder_first(node->parent->right);
     
     return node->parent;
-}
-
-void avltree_assert(struct avltree *__restrict tree)
-{
-    struct avlnode *avlnode;
-    unsigned int count;
-    int res;
-    
-    assert(tree->key_compare && "Invalid key compare callback.");
-    
-    count = 0;
-    
-    avltree_for_each_postorder(tree, avlnode) {
-        count += 1;
-        
-        if(avlnode->left) {
-            res = tree->key_compare(avlnode->left->key, avlnode->key);
-            
-            assert(res < 0 && "Invalid left child.");
-        }
-        
-        if(avlnode->right) {
-            res = tree->key_compare(avlnode->right->key, avlnode->key);
-            
-            assert(res > 0 && "Invalid right child.");
-        }
-        
-        if(!avlnode->parent) {
-            assert(tree->root == avlnode && "Invalid root.");
-        } else {
-            
-            if(avlnode->parent->left != avlnode)
-                assert(avlnode->parent->right == avlnode && "Invalid parent.");
-        }
-    }
-    
-    assert(count == tree->size && "Invalid avltree size.");
 }

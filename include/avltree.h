@@ -71,8 +71,6 @@ struct avlnode *avlnode_postorder_first(struct avlnode *node);
 
 struct avlnode *avlnode_postorder_next(struct avlnode *node);
 
-void avltree_assert(struct avltree *__restrict tree);
-
 #define avltree_for_each_postorder(tree, node)                                 \
     for((node) = avlnode_postorder_first((tree)->root);                        \
         (node);                                                                \

@@ -73,7 +73,5 @@ unsigned int (*map_key_hash(struct map *__restrict map))(const void *);
 
 void (*map_data_delete(struct map *__restrict map))(void *);
 
-void map_assert(const struct map *__restrict map);
-
 
 #endif /* _MAP_H_ */

@@ -2,7 +2,6 @@
 #include <string.h>
 #include <errno.h>
 #include <stdbool.h>
-#include <assert.h>
 
 #include "map.h"
 #include "container_util.h"
@@ -306,29 +305,4 @@ unsigned int (*map_key_hash(struct map *__restrict map))(const void *)
 void (*map_data_delete(struct map *__restrict map))(void *)
 {
     return map->data_delete;
-}
-
-void map_assert(const struct map *__restrict map)
-{
-    unsigned int count, i, hash, load_factor;
-    
-    load_factor = 100 * map->size / map->capacity;
-    
-    assert(load_factor > MAP_LOWER_TABLE_BOUND - 5 && "Load factor too small.");
-    assert(load_factor < MAP_UPPER_TABLE_BOUND + 5 && "Load factor too big.");
-    
-    assert(map->key_compare && "Invalid key compare callback.");
-    assert(map->key_hash && "Invalid key hash callback.");
-    
-    for(i = 0, count = 0; i < map->capacity; ++i) {
-        if(map->table[i].state == MAP_DATA_STATE_AVAILABLE) {
-            count += 1;
-            
-            hash = map->key_hash(map->table[i].key);
-            
-            assert(hash == map->table[i].hash && "Invalid hash value.");
-        }
-    }
-    
-    assert(count == map->size && "Invalid map size.");
 }
