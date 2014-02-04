@@ -43,9 +43,11 @@ static int _map_rehash(struct map *__restrict map, unsigned int capacity)
             if(err < 0) {
                 /* revert to old table, which wasn't changed */
                 free(map->table);
+                
                 map->size     = old_entries;
                 map->capacity = old_capacity;
                 map->table    = old_table;
+                
                 return err;
             }
         }

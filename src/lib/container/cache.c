@@ -177,7 +177,7 @@ void *cache_retrieve(struct cache *__restrict cache, const void *key)
     return entry->data;
 }
 
-void* cache_take(struct cache *__restrict cache, const void* key)
+void *cache_take(struct cache *__restrict cache, const void* key)
 {
     struct cache_entry *entry;
     
