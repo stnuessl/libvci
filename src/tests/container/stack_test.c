@@ -35,7 +35,7 @@ bool is_palindrome(struct stack *__restrict stack, const char *str)
     for(i = 0; i < len; ++i) {
         data[i].data = str[i];
         
-        stack_push(stack, &data[i].link);
+        stack_insert(stack, &data[i].link);
     }
     
     c = EOF;

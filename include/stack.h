@@ -26,9 +26,9 @@ void stack_destroy(struct stack *__restrict stack,
 void stack_clear(struct stack *__restrict stack, 
                  void (*data_delete)(struct link *));
 
-void stack_push(struct stack *__restrict stack, struct link *link);
+void stack_insert(struct stack *__restrict stack, struct link *link);
 
-struct link *stack_pop(struct stack *__restrict stack);
+struct link *stack_take(struct stack *__restrict stack);
 
 struct link *stack_top(struct stack *__restrict stack);
 

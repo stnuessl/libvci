@@ -50,14 +50,14 @@ void stack_clear(struct stack *__restrict stack,
 }
 
 
-void stack_push(struct stack *__restrict stack, struct link *link)
+void stack_insert(struct stack *__restrict stack, struct link *link)
 {
     stack->size += 1;
     
     list_insert_front(&stack->list, link);
 }
 
-struct link *stack_pop(struct stack *__restrict stack)
+struct link *stack_take(struct stack *__restrict stack)
 {
     stack->size -= 1;
     
