@@ -112,7 +112,10 @@ int buffer_prepare_write(struct buffer *__restrict buf, size_t size)
     if(buf->used + size <= buf->size)
         return 0;
     
-    for(new_size = buf->size; new_size <= buf->size + size; new_size <<= 1);
+    new_size = buf->size;
+    
+    while(new_size <= buf->size + size)
+        new_size <<= 1;
     
     return _buffer_resize(buf, new_size);
 }
