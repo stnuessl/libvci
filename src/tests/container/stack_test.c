@@ -41,7 +41,7 @@ bool is_palindrome(struct stack *__restrict stack, const char *str)
     c = EOF;
 
     while(!stack_empty(stack)) {
-        tmp = container_of(stack_pop(stack), struct data, link);
+        tmp = container_of(stack_take(stack), struct data, link);
         
         c = tmp->data;
         
