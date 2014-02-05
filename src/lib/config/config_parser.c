@@ -4,7 +4,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include <stdint.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 

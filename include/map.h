@@ -1,8 +1,6 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
-#include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
 
 enum map_data_state {

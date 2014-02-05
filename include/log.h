@@ -1,7 +1,6 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
@@ -60,8 +59,8 @@ void log_printf(struct log *__restrict l,
                                             __attribute__((format(printf,3,4)));
 
 void log_vprintf(struct log *__restrict l,
-                  int level,
-                  const char *__restrict fmt, va_list vargs);
+                 int level,
+                 const char *__restrict fmt, va_list vargs);
 
 void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
                                             __attribute__((format(printf,2,3)));

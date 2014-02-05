@@ -1,8 +1,6 @@
 #ifndef _CONFIG_PARSER_H_
 #define _CONFIG_PARSER_H_
 
-#include <stdint.h>
-
 #include "config.h"
 
 #define _NO_SECTION_ "__NO_SECTION__"

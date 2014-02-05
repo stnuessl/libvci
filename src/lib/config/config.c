@@ -1,9 +1,6 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <errno.h>
-#include <stdint.h>
 
 #include "map.h"
 #include "list.h"
@@ -82,7 +79,7 @@ const char *config_value(struct config *__restrict config,
                     const char *__restrict section,
                     const char *__restrict key)
 {
-    uint64_t merged_key;
+    unsigned long merged_key;
     
     if(!section)
         section = _NO_SECTION_;

@@ -1,8 +1,6 @@
 #ifndef _KEYS_H_
 #define _KEYS_H_
 
-#include <stdio.h>
-
 int key_compare(const void *m1, const void *m2);
 
 unsigned int key_hash(const void *key);
