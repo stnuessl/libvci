@@ -1,13 +1,13 @@
 #include "config.h"
-#include "key.h"
+#include "config_key.h"
 
 
-int key_compare(const void *m1, const void *m2)
+int config_key_compare(const void *m1, const void *m2)
 {
     return (unsigned long) m1 - (unsigned long) m2;
 }
 
-unsigned int key_hash(const void *key)
+unsigned int config_key_hash(const void *key)
 {
     unsigned long k;
     const char *buf;
@@ -34,8 +34,8 @@ unsigned int key_hash(const void *key)
     return hval;
 }
 
-unsigned long key_merge(const char *__restrict section, 
-                        const char *__restrict key)
+unsigned long config_key_merge(const char *__restrict section, 
+                               const char *__restrict key)
 {
     unsigned long ret;
     char *buf;

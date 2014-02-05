@@ -9,7 +9,7 @@
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 
-#include <ringbuffer.h>
+#include <libvci/ringbuffer.h>
 
 #define N_THREADS 2
 #define SLEEP_TIME 1

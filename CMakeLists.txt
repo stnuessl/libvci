@@ -11,7 +11,7 @@ set(TARGET vci)
 set(CMAKE_INSTALL_PREFIX /usr/local)
 set(TARGET_SONAME lib${TARGET}.so)
 set(TARGET_INSTALLNAME_DIR lib)
-set(HEADER_INSTALLNAME_DIR include)
+set(HEADER_INSTALLNAME_DIR include/libvci)
 
 set(HEADER
     include/avltree.h
@@ -19,45 +19,43 @@ set(HEADER
     include/cache.h
     include/clock.h
     include/config.h
-    include/etrace.h
     include/map.h
     include/link.h
     include/list.h
     include/log.h
     include/macro.h
     include/mempool.h
+    include/observer.h
     include/queue.h
     include/stack.h
+    include/subject.h
     include/ringbuffer.h
     include/task.h
     include/threadpool.h
     include/vector.h
-    include/observer.h
-    include/subject.h
     )
         
 set(SOURCE
-    src/lib/clock/clock.c
-    src/lib/config/config.c
-    src/lib/config/config_parser.c
-    src/lib/config/key.c
+    src/lib/concurrent/task.c
+    src/lib/concurrent/threadpool.c
     src/lib/container/avltree.c
     src/lib/container/buffer.c
     src/lib/container/cache.c
     src/lib/container/container_util.c
-    src/lib/container/map.c
     src/lib/container/list.c
+    src/lib/container/map.c
     src/lib/container/queue.c
-    src/lib/container/stack.c
     src/lib/container/ringbuffer.c
+    src/lib/container/stack.c
     src/lib/container/vector.c
-    src/lib/log/log.c
-    src/lib/etrace/etrace.c
-    src/lib/mempool/mempool.c
-    src/lib/observer/subject.c
-    src/lib/observer/observer.c
-    src/lib/threadpool/threadpool.c
-    src/lib/threadpool/task.c
+    src/lib/util/clock.c
+    src/lib/util/config.c
+    src/lib/util/config_parser.c
+    src/lib/util/config_key.c
+    src/lib/util/log.c
+    src/lib/util/mempool.c
+    src/lib/util/observer.c
+    src/lib/util/subject.c
     )
 
 find_package(Threads)

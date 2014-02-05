@@ -7,9 +7,9 @@
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 
-#include <task.h>
-#include <threadpool.h>
-#include <macro.h>
+#include <libvci/task.h>
+#include <libvci/threadpool.h>
+#include <libvci/macro.h>
 
 #define MAX_EPOLL_EVENTS 10
 

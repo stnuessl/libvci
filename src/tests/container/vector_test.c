@@ -4,9 +4,9 @@
 #include <string.h>
 #include <assert.h>
 
-#include <vector.h>
-#include <clock.h>
-#include <macro.h>
+#include <libvci/vector.h>
+#include <libvci/clock.h>
+#include <libvci/macro.h>
 
 int compare(const void *a, const void *b)
 {

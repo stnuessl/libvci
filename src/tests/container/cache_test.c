@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include <cache.h>
+#include <libvci/cache.h>
 
 unsigned int int_hash(const void *key)
 {

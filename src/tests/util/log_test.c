@@ -1,5 +1,6 @@
 #include <assert.h>
-#include <log.h>
+
+#include <libvci/log.h>
 
 
 int main(int argc, char *argv[])

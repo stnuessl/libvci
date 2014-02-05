@@ -12,7 +12,7 @@
 
 #include "config.h"
 #include "config_parser.h"
-#include "key.h"
+#include "config_key.h"
 
 static const char *_buffer_string(struct buffer *__restrict buf)
 {
@@ -138,7 +138,7 @@ static int _config_parser_handle_key(struct config_parser *__restrict parser)
             if(!s)
                 return -errno;
             
-            parser->key = key_merge(parser->section, s);
+            parser->key = config_key_merge(parser->section, s);
             break;
         default:
             if(!isalnum(c))

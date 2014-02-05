@@ -4,8 +4,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include <buffer.h>
-#include <macro.h>
+#include <libvci/buffer.h>
+#include <libvci/macro.h>
 
 int main(int argc, char *argv[])
 {

@@ -4,9 +4,9 @@
 #include <assert.h>
 #include <time.h>
 
-#include <mempool.h>
-#include <clock.h>
-#include <macro.h>
+#include <libvci/mempool.h>
+#include <libvci/clock.h>
+#include <libvci/macro.h>
 
 #define LOOPS 1
 #define POOL_CHUNKS 2000

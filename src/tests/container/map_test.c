@@ -6,9 +6,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include <map.h>
-#include <clock.h>
-#include <macro.h>
+#include <libvci/map.h>
+#include <libvci/clock.h>
+#include <libvci/macro.h>
 
 int int_compare(const void *a, const void *b)
 {

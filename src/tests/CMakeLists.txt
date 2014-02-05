@@ -40,27 +40,28 @@ add_executable(ringbuffer_test container/ringbuffer_test.c)
 target_link_libraries(ringbuffer_test ${LIBS})
 target_link_libraries(ringbuffer_test ${CMAKE_THREAD_LIBS_INIT})
 
-add_executable(threadpool_test threadpool/threadpool_test.c)
-target_link_libraries(threadpool_test ${LIBS})
-
-add_executable(clock_test clock/clock_test.c)
-target_link_libraries(clock_test ${LIBS})
-
-add_executable(config_test config/config_test.c)
-target_link_libraries(config_test ${LIBS})
-target_link_libraries(config_test ${CMAKE_THREAD_LIBS_INIT})
-
-add_executable(etrace_test etrace/etrace_test.c)
-target_link_libraries(etrace_test ${LIBS})
-
-add_executable(mempool_test mempool/mempool_test.c)
-target_link_libraries(mempool_test ${LIBS})
-
-add_executable(log_test log/log_test.c)
-target_link_libraries(log_test ${LIBS})
-
 add_executable(vector_test container/vector_test.c)
 target_link_libraries(vector_test ${LIBS})
 
-add_executable(observer_test observer/observer_test.c)
+add_executable(threadpool_test concurrent/threadpool_test.c)
+target_link_libraries(threadpool_test ${LIBS})
+
+add_executable(clock_test util/clock_test.c)
+target_link_libraries(clock_test ${LIBS})
+
+add_executable(config_test util/config_test.c)
+target_link_libraries(config_test ${LIBS})
+target_link_libraries(config_test ${CMAKE_THREAD_LIBS_INIT})
+
+add_executable(mempool_test util/mempool_test.c)
+target_link_libraries(mempool_test ${LIBS})
+
+add_executable(log_test util/log_test.c)
+target_link_libraries(log_test ${LIBS})
+
+add_executable(observer_test util/observer_test.c)
 target_link_libraries(observer_test ${LIBS})
+
+add_executable(async_task_test concurrent/async_task_test.c)
+target_link_libraries(async_task_test ${LIBS})
+target_link_libraries(async_task_test ${CMAKE_THREAD_LIBS_INIT})

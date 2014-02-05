@@ -6,8 +6,8 @@
 #include "list.h"
 #include "buffer.h"
 #include "macro.h"
-#include "key.h"
 #include "config.h"
+#include "config_key.h"
 #include "config_parser.h"
 
 struct config *config_new(const char *__restrict path)
@@ -42,7 +42,7 @@ int config_init(struct config *__restrict config, const char *__restrict path)
     if(!config->path)
         return -errno;
     
-    err = map_init(&config->map, 0, &key_compare, &key_hash);
+    err = map_init(&config->map, 0, &config_key_compare, &config_key_hash);
     if(err < 0) {
         free(config->path);
         return err;
@@ -84,7 +84,7 @@ const char *config_value(struct config *__restrict config,
     if(!section)
         section = _NO_SECTION_;
     
-    merged_key = key_merge(section, key);
+    merged_key = config_key_merge(section, key);
     
     return map_retrieve(&config->map, (void *) merged_key);
 }

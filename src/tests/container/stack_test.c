@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#include <link.h>
-#include <stack.h>
-#include <macro.h>
+#include <libvci/link.h>
+#include <libvci/stack.h>
+#include <libvci/macro.h>
 
 struct data {
     char data;

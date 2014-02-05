@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include <subject.h>
-#include <observer.h>
-#include <clock.h>
-#include <macro.h>
+#include <libvci/subject.h>
+#include <libvci/observer.h>
+#include <libvci/clock.h>
+#include <libvci/macro.h>
 
 
 struct my_observer {

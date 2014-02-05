@@ -7,9 +7,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include <avltree.h>
-#include <clock.h>
-#include <macro.h>
+#include <libvci/avltree.h>
+#include <libvci/clock.h>
+#include <libvci/macro.h>
 
 struct node {
     int data;

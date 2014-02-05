@@ -3,8 +3,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <clock.h>
-#include <macro.h>
+#include <libvci/clock.h>
+#include <libvci/macro.h>
 
 void do_task(struct clock *__restrict c)
 {

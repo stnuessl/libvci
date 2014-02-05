@@ -3,9 +3,9 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include <list.h>
-#include <clock.h>
-#include <macro.h>
+#include <libvci/list.h>
+#include <libvci/clock.h>
+#include <libvci/macro.h>
 
 struct data {
     int a;

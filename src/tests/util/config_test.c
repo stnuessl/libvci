@@ -5,9 +5,9 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include <macro.h>
-#include <config.h>
-#include <map.h>
+#include <libvci/macro.h>
+#include <libvci/config.h>
+#include <libvci/map.h>
 
 #define PRINT_CONFIG(config, section, key)                                     \
     fprintf(stdout,                                                            \

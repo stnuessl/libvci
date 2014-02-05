@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <queue.h>
-#include <clock.h>
-#include <macro.h>
-
-
+#include <libvci/queue.h>
+#include <libvci/clock.h>
+#include <libvci/macro.h>
 
 struct data {
     unsigned int data;
