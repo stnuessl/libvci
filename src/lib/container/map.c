@@ -263,7 +263,7 @@ void *map_take(struct map *__restrict map, const void *key)
 
 bool map_contains(struct map *__restrict map, const void *key)
 {
-    return map_retrieve(map, key) != NULL;
+    return _map_lookup(map, key) != NULL;
 }
 
 inline unsigned int map_size(const struct map *__restrict map)
