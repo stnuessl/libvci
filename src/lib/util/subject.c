@@ -85,6 +85,7 @@ int subject_add_observer(struct subject *__restrict sub,
     
     list = map_retrieve(&sub->map, (void *)(long) obs->event_id);
     if(!list) {
+        /* This will not get deleted until subject_destroy() is called. */
         list = list_new();
         
         if(!list)
@@ -106,18 +107,18 @@ int subject_add_observer(struct subject *__restrict sub,
 void subject_remove_observer(struct subject *__restrict sub,
                              struct observer *obs)
 {
-    struct link *list;
-    
+    struct link *list, *link, *safe;
+
     list = map_retrieve(&sub->map, (void *)(long) obs->event_id);
     if(!list)
         return;
     
-    list_take(&obs->link_event);
-    list_take(&obs->link_all);
-    
-    if(list_empty(list)) {
-        map_take(&sub->map, (void *)(long) obs->event_id);
-        list_delete(list, NULL);
+    list_for_each_safe(list, link, safe) {
+        if(container_of(link, struct observer, link_event) == obs) {
+            list_take(&obs->link_event);
+            list_take(&obs->link_all);
+            break;
+        }
     }
 }
 
@@ -142,14 +143,14 @@ void subject_notify_arg(struct subject *__restrict sub,
                         unsigned int event_id, 
                         void *arg)
 {
-    struct link *list, *link;
+    struct link *list, *link, *safe;
     struct observer *obs;
     
     list = map_retrieve(&sub->map, (void *)(long) event_id);
     if(!list)
         return;
     
-    list_for_each(list, link) {
+    list_for_each_safe(list, link, safe) {
         obs = container_of(link, struct observer, link_event);
         obs->func(obs, arg);
     }
@@ -162,10 +163,10 @@ void subject_notify_all(struct subject *__restrict sub)
 
 void subject_notify_all_arg(struct subject *__restrict sub, void *arg)
 {
-    struct link *link;
+    struct link *link, *safe;
     struct observer *obs;
     
-    list_for_each(&sub->list, link) {
+    list_for_each_safe(&sub->list, link, safe) {
         obs = container_of(link, struct observer, link_all);
         obs->func(obs, arg);
     }
