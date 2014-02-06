@@ -4,16 +4,19 @@
 #include "link.h"
 
 struct observer {
-    struct link link;
-    void (*func)(void *, void *);
-  
+    struct link link_event;
+    struct link link_all;
+    
+    void (*func)(struct observer *, void *);
+    
     unsigned int event_id;
 };
 
 void observer_set_function(struct observer *__restrict obs, 
-                           void (*func)(void *, void *));
+                           void (*func)(struct observer *, void *));
 
-void (*observer_function(struct observer *__restrict obs))(void *, void *);
+void (*observer_function(struct observer *__restrict obs))
+                        (struct observer *, void *);
 
 void observer_set_event_id(struct observer *__restrict obs, 
                            unsigned int event_id);

@@ -1,5 +1,3 @@
-
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -9,14 +7,13 @@
 #include <libvci/clock.h>
 #include <libvci/macro.h>
 
-
 struct my_observer {
     int id;
     void *data;
     struct observer obs;
 };
 
-void observer_call(void *obj, void *arg)
+void observer_call(struct observer *obj, void *arg)
 {
     struct my_observer *obs;
     long l;
@@ -31,7 +28,7 @@ void observer_call(void *obj, void *arg)
 
 static unsigned long incr = 0;
 
-void observer_incr(void *obj, void *arg)
+void observer_incr(struct observer *obj, void *arg)
 {
     incr += 1;
 }

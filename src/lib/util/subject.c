@@ -3,7 +3,6 @@
 
 #include "list.h"
 #include "map.h"
-#include "vector.h"
 #include "subject.h"
 #include "observer.h"
 
@@ -19,14 +18,14 @@ static int _int_compare(const void *a, const void *b)
     return (long) a - (long) b;
 }
 
-static void _observer_unlink(void *obs)
+static void _observer_unlink(struct link *link)
 {
-    list_take(&((struct observer *)obs)->link);
+    list_take(&container_of(link, struct observer, link_event)->link_all);
 }
 
-static void _vector_delete(void *vec)
+static void _list_delete(void *list)
 {
-    vector_delete(vec, &_observer_unlink);
+    list_delete(list, &_observer_unlink);
 }
 
 struct subject *subject_new(unsigned int observers)
@@ -61,7 +60,7 @@ int subject_init(struct subject *__restrict sub, unsigned int observers)
     if(err < 0)
         return err;
     
-    map_set_data_delete(&sub->map, &_vector_delete);
+    map_set_data_delete(&sub->map, &_list_delete);
     
     list_init(&sub->list);
 
@@ -81,28 +80,25 @@ void subject_clear(struct subject *__restrict sub)
 int subject_add_observer(struct subject *__restrict sub,
                          struct observer *obs)
 {
-    struct vector *vec;
+    struct link *list;
     int err;
-
-    vec = map_retrieve(&sub->map, (void *)(long) obs->event_id);
-    if(!vec) {
-        vec = vector_new(0);
+    
+    list = map_retrieve(&sub->map, (void *)(long) obs->event_id);
+    if(!list) {
+        list = list_new();
         
-        if(!vec)
+        if(!list)
             return -errno;
         
-        err = map_insert(&sub->map, (void *)(long) obs->event_id, vec);
+        err = map_insert(&sub->map, (void *)(long) obs->event_id, list);
         if(err < 0) {
-            vector_delete(vec, NULL);
+            list_delete(list, NULL);
             return err;
         }
     }
-
-    err = vector_insert_back(vec, obs);
-    if(err < 0)
-        return err;
     
-    list_insert_front(&sub->list, &obs->link);
+    list_insert_back(list, &obs->link_event);
+    list_insert_back(&sub->list, &obs->link_all);
     
     return 0;
 }
@@ -110,30 +106,31 @@ int subject_add_observer(struct subject *__restrict sub,
 void subject_remove_observer(struct subject *__restrict sub,
                              struct observer *obs)
 {
-    struct vector *vec;
-    unsigned int i;
+    struct link *list;
     
-    vec = map_retrieve(&sub->map, (void *)(long) obs->event_id);
+    list = map_retrieve(&sub->map, (void *)(long) obs->event_id);
+    if(!list)
+        return;
     
-    for(i = 0; i < vector_size(vec); ++i) {
-        if(*vector_at(vec, i) == obs) {
-            vector_take_at(vec, i);
-            list_take(&obs->link);
-            break;
-        }
+    list_take(&obs->link_event);
+    list_take(&obs->link_all);
+    
+    if(list_empty(list)) {
+        map_take(&sub->map, (void *)(long) obs->event_id);
+        list_delete(list, NULL);
     }
 }
 
 void subject_clear_event(struct subject *__restrict sub,
                          unsigned int event_id)
 {
-    struct vector *vec;
+    struct link *list;
     
-    vec = map_take(&sub->map, (void *)(long) event_id);
-    if(!vec)
+    list = map_take(&sub->map, (void *)(long) event_id);
+    if(!list)
         return;
 
-    vector_delete(vec, &_observer_unlink);
+    list_delete(list, &_observer_unlink);
 }
 
 void subject_notify(struct subject* sub, unsigned int event_id)
@@ -145,15 +142,17 @@ void subject_notify_arg(struct subject *__restrict sub,
                         unsigned int event_id, 
                         void *arg)
 {
-    struct vector *vec;
-    struct observer **obs;
+    struct link *list, *link;
+    struct observer *obs;
     
-    vec = map_retrieve(&sub->map, (void *)(long) event_id);
-    if(!vec)
+    list = map_retrieve(&sub->map, (void *)(long) event_id);
+    if(!list)
         return;
     
-    vector_for_each(vec, obs)
-        (*obs)->func(*obs, arg);
+    list_for_each(list, link) {
+        obs = container_of(link, struct observer, link_event);
+        obs->func(obs, arg);
+    }
 }
 
 void subject_notify_all(struct subject *__restrict sub)
@@ -167,8 +166,7 @@ void subject_notify_all_arg(struct subject *__restrict sub, void *arg)
     struct observer *obs;
     
     list_for_each(&sub->list, link) {
-        obs = container_of(link, struct observer, link);
-        
+        obs = container_of(link, struct observer, link_all);
         obs->func(obs, arg);
     }
 }

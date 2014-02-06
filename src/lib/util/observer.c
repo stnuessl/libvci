@@ -3,12 +3,13 @@
 #include "observer.h"
 
 void observer_set_function(struct observer *__restrict obs, 
-                           void (*func)(void *, void *))
+                           void (*func)(struct observer *, void *))
 {
     obs->func = func;
 }
 
-void (*observer_function(struct observer *__restrict obs))(void *, void *)
+void (*observer_function(struct observer *__restrict obs))
+                        (struct observer *, void *)
 {
     return obs->func;
 }
