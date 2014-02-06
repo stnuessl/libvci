@@ -9,7 +9,27 @@
  * Thanks to the wayland devs for this slick list implementation.
  */
 
-inline void list_init(struct link *__restrict list)
+struct link *list_new(void)
+{
+    struct link *list;
+    
+    list = malloc(sizeof(*list));
+    if(!list)
+        return NULL;
+    
+    list_init(list);
+    
+    return list;
+}
+
+void list_delete(struct link *__restrict list,
+                 void (*data_delete)(struct link *))
+{
+    list_destroy(list, data_delete);
+    free(list);
+}
+
+void list_init(struct link *__restrict list)
 {
     list->prev = list;
     list->next = list;
@@ -35,7 +55,7 @@ void list_clear(struct link *__restrict list,
         data_delete(link);
 }
 
-inline void list_insert(struct link *list, struct link *link)
+void list_insert(struct link *list, struct link *link)
 {
     link->prev = list;
     link->next = list->next;
@@ -44,28 +64,28 @@ inline void list_insert(struct link *list, struct link *link)
     link->next->prev = link;
 }
 
-inline void list_take(struct link *__restrict link)
+void list_take(struct link *__restrict link)
 {
     link->prev->next = link->next;
     link->next->prev = link->prev;
 }
 
-inline void list_insert_front(struct link *__restrict list, struct link *link)
+void list_insert_front(struct link *__restrict list, struct link *link)
 {
     list_insert(list, link);
 }
 
-inline void list_insert_back(struct link *__restrict list, struct link *link)
+void list_insert_back(struct link *__restrict list, struct link *link)
 {
     list_insert(list->prev, link);
 }
 
-inline struct link *list_front(struct link *__restrict list)
+struct link *list_front(struct link *__restrict list)
 {
     return list->next;
 }
 
-inline struct link *list_back(struct link *__restrict list)
+struct link *list_back(struct link *__restrict list)
 {
     return list->prev;
 }
@@ -92,7 +112,7 @@ struct link *list_take_back(struct link *__restrict list)
     return link;
 }
 
-inline bool list_empty(const struct link *__restrict list)
+bool list_empty(const struct link *__restrict list)
 {
     return list->next == list;
 }
