@@ -118,27 +118,27 @@ void map_test_performance(unsigned int num)
         assert(err == 0);
     }
     
-    fprintf(stdout, "Elapsed time for %u insertions: %lu ms\n",
+    fprintf(stdout, "Elapsed time for %u insertions: %lu us\n",
             num, 
-            clock_elapsed_ms(c));
+            clock_elapsed_us(c));
     
     clock_reset(c);
     
     for(i = 0; i < num; ++i)
         assert((int)(long) map_retrieve(map, (void *)(long) i) == i);
     
-    fprintf(stdout, "Elapsed time for %u lookups: %lu ms\n",
+    fprintf(stdout, "Elapsed time for %u lookups: %lu us\n",
             num,
-            clock_elapsed_ms(c));
+            clock_elapsed_us(c));
     
     clock_reset(c);
     
     for(i = 0; i < num; ++i)
         assert((int)(long) map_take(map, (void *)(long) i) == i);
     
-    fprintf(stdout, "Elapsed time for %u removals: %lu ms\n",
+    fprintf(stdout, "Elapsed time for %u removals: %lu us\n",
             num,
-            clock_elapsed_ms(c));
+            clock_elapsed_us(c));
     
     clock_delete(c);
     map_delete(map);
@@ -160,9 +160,9 @@ void map_test_performance(unsigned int num)
     
     fprintf(stdout, 
             "Elapsed time for %u insertions with "
-            "preallocated map memory: %lu ms\n",
+            "preallocated map memory: %lu us\n",
             num, 
-            clock_elapsed_ms(c));
+            clock_elapsed_us(c));
     
     clock_delete(c);
     map_delete(map);

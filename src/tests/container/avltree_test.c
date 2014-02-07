@@ -108,8 +108,8 @@ void avltree_test_iteration_performance(void)
     }
     
     fprintf(stdout, 
-            "Elapsed time for iteration of %d elements: %lu.\n",
-            i, clock_elapsed_ms(c));
+            "Elapsed time for iteration of %d elements: %lu us.\n",
+            i, clock_elapsed_us(c));
     
     assert(i == num);
     
@@ -185,8 +185,8 @@ void avltree_test_performance(int num)
     }
     
     fprintf(stdout, 
-            "Elapsed time for %d insertions is %lu ms.\n", 
-             num, clock_elapsed_ms(c));
+            "Elapsed time for %d insertions is %lu us.\n", 
+             num, clock_elapsed_us(c));
     
     clock_reset(c);
     
@@ -197,8 +197,8 @@ void avltree_test_performance(int num)
     }
     
     fprintf(stdout, 
-            "Elapsed time for %d retrievals is %lu ms.\n", 
-            num, clock_elapsed_ms(c));
+            "Elapsed time for %d retrievals is %lu us.\n", 
+            num, clock_elapsed_us(c));
     
     clock_reset(c);
     
@@ -209,8 +209,8 @@ void avltree_test_performance(int num)
     }
     
     fprintf(stdout, 
-            "Elapsed time for %d removals is %lu ms.\n", 
-            num, clock_elapsed_ms(c));
+            "Elapsed time for %d removals is %lu us.\n", 
+            num, clock_elapsed_us(c));
     
     free(node);
     clock_delete(c);
