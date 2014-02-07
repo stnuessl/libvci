@@ -14,6 +14,7 @@ set(TARGET_INSTALLNAME_DIR lib)
 set(HEADER_INSTALLNAME_DIR include/libvci)
 
 set(HEADER
+    include/async_task.h
     include/avltree.h
     include/buffer.h
     include/cache.h
@@ -30,13 +31,14 @@ set(HEADER
     include/stack.h
     include/subject.h
     include/ringbuffer.h
-    include/task.h
+    include/threadpool_task.h
     include/threadpool.h
     include/vector.h
     )
         
 set(SOURCE
-    src/lib/concurrent/task.c
+    src/lib/concurrent/async_task.c
+    src/lib/concurrent/threadpool_task.c
     src/lib/concurrent/threadpool.c
     src/lib/container/avltree.c
     src/lib/container/buffer.c
