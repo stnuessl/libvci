@@ -7,7 +7,7 @@
 
 #include "map.h"
 #include "queue.h"
-#include "task.h"
+#include "threadpool_task.h"
 
 struct threadpool {
     struct queue task_queue_in;
@@ -40,9 +40,10 @@ int threadpool_add_thread(struct threadpool *__restrict pool);
 int threadpool_remove_thread(struct threadpool *__restrict pool);
 
 int threadpool_add_task(struct threadpool *__restrict pool, 
-                        struct task *task);
+                        struct threadpool_task *task);
 
-struct task *threadpool_take_completed_task(struct threadpool *__restrict pool);
+struct threadpool_task *
+threadpool_take_completed_task(struct threadpool *__restrict pool);
 
 unsigned int threadpool_tasks_queued(struct threadpool *pool);
 

@@ -10,9 +10,15 @@
 
 #include "queue.h"
 #include "map.h"
-#include "task.h"
+#include "threadpool_task.h"
 #include "threadpool.h"
 #include "macro.h"
+
+
+struct exit_task {
+    struct threadpool_task task;
+    struct threadpool *pool;
+};
 
 static unsigned int _thread_hash(const void *thread)
 {
@@ -97,12 +103,15 @@ again:
     pthread_exit(NULL);
 }
 
-static void _task_exit_thread(struct task *__restrict task)
+static void _exit_task_thread(struct threadpool_task *__restrict task)
 {
     struct threadpool *pool;
+    struct exit_task *exit_task;
     
-    pool = task_value(task);
-    free(task);
+    exit_task = container_of(task, struct exit_task, task);
+    
+    pool = exit_task->pool;
+    free(exit_task);
     
     _thread_exit(pool);
 }
@@ -110,7 +119,7 @@ static void _task_exit_thread(struct task *__restrict task)
 static void *_thread_handle_tasks(void *arg)
 {
     struct link *link;
-    struct task *task;
+    struct threadpool_task *task;
     struct threadpool *pool;
     int err;
     
@@ -129,10 +138,10 @@ static void *_thread_handle_tasks(void *arg)
         link = queue_take(&pool->task_queue_in);
         pthread_mutex_unlock(&pool->mutex_queue_in);
 
-        task = container_of(link, struct task, link);
+        task = container_of(link, struct threadpool_task, link);
                 
         task->func(task);
-
+        
         pthread_mutex_lock(&pool->mutex_queue_out);
         
         err = sem_post(&pool->sem_queue_out);
@@ -334,7 +343,7 @@ out:
 
 int threadpool_remove_thread(struct threadpool *__restrict pool)
 {
-    struct task *task;
+    struct exit_task *task;
     
     /* 
      * this approach is quite neat since the first thread to take this
@@ -345,14 +354,15 @@ int threadpool_remove_thread(struct threadpool *__restrict pool)
     if(!task)
         return -errno;
     
-    task_set_function(task, &_task_exit_thread);
-    task_set_value(task, pool);
+    threadpool_task_set_function(&task->task, &_exit_task_thread);
+
+    task->pool = pool;
     
-    return threadpool_add_task(pool, task);
+    return threadpool_add_task(pool, &task->task);
 }
 
 int threadpool_add_task(struct threadpool *__restrict pool, 
-                        struct task *task)
+                        struct threadpool_task *task)
 {
     int err;
 
@@ -370,7 +380,8 @@ int threadpool_add_task(struct threadpool *__restrict pool,
     return err;
 }
 
-struct task *threadpool_take_completed_task(struct threadpool *__restrict pool)
+struct threadpool_task *
+threadpool_take_completed_task(struct threadpool *__restrict pool)
 {
     struct link *link;
     int err;
@@ -388,7 +399,7 @@ again:
     link = queue_take(&pool->task_queue_out);
     pthread_mutex_unlock(&pool->mutex_queue_out);
     
-    return container_of(link, struct task, link);
+    return container_of(link, struct threadpool_task, link);
 }
 
 unsigned int threadpool_tasks_queued(struct threadpool *pool)

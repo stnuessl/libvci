@@ -7,27 +7,24 @@
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 
-#include <libvci/task.h>
+#include <libvci/threadpool_task.h>
 #include <libvci/threadpool.h>
 #include <libvci/macro.h>
 
 #define MAX_EPOLL_EVENTS 10
 
 struct my_task {
+    struct threadpool_task task;
     unsigned int id;
-    struct task task;
 };
 
-void my_task_run(struct task *task)
+void my_task_run(struct threadpool_task *task)
 {
     struct my_task *my_task;
     
     my_task = container_of(task, struct my_task, task);
 
-    /* do fancy stuff with my_container */
-    my_task->id = (long) task_value(task);
-
-    task_set_return_value(task, task_value(task));
+    my_task->id = 0xffff;
 }
 
 static const char _usage[] = {
@@ -47,6 +44,8 @@ void epoll_init(void)
     epoll_fd = epoll_create(1);
     assert(epoll_fd >= 0);
     
+    memset(&ev.data, 0, sizeof(ev.data));
+    
     ev.data.fd  = threadpool_event_fd(pool);
     ev.events   = EPOLLIN;
     
@@ -62,10 +61,8 @@ void insert_tasks(int num_tasks)
     for(i = 0; i < num_tasks; ++i) {
         my_task = malloc(sizeof(*my_task));
         assert(my_task);
-        
-        my_task->id = i;
-        task_set_function(&my_task->task, &my_task_run);
-        task_set_value(&my_task->task, (void *)(long) i);
+
+        threadpool_task_set_function(&my_task->task, &my_task_run);
         
         err = threadpool_add_task(pool, &my_task->task);
         assert(err == 0);
@@ -105,7 +102,7 @@ void test_adding_removing_threads(void)
 void test_usage(int argc, char *argv[])
 {
     struct my_task *my_task;
-    struct task *task;
+    struct threadpool_task *task;
     eventfd_t tasks_done;
     int i, err, num_threads, num_tasks, fds;
     
@@ -131,9 +128,7 @@ void test_usage(int argc, char *argv[])
             
             err = eventfd_read(epoll_events[fds].data.fd, &tasks_done);
             assert(err == 0);
-            
-            fprintf(stdout, "INFO: %lu tasks were completed.\n", tasks_done);
-            
+
             i += tasks_done;
             
             while(tasks_done--) {
@@ -141,7 +136,7 @@ void test_usage(int argc, char *argv[])
                 
                 my_task = container_of(task, struct my_task, task);
                 
-                assert(my_task->id == (long) task_return_value(task));
+                assert(my_task->id == 0xffff);
                 free(my_task);
             }
         }
@@ -156,6 +151,9 @@ int main(int argc, char *argv[])
     test_adding_removing_threads();
     test_usage(argc, argv);
     
+    fprintf(stdout, 
+            "Tests finished. %s threads executed %s tasks\n", 
+            argv[1], argv[2]);
     
     return EXIT_SUCCESS;
 }
