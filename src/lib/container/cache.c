@@ -18,7 +18,7 @@ static struct cache_entry *_cache_lookup(struct cache *__restrict cache,
     
     hash = cache->key_hash(key);
     
-    index = hash % cache->capacity;
+    index = hash & (cache->capacity - 1);
     
     for(i = 0; i < cache->capacity; ++i) {
         switch(cache->table[index].state) {
