@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "map.h"
-#include "container_util.h"
+#include "container_p.h"
 #include "macro.h"
 
 #define MAP_DEFAULT_CAPACITY 32

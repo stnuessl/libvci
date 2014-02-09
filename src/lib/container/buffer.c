@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <stdbool.h>
 
-#include "container_util.h"
+#include "container_p.h"
 #include "buffer.h"
 
 #define BUFFER_DEFAULT_SIZE 128

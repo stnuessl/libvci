@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <errno.h>
 
-#include "container_util.h"
+#include "container_p.h"
 #include "vector.h"
 
 #define VECTOR_DEFAULT_CAPACITY 8

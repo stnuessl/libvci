@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "container_util.h"
+#include "container_p.h"
 #include "link.h"
 #include "list.h"
 #include "cache.h"
@@ -143,7 +143,7 @@ void cache_insert(struct cache *__restrict cache, const void *key, void *data)
     
     hash = cache->key_hash(key);
     
-    index = hash % cache->capacity;
+    index = hash & (cache->capacity - 1);
     
     while(1) {
         if(cache->table[index].state != CACHE_DATA_STATE_AVAILABLE) {
