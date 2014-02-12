@@ -27,6 +27,9 @@ target_link_libraries(map_test ${LIBS})
 add_executable(cache_test container/cache_test.c)
 target_link_libraries(cache_test ${LIBS})
 
+add_executable(heap_test container/heap_test.c)
+target_link_libraries(heap_test ${LIBS})
+
 add_executable(stack_test container/stack_test.c)
 target_link_libraries(stack_test ${LIBS})
 

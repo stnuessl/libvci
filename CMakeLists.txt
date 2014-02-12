@@ -20,6 +20,7 @@ set(HEADER
     include/cache.h
     include/clock.h
     include/config.h
+    include/heap.h
     include/map.h
     include/link.h
     include/list.h
@@ -44,6 +45,7 @@ set(SOURCE
     src/lib/container/buffer.c
     src/lib/container/cache.c
     src/lib/container/container_p.c
+    src/lib/container/heap.c
     src/lib/container/list.c
     src/lib/container/map.c
     src/lib/container/queue.c
