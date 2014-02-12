@@ -126,10 +126,8 @@ void test_heap_performance(int *data, unsigned int size)
     
     heap = heap_new(0, &_int_compare);
     c    = clock_new(CLOCK_PROCESS_CPUTIME_ID);
-    data = malloc(size * sizeof(*data));
     assert(heap);
     assert(c);
-    assert(data);
     
     clock_start(c);
 
@@ -235,6 +233,7 @@ void test_functionality(void)
         }
     }
     
+    free(data);
     heap_delete(heap);
 }
 
