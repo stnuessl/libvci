@@ -5,18 +5,25 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <limits.h>
+#include <errno.h>
 
 #include <libvci/heap.h>
 #include <libvci/clock.h>
 #include <libvci/macro.h>
 #include <libvci/link.h>
 #include <libvci/list.h>
+#include <libvci/avltree.h>
 
 #define MAX_PRINT 30
 
 
 struct list_node {
     struct link link;
+    int val;
+};
+
+struct tree_node {
+    struct avlnode avlnode;
     int val;
 };
 
@@ -41,7 +48,60 @@ void heap_check(const struct heap *__restrict heap)
     }
 }
 
-
+void test_avltree_performance(int *data, unsigned int size)
+{
+    struct avltree *tree;
+    struct avlnode *avlnode;
+    struct tree_node *nodes, *tmp, *last;
+    struct clock *c;
+    unsigned int i;
+    int err;
+    
+    nodes = malloc(size * sizeof(*nodes));
+    assert(nodes);
+    
+    for(i = 0; i < size; ++i)
+        nodes[i].val = data[i];
+    
+    tree = avltree_new(&_int_compare);
+    c    = clock_new(CLOCK_PROCESS_CPUTIME_ID);
+    assert(tree);
+    assert(c);
+    
+    clock_start(c);
+    
+    for(i = 0 ;  i < size; ++i) {
+        tmp = nodes + i;
+        err = avltree_insert(tree, &tmp->avlnode, (void *)(long) tmp->val);
+        assert(err == 0 || err == -EINVAL);
+    }
+    
+    fprintf(stdout, 
+            "Elapsed time for %u avltree insertions: %lu us.\n",
+             size, clock_elapsed_us(c));
+    
+    clock_reset(c);
+    
+    if(avltree_size(tree)) {
+        avlnode = avltree_take_max(tree);
+        last = container_of(avlnode, struct tree_node, avlnode);
+        
+        while(!avltree_empty(tree)) {
+            avlnode = avltree_take_max(tree);
+            tmp = container_of(avlnode, struct tree_node, avlnode);
+            assert(last->val >= tmp->val);
+            last = tmp;
+        }
+    }
+    
+    fprintf(stdout, 
+            "Elapsed time for %u avltree max removals: %lu us.\n",
+            size, clock_elapsed_us(c));
+    
+    avltree_delete(tree);
+    clock_delete(c);
+    free(nodes);
+}
 
 void test_sorted_list_performance(int *data, unsigned int size)
 {
@@ -185,6 +245,7 @@ void performance_comparison(int argc, char * const argv[])
     close(fd);
     
     test_heap_performance(data, num);
+    test_avltree_performance(data, num);
     test_sorted_list_performance(data, num);
     
     free(data);
