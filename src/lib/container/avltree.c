@@ -384,7 +384,7 @@ struct avlnode *avltree_take_max(struct avltree *__restrict tree)
     
     _avltree_rebalance_nodes(tree, max->parent);
     
-    return *node;
+    return max;
 }
 
 unsigned int avltree_size(const struct avltree *__restrict tree)
