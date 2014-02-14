@@ -5,6 +5,9 @@
 
 /* some useful macro definitions */
 
+#define stringify(s)                                                           \
+    #s
+    
 #define min(a, b)                                                              \
     ((a) < (b)) ? (a) : (b)
     
