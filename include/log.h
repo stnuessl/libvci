@@ -15,8 +15,8 @@
 #define LOG_PRINT_HOSTNAME      (1 << 4)
 #define LOG_PRINT_LEVEL         (1 << 5)
 
-#define LOG_SEVERITY_INFO     5
-#define LOG_SEVERITY_DEBUG    4
+#define LOG_SEVERITY_DEBUG    5
+#define LOG_SEVERITY_INFO     4
 #define LOG_SEVERITY_MESSAGE  3
 #define LOG_SEVERITY_WARNING  2
 #define LOG_SEVERITY_CRITICAL 1
@@ -62,10 +62,10 @@ void log_vprintf(struct log *__restrict l,
                  int level,
                  const char *__restrict fmt, va_list vargs);
 
-void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
+void log_debug(struct log *__restrict l, const char *__restrict fmt, ...)
                                             __attribute__((format(printf,2,3)));
 
-void log_debug(struct log *__restrict l, const char *__restrict fmt, ...)
+void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
                                             __attribute__((format(printf,2,3)));
 
 void log_message(struct log *__restrict l, const char *__restrict fmt, ...)

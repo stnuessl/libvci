@@ -213,21 +213,21 @@ void log_vprintf(struct log *__restrict l,
     _log_printf(l, level, fmt, vargs);
 }
 
-void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
-{
-    va_list vargs;
-    
-    va_start(vargs, fmt);
-    _log_printf(l, LOG_SEVERITY_INFO, fmt, vargs);
-    va_end(vargs);
-}
-
 void log_debug(struct log *__restrict l, const char *__restrict fmt, ...)
 {
     va_list vargs;
     
     va_start(vargs, fmt);
     _log_printf(l, LOG_SEVERITY_DEBUG, fmt, vargs);
+    va_end(vargs);
+}
+
+void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
+{
+    va_list vargs;
+    
+    va_start(vargs, fmt);
+    _log_printf(l, LOG_SEVERITY_INFO, fmt, vargs);
     va_end(vargs);
 }
 
