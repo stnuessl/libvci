@@ -18,8 +18,8 @@ static const char *_log_severity_string(int severity)
         "CRITICAL",
         "WARNING",
         "MESSAGE",
-        "INFO"
-        "DEBUG",
+        "INFO",
+        "DEBUG"
     };
     
     return strings[severity];
