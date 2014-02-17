@@ -10,8 +10,8 @@ add_definitions(-O2)
 set(TARGET vci)
 set(CMAKE_INSTALL_PREFIX /usr/local)
 set(TARGET_SONAME lib${TARGET}.so)
-set(TARGET_INSTALLNAME_DIR lib)
-set(HEADER_INSTALLNAME_DIR include/libvci)
+set(TARGET_INSTALL_DIR lib)
+set(HEADER_INSTALL_DIR include/libvci)
 
 set(HEADER
     include/async_task.h
@@ -76,10 +76,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
 install(FILES
         ${HEADER}
         DESTINATION
-        ${HEADER_INSTALLNAME_DIR}
+        ${HEADER_INSTALL_DIR}
         )
         
 install(FILES
         ${CMAKE_BINARY_DIR}/${TARGET_SONAME}
         DESTINATION
-        ${TARGET_INSTALLNAME_DIR})
+        ${TARGET_INSTALL_DIR})
