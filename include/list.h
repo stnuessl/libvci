@@ -36,7 +36,7 @@ struct link *list_take_back(struct link *__restrict list);
 
 bool list_empty(const struct link *__restrict list);
 
-void list_insert_list(struct link *list, struct link *other);
+void list_merge(struct link *list, struct link *other);
 
 #define list_for_each(list, link)                                              \
     for((link) = (list)->next; (link) != (list); (link) = (link)->next)

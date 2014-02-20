@@ -117,7 +117,7 @@ bool list_empty(const struct link *__restrict list)
     return list->next == list;
 }
 
-void list_insert_list(struct link *list, struct link *other)
+void list_merge(struct link *list, struct link *other)
 {
     if(list_empty(other))
         return;
