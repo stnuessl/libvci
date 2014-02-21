@@ -50,7 +50,7 @@ void *map_retrieve(struct map *__restrict map, const void *key);
 
 void *map_take(struct map *__restrict map, const void *key);
 
-bool map_contains(struct map *__restrict map, const void *key);
+bool map_contains(const struct map *__restrict map, const void *key);
 
 inline unsigned int map_size(const struct map *__restrict map);
 

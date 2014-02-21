@@ -72,7 +72,7 @@ static int _map_rehash(struct map *__restrict map, unsigned int capacity)
  * If there is a bug in this function it is very likely that
  * map_insert() suffers from the same bug.
  */
-static struct map_entry *_map_lookup(struct map *__restrict map,
+static struct map_entry *_map_lookup(const struct map *__restrict map,
                                      const void *__restrict key)
 {
     unsigned int hash, index, offset;
@@ -261,7 +261,7 @@ void *map_take(struct map *__restrict map, const void *key)
     return data;
 }
 
-bool map_contains(struct map *__restrict map, const void *key)
+bool map_contains(const struct map *__restrict map, const void *key)
 {
     return _map_lookup(map, key) != NULL;
 }
