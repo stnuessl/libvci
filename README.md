@@ -25,9 +25,6 @@ Implementation of various container types. Includes:
         LIFO Stack              --> struct stack
         Dynamic Array           --> struct vector
 
-### etrace
-Interface for stacktracing on critical errors.
-
 ### mempool
 Mempool implementation for fast memory allocation on fixed memory sizes.
 
