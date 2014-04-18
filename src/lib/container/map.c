@@ -308,3 +308,79 @@ void (*map_data_delete(struct map *__restrict map))(void *)
 {
     return map->data_delete;
 }
+
+unsigned int hash_u8(const void *key)
+{
+    return hash_u64(key);
+}
+
+unsigned int hash_u16(const void *key)
+{
+    return hash_u64(key);
+}
+
+unsigned int hash_u32(const void *key)
+{
+    return hash_u64(key);
+}
+
+unsigned int hash_u64(const void *key)
+{
+    unsigned int hval;
+    
+    hval = 1; 
+    
+    hval += (unsigned long) key;
+    hval += (hval << 10);
+    hval ^= (hval >> 6);
+    hval += ((unsigned long) key >> 32);
+    hval &= 0x0fffffff;
+    
+    hval += (hval << 3);
+    hval ^= (hval >> 11);
+    hval += (hval << 15);
+    
+    return hval;
+}
+
+unsigned int hash_s8(const void *key)
+{
+    return hash_u64(key);
+}
+
+unsigned int hash_s16(const void *key)
+{
+    return hash_u64(key);
+}
+
+unsigned int hash_s32(const void *key)
+{
+    return hash_u64(key);
+}
+
+unsigned int hash_s64(const void *key)
+{
+    return hash_u64(key);
+}
+
+unsigned int hash_string(const void *key)
+{
+    const char *k;
+    unsigned int hval;
+
+    k = key;
+    hval = 1;  
+    
+    while(*k != '\0') {
+        hval += *k++;
+        hval += (hval << 10);
+        hval ^= (hval >> 6);
+        hval &= 0x0fffffff;
+    }
+    
+    hval += (hval << 3);
+    hval ^= (hval >> 11);
+    hval += (hval << 15);
+    
+    return hval;
+}

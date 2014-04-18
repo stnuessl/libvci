@@ -71,5 +71,30 @@ unsigned int (*map_key_hash(struct map *__restrict map))(const void *);
 
 void (*map_data_delete(struct map *__restrict map))(void *);
 
+unsigned int hash_u8(const void *key);
+
+unsigned int hash_u16(const void *key);
+
+unsigned int hash_u32(const void *key);
+
+unsigned int hash_u64(const void *key);
+
+unsigned int hash_s8(const void *key);
+
+unsigned int hash_s16(const void *key);
+
+unsigned int hash_s32(const void *key);
+
+unsigned int hash_s64(const void *key);
+
+unsigned int hash_string(const void *key);
+
+#define map_for_each(map, i, value)                                            \
+    for((i) = 0, (value) = (map)->table[i].data;                               \
+        (i) < (map)->capacity;                                                 \
+        (i) += 1, (value) = (map)->table[i].data)                              \
+        if((map)->table[i].state != MAP_DATA_STATE_AVAILABLE)                  \
+            continue;                                                          \
+        else
 
 #endif /* _MAP_H_ */

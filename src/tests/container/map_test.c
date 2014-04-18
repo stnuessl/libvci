@@ -15,41 +15,6 @@ int int_compare(const void *a, const void *b)
     return (long)a - (long)b;
 }
 
-unsigned int hash(const void *key)
-{
-    unsigned int hval;
-    int val;
-    
-    val = (int)(long)key;
-    hval = 1;  
-
-    hval += val;
-    hval += (hval << 10);
-    hval ^= (hval >> 6);
-    hval &= 0x0fffffff;
-    
-    hval += (hval << 3);
-    hval ^= (hval >> 11);
-    hval += (hval << 15);
-    
-    return hval;
-}
-
-
-unsigned int string_hash(const void *key)
-{
-    const char *s;
-    unsigned int hval;
-    
-    s = key;
-    hval = 0;
-    
-    while(*s != '\0')
-        hval += hash((void *)(long) *s++);
-    
-    return hval;
-}
-
 int string_compare(const void *a, const void *b)
 {
     return strcmp(a, b);
@@ -57,7 +22,7 @@ int string_compare(const void *a, const void *b)
 
 void inspect_map(const struct map *__restrict map)
 {
-    unsigned int i;
+    unsigned int i, *tmp;
     
     for(i = 0; i < map->capacity; ++i) {
         if(map->table[i].state == MAP_DATA_STATE_AVAILABLE)
@@ -67,6 +32,13 @@ void inspect_map(const struct map *__restrict map)
                     (int)(long) map->table[i].data,
                     map->table[i].hash);
     }
+    
+    fprintf(stdout, "Inserted values: ");
+    
+    map_for_each(map, i, tmp)
+        fprintf(stdout, "%u ", (unsigned int) (long) tmp);
+    
+    fprintf(stdout, "\n");
     
     fprintf(stdout, "Map entries: %u.\n"
                     "Map capacity: %u.\n"
@@ -84,7 +56,7 @@ void map_test_insert_remove(void)
     
     num_elements = 32;
     
-    map = map_new(0, &int_compare, &hash);
+    map = map_new(0, &int_compare, &hash_s64);
     assert(map);
     
     for(i = 0; i < num_elements; ++i) {
@@ -106,7 +78,7 @@ void map_test_performance(unsigned int num)
     struct clock *c;
     int i, err;
     
-    map = map_new(0, &int_compare, &hash);
+    map = map_new(0, &int_compare, &hash_u32);
     c   = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(map);
     assert(c);
@@ -143,7 +115,7 @@ void map_test_performance(unsigned int num)
     clock_delete(c);
     map_delete(map);
     
-    map = map_new(0, &int_compare, &hash);
+    map = map_new(0, &int_compare, &hash_u32);
     c   = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(map);
     assert(c);
@@ -173,7 +145,7 @@ void map_stress_test(void)
     struct map *map;
     int err, i, num_elements;
     
-    map = map_new(0, &int_compare, &hash);
+    map = map_new(0, &int_compare, &hash_u64);
     assert(map);
     
     num_elements = 1000000;
@@ -227,7 +199,7 @@ void map_string_test(void)
     struct map *map;
     int err, i;
     
-    map = map_new(0, &string_compare, &string_hash);
+    map = map_new(0, &string_compare, &hash_string);
     assert(map);
     
     for(i = 0; i < ARRAY_SIZE(strings); i += 2) {
