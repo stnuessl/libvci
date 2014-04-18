@@ -1,7 +1,7 @@
 #
 # Example config file which can by accessed
 # via the config API calls of the vci library.
-# Keys and the values must beginn with a letter or a digit.
+# Keys and values must beginn with a letter or a digit.
 #
 
 #
@@ -34,7 +34,7 @@ Name = Jägermeister
 [Booze]
 
 #
-# In fact spaces, the equal signs, tabs and newline characters are all ignored
+# In fact spaces, equal signs, tabs and newline characters are all ignored
 # if they occur between a key and a value.
 # It is up to you the keep the config file readable!
 #
