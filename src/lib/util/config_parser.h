@@ -3,8 +3,6 @@
 
 #include "config.h"
 
-#define _NO_SECTION_ "__NO_SECTION__"
-
 enum parser_state {
     PARSER_STATE_START,
     PARSER_STATE_FINISHED,
@@ -17,12 +15,10 @@ enum parser_state {
 
 struct config_parser {
     struct config *config;
-    struct buffer *buf;
-    char *section;
-    unsigned long key;
-    char *file;
-    size_t fsize;
-    char *fpos;
+    char *fstart;
+    char *fend;
+    char *p;
+    char *key;
     
     enum parser_state state;
 };

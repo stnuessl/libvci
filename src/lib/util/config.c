@@ -7,8 +7,12 @@
 #include "buffer.h"
 #include "macro.h"
 #include "config.h"
-#include "config_key.h"
 #include "config_parser.h"
+
+static int string_compare(const void *a, const void *b)
+{
+    return strcmp(a, b);
+}
 
 struct config *config_new(const char *__restrict path)
 {
@@ -39,24 +43,28 @@ int config_init(struct config *__restrict config, const char *__restrict path)
     int err;
     
     config->path = strdup(path);
-    if(!config->path)
-        return -errno;
-    
-    err = map_init(&config->map, 0, &config_key_compare, &config_key_hash);
-    if(err < 0) {
-        free(config->path);
-        return err;
+    if(!config->path) {
+        err = -errno;
+        goto out;
     }
     
-    map_set_data_delete(&config->map, &free);
+    err = map_init(&config->map, 0, &string_compare, &hash_string);
+    if(err < 0) 
+        goto cleanup1;
     
     return 0;
+
+cleanup1:
+    free(config->path);
+out:    
+    return err;
 }
 
 void config_destroy(struct config *__restrict config)
 {
-    free(config->path);
     map_destroy(&config->map);
+    free(config->path);
+    free(config->mem);
 }
 
 int config_parse(struct config *__restrict config)
@@ -76,17 +84,16 @@ int config_parse(struct config *__restrict config)
 }
 
 const char *config_value(struct config *__restrict config, 
-                    const char *__restrict section,
                     const char *__restrict key)
 {
-    unsigned long merged_key;
-    
-    if(!section)
-        section = _NO_SECTION_;
-    
-    merged_key = config_key_merge(section, key);
-    
-    return map_retrieve(&config->map, (void *) merged_key);
+    return map_retrieve(&config->map, key);
+}
+
+int config_add_value(struct config *__restrict config, 
+                     const char *key,
+                     char *value)
+{
+    return map_insert(&config->map, key, value);
 }
 
 int config_set_path(struct config *__restrict config, 
@@ -104,4 +111,33 @@ int config_set_path(struct config *__restrict config,
 const char *config_path(struct config *__restrict config)
 {
     return config->path;
+}
+
+int config_save(struct config *__restrict config)
+{
+    return config_save_to_file(config, config->path);
+}
+
+int config_save_to_file(struct config *__restrict config, 
+                        const char *__restrict path)
+{
+    FILE *f;
+    struct entry *e;
+    const char *key;
+    char *val;
+    
+    f = fopen(path, "w");
+    if(!f)
+        return -errno;
+    
+    config_for_each(config, e) {
+        key = entry_key(e);
+        val = entry_data(e);
+        
+        fprintf(f, "%s = %s\n", key, val);
+    }
+    
+    fclose(f);
+    
+    return 0;
 }

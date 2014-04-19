@@ -22,12 +22,13 @@ int string_compare(const void *a, const void *b)
 
 void inspect_map(const struct map *__restrict map)
 {
-    unsigned int i, *tmp;
+    struct entry *e;
+    unsigned int i;
     
     for(i = 0; i < map->capacity; ++i) {
         if(map->table[i].state == MAP_DATA_STATE_AVAILABLE)
             fprintf(stdout, "At index %2d: Key %d -> Value %d -> Hash %u\n",
-                    i,
+                    i, 
                     (int)(long) map->table[i].key,
                     (int)(long) map->table[i].data,
                     map->table[i].hash);
@@ -35,17 +36,13 @@ void inspect_map(const struct map *__restrict map)
     
     fprintf(stdout, "Inserted values: ");
     
-    map_for_each(map, i, tmp)
-        fprintf(stdout, "%u ", (unsigned int) (long) tmp);
+    map_for_each(map, e)
+        fprintf(stdout, "%u ", (unsigned int) (long) entry_data(e));
     
     fprintf(stdout, "\n");
-    
-    fprintf(stdout, "Map entries: %u.\n"
-                    "Map capacity: %u.\n"
-                    "Map occupation is %d %%.\n",
-            map->size, 
-            map->capacity,
-            100 * map->size / map->capacity);
+
+    fprintf(stdout, "Map entries: %u / capacity: %u / occupation: %d %%.\n",
+            map->size, map->capacity, 100 * map->size / map->capacity);
 }
 
 void map_test_insert_remove(void)

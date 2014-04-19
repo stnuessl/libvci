@@ -55,7 +55,6 @@ set(SOURCE
     src/lib/util/clock.c
     src/lib/util/config.c
     src/lib/util/config_parser.c
-    src/lib/util/config_key.c
     src/lib/util/log.c
     src/lib/util/mempool.c
     src/lib/util/observer.c

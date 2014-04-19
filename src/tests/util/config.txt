@@ -11,32 +11,9 @@
 ; same goes for lines with a ';'
 ;
 
-ShoppingList Drinks
+Year   = 2013
+Month  = September
+Day    = Wednesday
 
-Year    2013
-Month   09      September
-Day     18      Wednesday
-
-[Whiskey]
-
-Name            Talisker
-Age             10,18,25,30,35
-Distillery      Talisker Distillery
-
-[HerbLiqueur]
-
-#
-# assignments also works!
-#
-
-Name = Jägermeister
-
-[Booze]
-
-#
-# In fact spaces, equal signs, tabs and newline characters are all ignored
-# if they occur between a key and a value.
-# It is up to you the keep the config file readable!
-#
-Name =  ==              
-Absolut Wodka
+Name = Doge
+Age  = 1

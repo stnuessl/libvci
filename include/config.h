@@ -5,11 +5,13 @@
 #include <stdbool.h>
 
 #include "map.h"
+#include "vector.h"
 #include "list.h"
 
 struct config {
-    char *path;
     struct map map;
+    char *path;
+    char *mem;
 };
 
 struct config *config_new(const char *__restrict path);
@@ -23,12 +25,23 @@ void config_destroy(struct config *__restrict config);
 int config_parse(struct config *__restrict config);
 
 const char *config_value(struct config *__restrict config, 
-                         const char *__restrict section,
                          const char *__restrict key);
 
+int config_add_value(struct config *__restrict config, 
+                     const char *key,
+                     char *value);
+
 int config_set_path(struct config *__restrict config, 
-                     const char *__restrict path);
+                    const char *__restrict path);
 
 const char *config_path(struct config *__restrict config);
+
+int config_save(struct config *__restrict config);
+
+int config_save_to_file(struct config *__restrict config, 
+                        const char *__restrict path);
+
+#define config_for_each(config, entry)                                         \
+    map_for_each(&(config)->map, (entry))
 
 #endif /* _CONFIG_H_ */  

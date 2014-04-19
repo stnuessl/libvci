@@ -21,7 +21,7 @@
 
 static int _map_rehash(struct map *__restrict map, unsigned int capacity)
 {
-    struct map_entry *old_table;
+    struct entry *old_table;
     unsigned int i, old_capacity, old_entries;
     int err;
     
@@ -72,7 +72,7 @@ static int _map_rehash(struct map *__restrict map, unsigned int capacity)
  * If there is a bug in this function it is very likely that
  * map_insert() suffers from the same bug.
  */
-static struct map_entry *_map_lookup(const struct map *__restrict map,
+static struct entry *_map_lookup(const struct map *__restrict map,
                                      const void *__restrict key)
 {
     unsigned int hash, index, offset;
@@ -233,7 +233,7 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
 
 void *map_retrieve(struct map *__restrict map, const void *key)
 {
-    struct map_entry *entry;
+    struct entry *entry;
     
     entry = _map_lookup(map, key);
     
@@ -242,7 +242,7 @@ void *map_retrieve(struct map *__restrict map, const void *key)
 
 void *map_take(struct map *__restrict map, const void *key)
 {
-    struct map_entry *entry;
+    struct entry *entry;
     void *data;
     
     entry = _map_lookup(map, key);
@@ -383,4 +383,14 @@ unsigned int hash_string(const void *key)
     hval += (hval << 15);
     
     return hval;
+}
+
+inline const void *entry_key(struct entry *__restrict e)
+{
+    return e->key;
+}
+
+inline void *entry_data(struct entry *__restrict e)
+{
+    return e->data;
 }

@@ -9,36 +9,39 @@
 #include <libvci/config.h>
 #include <libvci/map.h>
 
-#define PRINT_CONFIG(config, section, key)                                     \
+#define PRINT_CONFIG(config,key)                                               \
     fprintf(stdout,                                                            \
-    "[%15s]: %15s -> %20s\n",                                                  \
-    section ? section : "null", key, config_value(config, section, key))
+    "%15s -> %20s\n",                                                          \
+    key, config_value(config, key))
 
 void *run(void *__restrict path)
 {
     struct config *config;
+    struct entry *e;
+    const char *k;
+    char *v;
     int err;
     
     config = config_new(path);
-    if(!config)
-        return NULL;
+    assert(config);
     
     err = config_parse(config);
-    if(err < 0)
-        goto out;
+    assert(err == 0);
     
-    PRINT_CONFIG(config, NULL, "ShoppingList");
-    PRINT_CONFIG(config, NULL, "Year");
-    PRINT_CONFIG(config, NULL, "Month");
-    PRINT_CONFIG(config, NULL, "Day");
+    PRINT_CONFIG(config, "Year");
+    PRINT_CONFIG(config, "Month");
+    PRINT_CONFIG(config, "Day");
     
-    PRINT_CONFIG(config, "Whiskey", "Name");
-    PRINT_CONFIG(config, "Whiskey", "Age");
-    PRINT_CONFIG(config, "Whiskey", "Distillery");
+    PRINT_CONFIG(config, "Name");
+    PRINT_CONFIG(config, "Age");
     
-    PRINT_CONFIG(config, "HerbLiqueur", "Name");
-    PRINT_CONFIG(config, "Booze", "Name");
-out:
+    config_for_each(config, e) {
+        k = entry_key(e);
+        v = entry_data(e);
+    
+        fprintf(stdout, "%s -> %s\n", k, v);
+    }
+    
     config_delete(config);
     
     return NULL;

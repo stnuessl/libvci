@@ -9,7 +9,7 @@ enum map_data_state {
     MAP_DATA_STATE_REMOVED      = 0x02
 };
 
-struct map_entry {
+struct entry {
     const void *key;
     void *data;
     
@@ -18,7 +18,7 @@ struct map_entry {
 };
 
 struct map {
-    struct map_entry *table;
+    struct entry *table;
     unsigned int size;
     unsigned int capacity;
 
@@ -89,12 +89,18 @@ unsigned int hash_s64(const void *key);
 
 unsigned int hash_string(const void *key);
 
-#define map_for_each(map, i, value)                                            \
-    for((i) = 0, (value) = (map)->table[i].data;                               \
-        (i) < (map)->capacity;                                                 \
-        (i) += 1, (value) = (map)->table[i].data)                              \
-        if((map)->table[i].state != MAP_DATA_STATE_AVAILABLE)                  \
+inline const void *entry_key(struct entry *__restrict e);
+
+inline void *entry_data(struct entry *__restrict e);
+
+
+#define map_for_each(map, entry)                                               \
+    for((entry) = (map)->table;                                                \
+        (entry) < (map)->table + (map)->capacity;                              \
+        (entry) += 1)                                                          \
+        if((entry)->state != MAP_DATA_STATE_AVAILABLE)                         \
             continue;                                                          \
         else
+
 
 #endif /* _MAP_H_ */
