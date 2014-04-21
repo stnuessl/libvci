@@ -36,11 +36,6 @@ int config_set_path(struct config *__restrict config,
 
 const char *config_path(struct config *__restrict config);
 
-int config_save(struct config *__restrict config);
-
-int config_save_to_file(struct config *__restrict config, 
-                        const char *__restrict path);
-
 #define config_for_each(config, entry)                                         \
     map_for_each(&(config)->map, (entry))
 

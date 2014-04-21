@@ -62,9 +62,9 @@ out:
 
 void config_destroy(struct config *__restrict config)
 {
+    free(config->mem);
     map_destroy(&config->map);
     free(config->path);
-    free(config->mem);
 }
 
 int config_parse(struct config *__restrict config)
@@ -89,13 +89,6 @@ const char *config_value(struct config *__restrict config,
     return map_retrieve(&config->map, key);
 }
 
-int config_add_value(struct config *__restrict config, 
-                     const char *key,
-                     char *value)
-{
-    return map_insert(&config->map, key, value);
-}
-
 int config_set_path(struct config *__restrict config, 
                      const char *__restrict path)
 {
@@ -111,33 +104,4 @@ int config_set_path(struct config *__restrict config,
 const char *config_path(struct config *__restrict config)
 {
     return config->path;
-}
-
-int config_save(struct config *__restrict config)
-{
-    return config_save_to_file(config, config->path);
-}
-
-int config_save_to_file(struct config *__restrict config, 
-                        const char *__restrict path)
-{
-    FILE *f;
-    struct entry *e;
-    const char *key;
-    char *val;
-    
-    f = fopen(path, "w");
-    if(!f)
-        return -errno;
-    
-    config_for_each(config, e) {
-        key = entry_key(e);
-        val = entry_data(e);
-        
-        fprintf(f, "%s = %s\n", key, val);
-    }
-    
-    fclose(f);
-    
-    return 0;
 }
