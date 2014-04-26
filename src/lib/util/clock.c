@@ -134,7 +134,7 @@ unsigned long clock_elapsed_ms(struct clock *__restrict c)
     
     ts = _clock_elapsed(c);
     
-    return ts.tv_sec * 1000UL + ts.tv_nsec / 1000000UL;
+    return ts.tv_sec * 1000UL + ts.tv_nsec / (unsigned long) 1e6;
 }
 
 unsigned long clock_elapsed_us(struct clock *__restrict c)
@@ -143,7 +143,7 @@ unsigned long clock_elapsed_us(struct clock *__restrict c)
     
     ts = _clock_elapsed(c);
     
-    return ts.tv_sec * 1000000UL + ts.tv_nsec / 1000UL;
+    return ts.tv_sec * (unsigned long) 1e6 + ts.tv_nsec / 1000UL;
 }
 
 unsigned long clock_elapsed_ns(struct clock *__restrict c)
@@ -152,5 +152,5 @@ unsigned long clock_elapsed_ns(struct clock *__restrict c)
     
     ts = _clock_elapsed(c);
     
-    return ts.tv_sec * 1000000000UL + ts.tv_nsec % 1000000000UL;
+    return ts.tv_sec * (unsigned long) 1e9 + ts.tv_nsec % (unsigned long) 1e9 ;
 }
