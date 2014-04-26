@@ -16,6 +16,72 @@
 /* max file size 512 kB */
 #define CONFIG_MAX_FILE_SIZE (1 << 19)
 
+static void parser_skip_line(struct config_parser *__restrict parser)
+{
+    char c;
+    
+    for(; parser->p < parser->fend; ++parser->p) {
+        c = *parser->p;
+        
+        if(c == '\n' || c == EOF)
+            break;
+    }
+}
+
+static char *parser_read_key(struct config_parser *__restrict parser)
+{
+    char *start, c;
+    
+    for(start = parser->p; parser->p < parser->fend; ++parser->p) {
+        c = *parser->p;
+        
+        switch(c) {
+            case ' ':
+                *parser->p = '\0';
+                break;
+            case '=':
+                *parser->p = '\0';
+                return start;
+            default:
+                if(!isalnum(c))
+                    goto out;
+                
+                break;
+        }
+    }
+    
+    out:
+    errno = EINVAL;
+    return NULL;
+}
+
+static char *parser_read_value(struct config_parser *__restrict parser)
+{
+    char *start, c;
+    
+    for(start = parser->p; parser->p < parser->fend; ++parser->p) {
+        c = *parser->p;
+        
+        switch(c) {
+            case ' ':
+                *parser->p = '\0';
+                break;
+            case '\n':
+                *parser->p = '\0';
+                return start;
+            default:
+                if(!isalnum(c))
+                    goto out;
+                
+                break;
+        }
+    }
+    
+    out:
+    errno = EINVAL;
+    return NULL;
+}
+
 struct config_parser *config_parser_new(struct config *config)
 {
     struct config_parser *p;
@@ -67,72 +133,6 @@ cleanup2:
 cleanup1:
     free(p);
 out:
-    return NULL;
-}
-
-static void parser_skip_line(struct config_parser *__restrict parser)
-{
-    char c;
-    
-    for(; parser->p < parser->fend; ++parser->p) {
-        c = *parser->p;
-        
-        if(c == '\n' || c == EOF)
-            break;
-    }
-}
-
-static char *parser_read_key(struct config_parser *__restrict parser)
-{
-    char *start, c;
-    
-    for(start = parser->p; parser->p < parser->fend; ++parser->p) {
-        c = *parser->p;
-        
-        switch(c) {
-        case ' ':
-            *parser->p = '\0';
-            break;
-        case '=':
-            *parser->p = '\0';
-            return start;
-        default:
-            if(!isalnum(c))
-                goto out;
-            
-            break;
-        }
-    }
-    
-out:
-    errno = EINVAL;
-    return NULL;
-}
-
-static char *parser_read_value(struct config_parser *__restrict parser)
-{
-    char *start, c;
-    
-    for(start = parser->p; parser->p < parser->fend; ++parser->p) {
-        c = *parser->p;
-        
-        switch(c) {
-        case ' ':
-            *parser->p = '\0';
-            break;
-        case '\n':
-            *parser->p = '\0';
-            return start;
-        default:
-            if(!isalnum(c))
-                goto out;
-            
-            break;
-        }
-    }
-    
-out:
-    errno = EINVAL;
     return NULL;
 }
 
