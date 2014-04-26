@@ -123,6 +123,37 @@ void test_duplicates(unsigned int num)
             num, dups1, (double) dups1 / num, num, dups2, (double) dups2 / num);
 }
 
+void test_range(unsigned int num)
+{
+    struct random *rand;
+    unsigned int i, n;
+    
+    rand = random_new();
+    assert(rand);
+    
+    for(i = 0; i < num; ++i) {
+        n = random_uint_range(rand, 0, 100);
+        assert(n >= 0 && n <= 100);
+        
+        n = random_uint_range(rand, 1000, 10000);
+        assert(n >= 1000 && n <= 10000);
+        
+        n = random_uint_range(rand, 99999, 123456);
+        assert(n >= 99999 && n <= 123456);
+        
+        n = random_uint_range(rand, (unsigned int) 1e6 + 1, (unsigned int) 1e8);
+        assert(n >= (unsigned int) 1e6 + 1 && n <= (unsigned int) 1e8);
+        
+        n = random_uint_range(rand, 0, 0);
+        assert(n == 0);
+        
+        n = random_uint_range(rand, 100, 100);
+        assert(n == 100);
+    }
+    
+    random_delete(rand);
+}
+
 int main(int argc, char *argv[])
 {
     unsigned int num;
@@ -137,6 +168,7 @@ int main(int argc, char *argv[])
     if(num) {
         test_seeding(num);
         test_duplicates(num);
+        test_range(num);
     }
     
     fprintf(stdout, "Tests finished\n");
