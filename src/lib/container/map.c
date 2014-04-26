@@ -73,7 +73,7 @@ static int _map_rehash(struct map *__restrict map, unsigned int capacity)
  * map_insert() suffers from the same bug.
  */
 static struct entry *_map_lookup(const struct map *__restrict map,
-                                     const void *__restrict key)
+                                 const void *__restrict key)
 {
     unsigned int hash, index, offset;
     
@@ -86,7 +86,7 @@ static struct entry *_map_lookup(const struct map *__restrict map,
 
         switch(map->table[index].state) {
             case MAP_DATA_STATE_AVAILABLE:
-                if(map->table[index].hash != hash )
+                if(map->table[index].hash != hash)
                     break;
                 
                 if(map->key_compare(map->table[index].key, key) == 0)

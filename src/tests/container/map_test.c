@@ -57,12 +57,12 @@ void map_test_insert_remove(void)
     assert(map);
     
     for(i = 0; i < num_elements; ++i) {
-        err = map_insert(map, (void *)(long)i, (void *)(long)i);
+        err = map_insert(map, (void *)(long)i, (void *)(long) i);
         assert(err == 0);
     }
     
     for(i = 0; i < num_elements - (num_elements >> 1); ++i)
-        assert((int)(long)map_take(map, (void *)(long)i) == i);
+        assert((int)(long)map_take(map, (void *)(long) i) == i);
     
     inspect_map(map);
     
