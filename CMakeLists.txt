@@ -29,6 +29,7 @@ set(HEADER
     include/mempool.h
     include/observer.h
     include/queue.h
+    include/random.h
     include/stack.h
     include/subject.h
     include/ringbuffer.h
@@ -58,6 +59,7 @@ set(SOURCE
     src/lib/util/log.c
     src/lib/util/mempool.c
     src/lib/util/observer.c
+    src/lib/util/random.c
     src/lib/util/subject.c
     )
 

@@ -67,3 +67,6 @@ target_link_libraries(observer_test ${LIBS})
 add_executable(async_task_test concurrent/async_task_test.c)
 target_link_libraries(async_task_test ${LIBS})
 target_link_libraries(async_task_test ${CMAKE_THREAD_LIBS_INIT})
+
+add_executable(random_test util/random_test.c)
+target_link_libraries(random_test ${LIBS})
