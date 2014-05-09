@@ -34,6 +34,10 @@ struct link *list_take_front(struct link *__restrict list);
 
 struct link *list_take_back(struct link *__restrict list);
 
+struct link *list_at(struct link *__restrict list, unsigned int index);
+
+struct link *list_at_reverse(struct link *__restrict list, unsigned int index);
+
 bool list_empty(const struct link *__restrict list);
 
 void list_merge(struct link *list, struct link *other);

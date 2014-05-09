@@ -112,6 +112,30 @@ struct link *list_take_back(struct link *__restrict list)
     return link;
 }
 
+struct link *list_at(struct link *__restrict list, unsigned int index)
+{
+    struct link *link;
+
+    link = list->next;
+    
+    while(index--)
+        link = link->next;
+    
+    return (link != list) ? link : list->prev;
+}
+
+struct link *list_at_reverse(struct link *__restrict list, unsigned int index)
+{
+    struct link *link;
+    
+    link = list->prev;
+    
+    while(index--)
+        link = link->prev;
+    
+    return (link != list) ? link : list->next;
+}
+
 bool list_empty(const struct link *__restrict list)
 {
     return list->next == list;
