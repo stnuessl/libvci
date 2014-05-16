@@ -1,9 +1,34 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2013 Steffen Nuessle
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <stdbool.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 
@@ -28,6 +53,7 @@ static void parser_skip_line(struct config_parser *__restrict parser)
     }
 }
 
+
 static char *parser_read_key(struct config_parser *__restrict parser)
 {
     char *start, c;
@@ -37,6 +63,8 @@ static char *parser_read_key(struct config_parser *__restrict parser)
         
         switch(c) {
             case ' ':
+            case '\t':
+            case '\0':
                 *parser->p = '\0';
                 break;
             case '=':
@@ -50,7 +78,7 @@ static char *parser_read_key(struct config_parser *__restrict parser)
         }
     }
     
-    out:
+out:
     errno = EINVAL;
     return NULL;
 }
@@ -64,20 +92,18 @@ static char *parser_read_value(struct config_parser *__restrict parser)
         
         switch(c) {
             case ' ':
+            case '\t':
+            case '\0':
                 *parser->p = '\0';
                 break;
             case '\n':
                 *parser->p = '\0';
                 return start;
             default:
-                if(!isalnum(c))
-                    goto out;
-                
                 break;
         }
     }
     
-    out:
     errno = EINVAL;
     return NULL;
 }
@@ -95,7 +121,7 @@ struct config_parser *config_parser_new(struct config *config)
     
     memset(p, 0, sizeof(*p));
     
-    fd = open(config->path, O_RDWR);
+    fd = open(config->path, O_RDONLY);
     if(fd < 0)
         goto cleanup1;
     
@@ -103,7 +129,6 @@ struct config_parser *config_parser_new(struct config *config)
     if(err < 0)
         goto cleanup1;
     
-    /* 512 MB */
     if(stat.st_size > CONFIG_MAX_FILE_SIZE) {
         errno = EINVAL;
         goto cleanup1;
@@ -124,7 +149,6 @@ struct config_parser *config_parser_new(struct config *config)
     p->fend        = p->fstart + stat.st_size;
     p->config      = config;
     p->config->mem = p->fstart;
-    p->state       = PARSER_STATE_START;
     
     return p;
 
@@ -146,28 +170,28 @@ int config_parser_parse(struct config_parser *__restrict parser)
     for(parser->p = parser->fstart; parser->p < parser->fend; ++parser->p) {
         c = *parser->p;
         
-        if(isalnum(c)) {
-            if(!key) {
-                key = parser_read_key(parser);
-                
-                if(!key)
-                    return -errno;
-                
-            } else {
-                val = parser_read_value(parser);
-                if(!val)
-                    return -errno;
-                
-                err = map_insert(&parser->config->map, key, val);
-                if(err < 0)
-                    return err;
-                
-                key = NULL;
-            }
-        } else if(c == '#' || c == ';') {
-            parser_skip_line(parser);
-        } else if(c == ' ' || c == '\t' || c == '\n') {
+        if(isspace(c))
             continue;
+        
+        if(c == '#' || c == ';') {
+            parser_skip_line(parser);
+            
+        } else if(isalnum(c) && !key) {
+            key = parser_read_key(parser);
+                
+            if(!key)
+                return -errno;
+            
+        } else if(isgraph(c) && key) {
+            val = parser_read_value(parser);
+            if(!val)
+                return -errno;
+            
+            err = map_insert(&parser->config->map, key, val);
+            if(err < 0)
+                return err;
+            
+            key = NULL;
         } else {
             return -EINVAL;
         }

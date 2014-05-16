@@ -1,3 +1,27 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2013 Steffen Nuessle
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -30,7 +54,7 @@ static void _log_write_line_header(struct log *__restrict l, int level)
     time_t now;
     struct tm ltime;
     
-    if(l->flags & LOG_PRINT_DATE) {
+    if(l->flags & LOG_DATE) {
         now = time(NULL);
         
         localtime_r(&now, &ltime);
@@ -40,21 +64,21 @@ static void _log_write_line_header(struct log *__restrict l, int level)
                 ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
     }
     
-    if(l->flags & LOG_PRINT_HOSTNAME)
+    if(l->flags & LOG_HOSTNAME)
         fprintf(l->file, "| %s | ", l->hostname);
         
-    if(l->flags & LOG_PRINT_TIMESTAMP) {
+    if(l->flags & LOG_TIMESTAMP) {
         fprintf(l->file, "[ %*lf ] ",
                 10, (double) clock_elapsed_us(&l->clock) / 1e6);
     }
     
-    if(l->flags & LOG_PRINT_NAME)
+    if(l->flags & LOG_NAME)
         fprintf(l->file,  "< %s > ", l->name);
     
-    if(l->flags & LOG_PRINT_PID)
+    if(l->flags & LOG_PID)
         fprintf(l->file, "( %*u ) ", 5, getpid());
         
-    if(l->flags & LOG_PRINT_LEVEL)
+    if(l->flags & LOG_LEVEL)
         fprintf(l->file, "{ %*s } ", 9, _log_severity_string(level));
     
     fprintf(l->file, ": ");
@@ -108,7 +132,7 @@ int log_init(struct log *__restrict l,
         goto cleanup1;
     }
     
-    if(flags & LOG_PRINT_TIMESTAMP) {
+    if(flags & LOG_TIMESTAMP) {
         err = clock_init(&l->clock, CLOCK_MONOTONIC);
         if(err < 0)
             goto cleanup2;
@@ -116,7 +140,7 @@ int log_init(struct log *__restrict l,
         clock_start(&l->clock);
     }
     
-    if(flags & LOG_PRINT_HOSTNAME) {
+    if(flags & LOG_HOSTNAME) {
         hostname[HOSTNAME_SIZE - 1] = '\0';
         
         err = gethostname(hostname, HOSTNAME_SIZE - 1);
@@ -131,12 +155,12 @@ int log_init(struct log *__restrict l,
     }
 
     l->flags = flags;
-    l->severity_cap = LOG_SEVERITY_INFO;
+    l->severity_cap = LOG_INFO;
     
     return 0;
 
 cleanup3:
-    if(flags & LOG_PRINT_TIMESTAMP)
+    if(flags & LOG_TIMESTAMP)
         clock_destroy(&l->clock);
 cleanup2:
     fclose(l->file);
@@ -148,10 +172,10 @@ out:
 
 void log_destroy(struct log *__restrict l)
 {
-    if(l->flags & LOG_PRINT_TIMESTAMP)
+    if(l->flags & LOG_TIMESTAMP)
         clock_destroy(&l->clock);
     
-    if(l->flags & LOG_PRINT_HOSTNAME)
+    if(l->flags & LOG_HOSTNAME)
         free(l->hostname);
     
     free(l->name);
@@ -218,7 +242,7 @@ void log_debug(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_SEVERITY_DEBUG, fmt, vargs);
+    _log_printf(l, LOG_DEBUG, fmt, vargs);
     va_end(vargs);
 }
 
@@ -227,7 +251,7 @@ void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_SEVERITY_INFO, fmt, vargs);
+    _log_printf(l, LOG_INFO, fmt, vargs);
     va_end(vargs);
 }
 
@@ -236,7 +260,7 @@ void log_message(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_SEVERITY_MESSAGE, fmt, vargs);
+    _log_printf(l, LOG_MESSAGE, fmt, vargs);
     va_end(vargs);
 }
 
@@ -245,7 +269,7 @@ void log_warning(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_SEVERITY_WARNING, fmt, vargs);
+    _log_printf(l, LOG_WARNING, fmt, vargs);
     va_end(vargs);
 }
 
@@ -254,7 +278,7 @@ void log_critical(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_SEVERITY_CRITICAL, fmt, vargs);
+    _log_printf(l, LOG_CRITICAL, fmt, vargs);
     va_end(vargs);
 }
 
@@ -263,6 +287,6 @@ void log_error(struct log *__restrict l, const char *__restrict fmt, ...)
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_SEVERITY_ERROR, fmt, vargs);
+    _log_printf(l, LOG_ERROR, fmt, vargs);
     va_end(vargs);
 }
