@@ -51,9 +51,9 @@ struct vector *vector_new(unsigned int capacity)
     return vec;
 }
 
-void vector_delete(struct vector *__restrict vec, void (*data_delete)(void *))
+void vector_delete(struct vector *__restrict vec)
 {
-    vector_destroy(vec, data_delete);
+    vector_destroy(vec);
     free(vec);
 }
 
@@ -67,35 +67,27 @@ int vector_init(struct vector *__restrict vec, unsigned int capacity)
 
     vec->size = 0;
     vec->capacity = capacity;
+    vec->data_compare = NULL;
+    vec->data_delete  = NULL;
     
     return 0;
 }
 
-void vector_destroy(struct vector *__restrict vec, void (*data_delete)(void *))
+void vector_destroy(struct vector *__restrict vec)
 {
-    vector_clear(vec, data_delete);
+    vector_clear(vec);
     free(vec->data);
 }
 
-void vector_clear(struct vector *__restrict vec, void (*data_delete)(void *))
+void vector_clear(struct vector *__restrict vec)
 {
-    if(!data_delete) {
+    if(!vec->data_delete) {
         vec->size = 0;
         return;
     }
     
-    while(vec->size--) {
-        if(vec->data[vec->size]) {
-            data_delete(vec->data[vec->size]);
-            vec->data[vec->size] = NULL;
-        }
-    }
-}
-
-void vector_sort(struct vector *__restrict vec,
-                 int (*data_compare)(const void *, const void *))
-{
-    qsort(vec->data, vec->size, sizeof(*vec->data), data_compare);
+    while(vec->size--)
+        vec->data_delete(vec->data[vec->size]);
 }
 
 inline unsigned int vector_size(const struct vector *__restrict vec)
@@ -209,17 +201,95 @@ void *vector_take_back(struct vector *__restrict vec)
     return vec->data[vec->size];
 }
 
+void *vector_take(struct vector *__restrict vec, void *data)
+{
+    unsigned int i;
+    
+    for(i = 0; i < vec->size; ++i) {
+        if(vec->data[i] == data)
+            return vector_take_at(vec, i);
+    }
+    
+    return NULL;
+}
+
 void **vector_at(struct vector *__restrict vec, unsigned int i)
 {
     return vec->data + i;
 }
 
-void **vector_start(struct vector *__restrict vec)
+void **vector_front(struct vector *__restrict vec)
 {
     return vec->data;
 }
 
-void **vector_end(struct vector *__restrict vec)
+void **vector_back(struct vector *__restrict vec)
 {
     return vec->data + vec->size - 1;
+}
+
+void vector_sort(struct vector *__restrict vec)
+{
+    qsort(vec->data, vec->size, sizeof(*vec->data), vec->data_compare);
+}
+
+int vector_insert_sorted(struct vector *__restrict vec, void *data)
+{
+    unsigned int i;
+    int res;
+    
+    for(i = 0; i < vec->size; i++) {
+        res = vec->data_compare(vec->data[i], data);
+        
+        if(res > 0)
+            break;
+    }
+    
+    return vector_insert_at(vec, i, data);
+}
+
+void *vector_take_sorted(struct vector *__restrict vec, void *data)
+{
+    int l, r, m;
+    int res;
+    
+    l = 0;
+    r = vec->size - 1;
+    
+    while(l <= r) {
+        m = (l + r) >> 1;
+        
+        res = vec->data_compare(vec->data[m], data);
+        if(res < 0)
+            r = m - 1;
+        else if(res > 0)
+            l = m + 1;
+        else
+            return vector_take_at(vec, m);
+    }
+    
+    return NULL;
+}
+
+void vector_set_data_compare(struct vector *__restrict vec, 
+                             int (*data_compare)(const void *, const void *))
+{
+    vec->data_compare = data_compare;
+}
+
+int (*vector_data_compare(struct vector *__restrict vec))
+                          (const void *, const void *)
+{
+    return vec->data_compare;
+}
+
+void vector_set_data_delete(struct vector *__restrict vec, 
+                            void (*data_delete)(void *))
+{
+    vec->data_delete = data_delete;
+}
+
+void (*vector_data_delete(struct vector *__restrict vec))(void *)
+{
+    return vec->data_delete;
 }

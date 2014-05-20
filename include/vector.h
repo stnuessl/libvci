@@ -28,7 +28,11 @@
 #include <stdbool.h>
 
 struct vector {
+    int (*data_compare)(const void *, const void *);
+    void (*data_delete)(void *);
+    
     void **data;
+    
     unsigned int size;
     unsigned int capacity;
 };
@@ -36,22 +40,19 @@ struct vector {
 
 struct vector *vector_new(unsigned int capacity);
 
-void vector_delete(struct vector *__restrict vec, void (*data_delete)(void *));
+void vector_delete(struct vector *__restrict vec);
 
 int vector_init(struct vector *__restrict vec, unsigned int capacity);
 
-void vector_destroy(struct vector *__restrict vec, void (*data_delete)(void *));
+void vector_destroy(struct vector *__restrict vec);
 
-void vector_clear(struct vector *__restrict vec, void (*data_delete)(void *));
-
-void vector_sort(struct vector *__restrict vec,
-                 int (*data_compare)(const void *, const void *));
+void vector_clear(struct vector *__restrict vec);
 
 inline unsigned int vector_size(const struct vector *__restrict vec);
 
 inline bool vector_empty(const struct vector *__restrict vec);
 
-int vector_set_capacity(struct vector *__restrict vec, unsigned int size);
+int vector_set_capacity(struct vector *__restrict vec, unsigned int capacity);
 
 inline unsigned int vector_capacity(const struct vector *__restrict vec);
 
@@ -69,11 +70,30 @@ void *vector_take_at(struct vector *__restrict vec, unsigned int i);
 
 void *vector_take_back(struct vector *__restrict vec);
 
+void *vector_take(struct vector *__restrict vec, void *data);
+
 void **vector_at(struct vector *__restrict vec, unsigned int i);
 
-void **vector_start(struct vector *__restrict vec);
+void **vector_front(struct vector *__restrict vec);
 
-void **vector_end(struct vector *__restrict vec);
+void **vector_back(struct vector *__restrict vec);
+
+void vector_sort(struct vector *__restrict vec);
+
+int vector_insert_sorted(struct vector *__restrict vec, void *data);
+
+void *vector_take_sorted(struct vector *__restrict vec, void *data);
+
+void vector_set_data_compare(struct vector *__restrict vec, 
+                             int (*data_compare)(const void *, const void *));
+
+int (*vector_data_compare(struct vector *__restrict vec))
+                          (const void *, const void *);
+
+void vector_set_data_delete(struct vector *__restrict vec, 
+                            void (*data_delete)(void *));
+
+void (*vector_data_delete(struct vector *__restrict vec))(void *);
 
 #define vector_for_each(vec, tmp)                                              \
     for((tmp) = (__typeof(tmp)) (vec)->data;                                   \
