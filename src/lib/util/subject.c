@@ -39,7 +39,7 @@ static unsigned int _int_hash(const void *key)
 
 static int _int_compare(const void *a, const void *b)
 {
-    return (long) a - (long) b;
+    return (a > b) - (a < b);
 }
 
 static void _observer_unlink(struct link *link)

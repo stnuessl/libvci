@@ -36,7 +36,7 @@
 
 int int_compare(const void *a, const void *b)
 {
-    return (long)a - (long)b;
+    return (a > b) - (a < b);
 }
 
 int string_compare(const void *a, const void *b)
