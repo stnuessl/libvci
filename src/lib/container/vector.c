@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#define _GNU_SOURCE
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,6 +33,15 @@
 #include "vector.h"
 
 #define VECTOR_DEFAULT_CAPACITY 8
+
+static int qsort_compare(const void *a, const void *b, void *arg)
+{
+    struct vector *vec;
+    
+    vec = arg;
+    
+    return vec->data_compare(*(const void **)a, *(const void **)b);
+}
 
 struct vector *vector_new(unsigned int capacity)
 {
@@ -160,18 +170,7 @@ int vector_insert_at(struct vector *__restrict vec, unsigned int i, void *data)
 
 int vector_insert_back(struct vector *__restrict vec, void *data)
 {
-    int err;
-    
-    if(vec->size >= vec->capacity) {
-        err = vector_set_capacity(vec, vec->capacity << 1);
-        if(err < 0)
-            return err;
-    }
-    
-    vec->data[vec->size] = data;
-    vec->size += 1;
-    
-    return 0;
+    return vector_insert_at(vec, vec->size, data);
 }
 
 void *vector_take_front(struct vector *__restrict vec)
@@ -196,9 +195,7 @@ void *vector_take_at(struct vector *__restrict vec, unsigned int i)
 
 void *vector_take_back(struct vector *__restrict vec)
 {
-    vec->size -= 1;
-    
-    return vec->data[vec->size];
+    return vector_take_at(vec, vec->size - 1);
 }
 
 void *vector_take(struct vector *__restrict vec, void *data)
@@ -230,7 +227,7 @@ void **vector_back(struct vector *__restrict vec)
 
 void vector_sort(struct vector *__restrict vec)
 {
-    qsort(vec->data, vec->size, sizeof(*vec->data), vec->data_compare);
+    qsort_r(vec->data, vec->size, sizeof(*vec->data), &qsort_compare, vec);
 }
 
 int vector_insert_sorted(struct vector *__restrict vec, void *data)

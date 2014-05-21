@@ -27,16 +27,13 @@
 #include <errno.h>
 
 #include "map.h"
+#include "hash.h"
+#include "compare.h"
 #include "list.h"
 #include "buffer.h"
 #include "macro.h"
 #include "config.h"
 #include "config_parser.h"
-
-static int string_compare(const void *a, const void *b)
-{
-    return strcmp(a, b);
-}
 
 struct config *config_new(const char *__restrict path)
 {
@@ -72,7 +69,7 @@ int config_init(struct config *__restrict config, const char *__restrict path)
         goto out;
     }
     
-    err = map_init(&config->map, 0, &string_compare, &hash_string);
+    err = map_init(&config->map, 0, &compare_string, &hash_string);
     if(err < 0) 
         goto cleanup1;
     

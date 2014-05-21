@@ -32,8 +32,10 @@
 #include <libvci/random.h>
 #include <libvci/macro.h>
 #include <libvci/map.h>
+#include <libvci/hash.h>
+#include <libvci/compare.h>
 
-int int_compare(const void *a, const void *b)
+int compare_int(const void *a, const void *b)
 {
     return a - b;
 }
@@ -94,7 +96,7 @@ void test_duplicates(unsigned int num)
     unsigned int i, n, dups1, dups2;;
     int err;
     
-    m = map_new(0, &int_compare, &hash_u32);
+    m = map_new(0, &compare_int, &hash_uint);
     random = random_new();
     
     assert(m);

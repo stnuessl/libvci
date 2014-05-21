@@ -84,6 +84,10 @@ int vector_insert_sorted(struct vector *__restrict vec, void *data);
 
 void *vector_take_sorted(struct vector *__restrict vec, void *data);
 
+/* 
+ * This data compare function must absolutely make sure that it compares
+ * the corresponding types and not void * -values
+ */
 void vector_set_data_compare(struct vector *__restrict vec, 
                              int (*data_compare)(const void *, const void *));
 

@@ -19,7 +19,9 @@ set(HEADER
     include/buffer.h
     include/cache.h
     include/clock.h
+    include/compare.h
     include/config.h
+    include/hash.h
     include/heap.h
     include/map.h
     include/link.h
@@ -54,8 +56,10 @@ set(SOURCE
     src/lib/container/stack.c
     src/lib/container/vector.c
     src/lib/util/clock.c
+    src/lib/util/compare.c
     src/lib/util/config.c
     src/lib/util/config_parser.c
+    src/lib/util/hash.c
     src/lib/util/log.c
     src/lib/util/mempool.c
     src/lib/util/observer.c

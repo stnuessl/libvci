@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 
 #include <libvci/avltree.h>
+#include <libvci/compare.h>
 #include <libvci/clock.h>
 #include <libvci/macro.h>
 
@@ -39,11 +40,6 @@ struct node {
     int data;
     struct avlnode avlnode;
 };
-
-int int_compare(const void *a, const void *b)
-{
-    return (long) a - (long) b;
-}
 
 void node_delete_from_avlnode(struct avlnode *avlnode)
 {
@@ -63,7 +59,7 @@ void avltree_test_deletion(void)
         exit(EXIT_FAILURE);
     }
     
-    tree = avltree_new(&int_compare);
+    tree = avltree_new(&compare_int);
     assert(tree);
     
     avltree_set_data_delete(tree, &node_delete_from_avlnode);
@@ -102,7 +98,7 @@ void avltree_test_iteration_performance(void)
     
     num = 1000000;
     
-    tree = avltree_new(&int_compare);
+    tree = avltree_new(&compare_int);
     c    = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(tree);
     assert(c);
@@ -150,7 +146,7 @@ void avltree_test_iteration_print(void)
     
     num = 10;
     
-    tree = avltree_new(&int_compare);
+    tree = avltree_new(&compare_int);
     assert(tree);
     
     avltree_set_data_delete(tree, &node_delete_from_avlnode);
@@ -189,7 +185,7 @@ void avltree_test_performance(int num)
     struct node *node, *tmp;
     int i, err;
     
-    tree = avltree_new(&int_compare);
+    tree = avltree_new(&compare_int);
     c    = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     
     assert(tree);

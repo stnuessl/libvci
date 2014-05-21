@@ -31,18 +31,10 @@
 #include <sys/stat.h>
 
 #include <libvci/map.h>
+#include <libvci/hash.h>
+#include <libvci/compare.h>
 #include <libvci/clock.h>
 #include <libvci/macro.h>
-
-int int_compare(const void *a, const void *b)
-{
-    return (a > b) - (a < b);
-}
-
-int string_compare(const void *a, const void *b)
-{
-    return strcmp(a, b);
-}
 
 void inspect_map(const struct map *__restrict map)
 {
@@ -77,7 +69,7 @@ void map_test_insert_remove(void)
     
     num_elements = 32;
     
-    map = map_new(0, &int_compare, &hash_s64);
+    map = map_new(0, &compare_int, &hash_long);
     assert(map);
     
     for(i = 0; i < num_elements; ++i) {
@@ -99,7 +91,7 @@ void map_test_performance(unsigned int num)
     struct clock *c;
     int i, err;
     
-    map = map_new(0, &int_compare, &hash_u32);
+    map = map_new(0, &compare_int, &hash_uint);
     c   = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(map);
     assert(c);
@@ -136,7 +128,7 @@ void map_test_performance(unsigned int num)
     clock_delete(c);
     map_delete(map);
     
-    map = map_new(0, &int_compare, &hash_u32);
+    map = map_new(0, &compare_int, &hash_uint);
     c   = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(map);
     assert(c);
@@ -166,7 +158,7 @@ void map_stress_test(void)
     struct map *map;
     int err, i, num_elements;
     
-    map = map_new(0, &int_compare, &hash_u64);
+    map = map_new(0, &compare_int, &hash_ulong);
     assert(map);
     
     num_elements = 1000000;
@@ -220,7 +212,7 @@ void map_string_test(void)
     struct map *map;
     int err, i;
     
-    map = map_new(0, &string_compare, &hash_string);
+    map = map_new(0, &compare_string, &hash_string);
     assert(map);
     
     for(i = 0; i < ARRAY_SIZE(strings); i += 2) {

@@ -31,18 +31,12 @@
 #include <sys/stat.h>
 
 #include <libvci/cache.h>
+#include <libvci/compare.h>
 
-unsigned int int_hash(const void *key)
+unsigned int char_hash(const void *key)
 {
     return (long)key;
 }
-
-int int_compare(const void *a, const void *b)
-{
-    return (long) a - (long) b;
-}
-
-
 
 void test_random(void)
 {
@@ -55,7 +49,7 @@ void test_random(void)
     hit = 0;
     miss = 0;
     
-    cache = cache_new(UCHAR_MAX / 2, &int_compare, &int_hash);
+    cache = cache_new(UCHAR_MAX / 2, &compare_int, &char_hash);
     assert(cache);
     
     fd = open("/dev/urandom", O_RDONLY);
@@ -89,7 +83,7 @@ void test_correctness(void)
     struct cache *cache;
     int i, data;
     
-    cache = cache_new(CACHE_SIZE, &int_compare, &int_hash);
+    cache = cache_new(CACHE_SIZE, &compare_int, &char_hash);
     assert(cache);
 
     for(i = 0; i < CACHE_SIZE; i++)

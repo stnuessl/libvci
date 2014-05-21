@@ -95,24 +95,6 @@ unsigned int (*map_key_hash(struct map *__restrict map))(const void *);
 
 void (*map_data_delete(struct map *__restrict map))(void *);
 
-unsigned int hash_u8(const void *key);
-
-unsigned int hash_u16(const void *key);
-
-unsigned int hash_u32(const void *key);
-
-unsigned int hash_u64(const void *key);
-
-unsigned int hash_s8(const void *key);
-
-unsigned int hash_s16(const void *key);
-
-unsigned int hash_s32(const void *key);
-
-unsigned int hash_s64(const void *key);
-
-unsigned int hash_string(const void *key);
-
 inline const void *entry_key(struct entry *__restrict e);
 
 inline void *entry_data(struct entry *__restrict e);

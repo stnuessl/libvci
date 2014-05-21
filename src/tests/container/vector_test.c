@@ -26,28 +26,23 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <assert.h>
 
 #include <libvci/vector.h>
 #include <libvci/clock.h>
 #include <libvci/macro.h>
+#include <libvci/random.h>
+#include <libvci/compare.h>
 
-int compare(const void *a, const void *b)
+static void check_sorted_vector(struct vector *__restrict v)
 {
-    return (long) *(const int **) a - (long) *(const int **) b;
-}
-
-void print_vector(struct vector *__restrict v)
-{
-    void **data;
-    int i;
-
-    i = 0;
+    unsigned int i, size;
     
-    vector_for_each(v, data)
-        fprintf(stdout, "vec(%d) = %d\n", i++, (int)(long) *data);
-        
-    fprintf(stdout, "\n");
+    size = vector_size(v);
+    
+    for(i = 1; i < size; ++i)
+        assert((long)*vector_at(v, i - 1) <= (long)*vector_at(v, i));
 }
 
 void test_sort_vector(void)
@@ -59,6 +54,8 @@ void test_sort_vector(void)
     v = vector_new(ARRAY_SIZE(a));
     assert(v);
     
+    vector_set_data_compare(v, &compare_int);
+    
     /*
      * vector_at() doesn't work on vector with size 0,
      * so we artifically increase it.
@@ -69,36 +66,44 @@ void test_sort_vector(void)
     for(i = 0; i < ARRAY_SIZE(a); ++i)
         *vector_at(v, i) = (void *)(long) a[i];
     
-    vector_sort(v, &compare);
+    vector_sort(v);
     
-    print_vector(v);
+    for(i = 0; i < vector_size(v); ++i)
+        fprintf(stdout, "%d\n", (int)(long)*vector_at(v, i));
     
-    for(i = 1; i < ARRAY_SIZE(a); ++i)
-        assert((int)(long)*vector_at(v, i - 1) <= (int)(long)*vector_at(v, i));
+    check_sorted_vector(v);
     
-    vector_delete(v, NULL);
+    vector_delete(v);
 }
 
 void test_sort_large_vector(void)
 {
 #define N_ELEMENTS 10000000
     struct vector *v;
+    struct random *r;
     struct clock *c;
     int i;
+    unsigned int rand;
     
     v = vector_new(N_ELEMENTS);
     c = clock_new(CLOCK_MONOTONIC);
+    r = random_new();
     assert(v);
     assert(c);
+    assert(r);
+    
+    vector_set_data_compare(v, &compare_uint);
     
     i = 0;
     
-    for(i = 0; i < N_ELEMENTS; ++i)
-        vector_insert_at(v, i, (void *)(long) N_ELEMENTS - i);
+    for(i = 0; i < N_ELEMENTS; ++i) {
+        rand = random_uint(r);
+        assert(vector_insert_at(v, i, (void *)(long) rand) == 0);
+    }
         
     clock_start(c);
     
-    vector_sort(v, &compare);
+    vector_sort(v);
     
     clock_stop(c);
     
@@ -106,11 +111,10 @@ void test_sort_large_vector(void)
             "Elapsed sorting time (%u elements): %lu ms.\n", 
             N_ELEMENTS, clock_elapsed_ms(c));
     
-    for(i = 1; i < N_ELEMENTS; ++i)
-        assert((int)(long)*vector_at(v, i - 1) <= (int)(long)*vector_at(v, i));
+    check_sorted_vector(v);
     
-    vector_delete(v, NULL);
     clock_delete(c);
+    vector_delete(v);
 }
 
 void test_insert(void)
@@ -130,10 +134,8 @@ void test_insert(void)
     assert(err == 0);
     
     size = vector_size(vec);
-    
-    print_vector(vec);
-    
-    vector_delete(vec, NULL);
+        
+    vector_delete(vec);
 }
 
 void test_take(void)
@@ -141,7 +143,7 @@ void test_take(void)
     struct vector *vec;
     int size = 10, i;
     
-    vec = vector_new(10);
+    vec = vector_new(size);
     assert(vec);
     
     for(i = 0; i < size; ++i)
@@ -153,8 +155,37 @@ void test_take(void)
     
     assert(vector_size(vec) == size - 3);
     
-    print_vector(vec);
-    vector_delete(vec, NULL);
+    vector_delete(vec);
+}
+
+void test_sorted(void)
+{
+    struct vector *vec;
+    struct random *rand;
+    int size, i, err, tmp, **p;
+    
+    size = (int) 10000;
+    
+    vec = vector_new(0);
+    rand = random_new();
+    assert(vec);
+    assert(rand);
+    
+    vector_set_data_compare(vec, &compare_int);
+    
+    for(i = 0; i < size; ++i) {
+        tmp = random_uint(rand);
+        err = vector_insert_sorted(vec, (void *)(long) tmp);
+        assert(err == 0);
+    }
+    
+    vector_set_capacity(vec, min(vector_size(vec), 10));
+    
+    vector_for_each(vec, p)
+        fprintf(stdout, "%u\n", (unsigned int)(long) *p);
+    
+    random_delete(rand);
+    vector_delete(vec);
 }
 
 int main(int argc, char *argv[])
@@ -163,6 +194,7 @@ int main(int argc, char *argv[])
     test_sort_large_vector();
     test_insert();
     test_take();
+    test_sorted();
     
     return EXIT_SUCCESS;
 }

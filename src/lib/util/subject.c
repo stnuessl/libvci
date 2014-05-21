@@ -27,6 +27,7 @@
 
 #include "list.h"
 #include "map.h"
+#include "compare.h"
 #include "subject.h"
 #include "observer.h"
 
@@ -35,11 +36,6 @@
 static unsigned int _int_hash(const void *key)
 {
     return (long) key;
-}
-
-static int _int_compare(const void *a, const void *b)
-{
-    return (a > b) - (a < b);
 }
 
 static void _observer_unlink(struct link *link)
@@ -80,7 +76,7 @@ int subject_init(struct subject *__restrict sub, unsigned int observers)
 {
     int err;
 
-    err = map_init(&sub->map, observers, &_int_compare, &_int_hash);
+    err = map_init(&sub->map, observers, &compare_int, &_int_hash);
     if(err < 0)
         return err;
     
