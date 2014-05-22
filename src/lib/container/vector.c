@@ -114,6 +114,9 @@ int vector_set_capacity(struct vector *__restrict vec, unsigned int capacity)
 {
     void **data;
     
+    if(capacity <= vec->size)
+        vec->size = capacity;
+    
     capacity = adjust(capacity, VECTOR_DEFAULT_CAPACITY);
     
     if(capacity == vec->capacity)
@@ -122,10 +125,7 @@ int vector_set_capacity(struct vector *__restrict vec, unsigned int capacity)
     data = realloc(vec->data, capacity * sizeof(*data));
     if(!data)
         return -errno;
-    
-    if(vec->size > capacity)
-        vec->size = capacity;
-    
+
     vec->data = data;
     vec->capacity = capacity;
     
@@ -185,8 +185,9 @@ void *vector_take_at(struct vector *__restrict vec, unsigned int i)
     
     data = vec->data[i];
     
-    move_size = (vec->size - i) * sizeof(*vec->data);
     vec->size -= 1;
+    
+    move_size = (vec->size - i) * sizeof(*vec->data);
     
     memmove(vec->data + i, vec->data + i + 1, move_size);
     
@@ -256,7 +257,7 @@ void *vector_take_sorted(struct vector *__restrict vec, void *data)
     while(l <= r) {
         m = (l + r) >> 1;
         
-        res = vec->data_compare(vec->data[m], data);
+        res = vec->data_compare(data, vec->data[m]);
         if(res < 0)
             r = m - 1;
         else if(res > 0)

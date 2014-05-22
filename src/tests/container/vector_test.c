@@ -113,6 +113,7 @@ void test_sort_large_vector(void)
     
     check_sorted_vector(v);
     
+    random_delete(r);
     clock_delete(c);
     vector_delete(v);
 }
@@ -181,11 +182,46 @@ void test_sorted(void)
     
     vector_set_capacity(vec, min(vector_size(vec), 10));
     
+    vector_take(vec, *vector_front(vec));
+    vector_take(vec, *vector_back(vec));
+        
     vector_for_each(vec, p)
         fprintf(stdout, "%u\n", (unsigned int)(long) *p);
     
     random_delete(rand);
     vector_delete(vec);
+}
+
+void test_sorted_simple(void)
+{
+    struct vector *v;
+    int i, **p, err, a[] = { 0, 1, 2 ,3 ,4 ,5 ,6 ,7 ,8, 9 };
+    
+    v = vector_new(0);
+    assert(v);
+    
+    vector_set_data_compare(v, &compare_int);
+    
+    for(i = 0; i < ARRAY_SIZE(a); ++i) {
+        err = vector_insert_sorted(v, (void *)(long) a[i]);
+        assert(err == 0);
+    }
+    
+    vector_insert_front(v, (void *) -1);
+    vector_insert_back(v, (void *) 10);
+    
+    assert((int)(long) *vector_front(v) == -1);
+    assert((int)(long) *vector_back(v) == 10);
+    
+    vector_take(v, *vector_front(v));
+    vector_take(v, *vector_back(v));
+    vector_take_sorted(v, (void *) 4);
+    vector_take(v, (void *) 5);
+    
+    vector_for_each(v, p)
+        assert((int)(long) *p != 4 && (int)(long) *p != 5);
+    
+    vector_delete(v);
 }
 
 int main(int argc, char *argv[])
@@ -195,6 +231,7 @@ int main(int argc, char *argv[])
     test_insert();
     test_take();
     test_sorted();
+    test_sorted_simple();
     
     return EXIT_SUCCESS;
 }
