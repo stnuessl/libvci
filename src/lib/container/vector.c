@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdbool.h>
+#include <limits.h>
 #include <errno.h>
 
 #include "container_p.h"
@@ -233,23 +234,37 @@ void vector_sort(struct vector *__restrict vec)
 
 int vector_insert_sorted(struct vector *__restrict vec, void *data)
 {
-    unsigned int i;
+    unsigned int l, r, m;
     int res;
     
-    for(i = 0; i < vec->size; i++) {
-        res = vec->data_compare(vec->data[i], data);
-        
-        if(res > 0)
-            break;
+    if(vector_empty(vec))
+        return vector_insert_back(vec, data);
+    
+    l = 0;
+    r = vec->size - 1;
+    
+    while(l <= r && r != UINT_MAX) {
+        m = (l + r) >> 1;
+                
+        res = vec->data_compare(data, vec->data[m]);
+        if(res < 0)
+            r = m - 1;
+        else if(res > 0)
+            l = m + 1;
+        else
+            return vector_insert_at(vec, m, data);
     }
     
-    return vector_insert_at(vec, i, data);
+    return vector_insert_at(vec, l, data);
 }
 
 void *vector_take_sorted(struct vector *__restrict vec, void *data)
 {
-    int l, r, m;
+    unsigned int l, r, m;
     int res;
+    
+    if(vector_empty(vec))
+        return NULL;
     
     l = 0;
     r = vec->size - 1;

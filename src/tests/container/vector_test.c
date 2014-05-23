@@ -78,7 +78,7 @@ void test_sort_vector(void)
 
 void test_sort_large_vector(void)
 {
-#define N_ELEMENTS 10000000
+#define N_ELEMENTS 1000000
     struct vector *v;
     struct random *r;
     struct clock *c;
@@ -163,22 +163,32 @@ void test_sorted(void)
 {
     struct vector *vec;
     struct random *rand;
+    struct clock *c;
     int size, i, err, tmp, **p;
     
-    size = (int) 10000;
+    size = 25000;
     
     vec = vector_new(0);
     rand = random_new();
+    c = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(vec);
     assert(rand);
     
     vector_set_data_compare(vec, &compare_int);
     
+    clock_start(c);
+    
     for(i = 0; i < size; ++i) {
+        clock_stop(c);
         tmp = random_uint(rand);
+        clock_continue(c);
         err = vector_insert_sorted(vec, (void *)(long) tmp);
         assert(err == 0);
     }
+    
+    clock_stop(c);
+    
+    fprintf(stdout, "%d sorted inserts: %lu ms\n", size, clock_elapsed_ms(c));
     
     vector_set_capacity(vec, min(vector_size(vec), 10));
     
@@ -188,6 +198,7 @@ void test_sorted(void)
     vector_for_each(vec, p)
         fprintf(stdout, "%u\n", (unsigned int)(long) *p);
     
+    clock_delete(c);
     random_delete(rand);
     vector_delete(vec);
 }
@@ -195,7 +206,7 @@ void test_sorted(void)
 void test_sorted_simple(void)
 {
     struct vector *v;
-    int i, **p, err, a[] = { 0, 1, 2 ,3 ,4 ,5 ,6 ,7 ,8, 9 };
+    int i, **p, err, a[] = { 0, -1, 8, 5, 1, 2, 9, 3 ,6 ,4 ,7 };
     
     v = vector_new(0);
     assert(v);
@@ -206,7 +217,7 @@ void test_sorted_simple(void)
         err = vector_insert_sorted(v, (void *)(long) a[i]);
         assert(err == 0);
     }
-    
+        
     vector_insert_front(v, (void *) -1);
     vector_insert_back(v, (void *) 10);
     
@@ -217,6 +228,7 @@ void test_sorted_simple(void)
     vector_take(v, *vector_back(v));
     vector_take_sorted(v, (void *) 4);
     vector_take(v, (void *) 5);
+    
     
     vector_for_each(v, p)
         assert((int)(long) *p != 4 && (int)(long) *p != 5);
