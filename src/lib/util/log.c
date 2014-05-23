@@ -35,24 +35,25 @@
 #include "clock.h"
 #include "log.h"
 
-static const char *_log_severity_string(int severity)
+static const char *log_level_string(int severity)
 {
     static const char *strings[] = {
-        "ERROR",
-        "CRITICAL",
-        "WARNING",
-        "MESSAGE",
-        "INFO",
-        "DEBUG"
+        [LOG_DEBUG]   = "DEBUG",
+        [LOG_INFO]    = "INFO",
+        [LOG_WARNING] = "WARNING",
+        [LOG_ERROR]   = "ERROR"
     };
     
     return strings[severity];
 }
 
-static void _log_write_line_header(struct log *__restrict l, int level)
+static void write_line_header(struct log *__restrict l, 
+                              uint8_t level,
+                              const char *__restrict tag)
 {
     time_t now;
     struct tm ltime;
+    unsigned long elapsed;
     
     if(l->flags & LOG_DATE) {
         now = time(NULL);
@@ -64,30 +65,45 @@ static void _log_write_line_header(struct log *__restrict l, int level)
                 ltime.tm_hour, ltime.tm_min, ltime.tm_sec);
     }
     
-    if(l->flags & LOG_HOSTNAME)
-        fprintf(l->file, "| %s | ", l->hostname);
-        
     if(l->flags & LOG_TIMESTAMP) {
-        fprintf(l->file, "[ %*lf ] ",
-                10, (double) clock_elapsed_us(&l->clock) / 1e6);
+        elapsed = clock_elapsed_us(&l->clock);
+        fprintf(l->file, "| %*lf ", 11, (double) elapsed / 1e6);
     }
     
-    if(l->flags & LOG_NAME)
-        fprintf(l->file,  "< %s > ", l->name);
+    if(l->flags & LOG_HOSTNAME)
+        fprintf(l->file, "| %s ", l->hostname);
     
     if(l->flags & LOG_PID)
-        fprintf(l->file, "( %*u ) ", 5, getpid());
-        
+        fprintf(l->file, "| %*u ", 5, getpid());
+    
     if(l->flags & LOG_LEVEL)
-        fprintf(l->file, "{ %*s } ", 9, _log_severity_string(level));
+        fprintf(l->file, "| %*s ", 8, log_level_string(level));
+    
+    fprintf(l->file, "| <> ");
+    
+    if(l->flags & LOG_TAG)
+        fprintf(l->file,  "%s ", tag);
     
     fprintf(l->file, ": ");
 }
 
 
-struct log *log_new(const char *__restrict path, 
-                    const char *__restrict name, 
-                    uint8_t flags)
+static void log_print(struct log *__restrict l,
+                      uint8_t level,
+                      const char *__restrict tag,
+                      const char *__restrict fmt,
+                      va_list vargs)
+{
+    if(level < l->level)
+        return;
+    
+    write_line_header(l, level, tag);
+    vfprintf(l->file, fmt, vargs);
+    fflush(l->file);
+}
+
+
+struct log *log_new(const char *__restrict path, uint8_t flags)
 {
     struct log *l;
     int err;
@@ -96,7 +112,7 @@ struct log *log_new(const char *__restrict path,
     if(!l)
         return NULL;
     
-    err = log_init(l, path, name, flags);
+    err = log_init(l, path, flags);
     if(err < 0) {
         free(l);
         return NULL;
@@ -113,29 +129,23 @@ void log_delete(struct log *__restrict l)
 
 int log_init(struct log *__restrict l,
              const char *__restrict path,
-             const char *__restrict name, 
              uint8_t flags)
 {
 #define HOSTNAME_SIZE 64
     char hostname[HOSTNAME_SIZE];
     int err;
     
-    l->name = strdup(name);
-    if(!l->name) {
-        err = -errno;
-        goto out;
-    }
     
     l->file = fopen(path, "a");
     if(!l->file) {
         err = -errno;
-        goto cleanup1;
+        goto out;
     }
     
     if(flags & LOG_TIMESTAMP) {
         err = clock_init(&l->clock, CLOCK_MONOTONIC);
         if(err < 0)
-            goto cleanup2;
+            goto cleanup1;
         
         clock_start(&l->clock);
     }
@@ -145,27 +155,27 @@ int log_init(struct log *__restrict l,
         
         err = gethostname(hostname, HOSTNAME_SIZE - 1);
         if(err < 0)
-            goto cleanup3;
+            goto cleanup2;
         
         l->hostname = strdup(hostname);
         if(!l->hostname) {
             err = -errno;
-            goto cleanup3;
+            goto cleanup2;
         }
     }
 
     l->flags = flags;
-    l->severity_cap = LOG_INFO;
+    l->level = LOG_INFO;
+    
+    fprintf(l->file, "--\n");
     
     return 0;
 
-cleanup3:
+cleanup2:
     if(flags & LOG_TIMESTAMP)
         clock_destroy(&l->clock);
-cleanup2:
-    fclose(l->file);
 cleanup1:
-    free(l->name);
+    fclose(l->file);
 out:
     return err;
 }
@@ -177,9 +187,7 @@ void log_destroy(struct log *__restrict l)
     
     if(l->flags & LOG_HOSTNAME)
         free(l->hostname);
-    
-    free(l->name);
-    
+        
     fclose(l->file);
 }
 
@@ -196,97 +204,82 @@ inline int log_fd(const struct log *__restrict l)
     return fileno(l->file);
 }
 
-inline void log_set_severity_cap(struct log *__restrict l, int severity_cap)
+inline void log_set_level(struct log *__restrict l, uint8_t level)
 {
-    l->severity_cap = severity_cap;
+    l->level = level;
 }
 
-inline int log_severity_cap(const struct log *__restrict l)
+inline int log_level(const struct log *__restrict l)
 {
-    return l->severity_cap;
-}
-
-static void _log_printf(struct log *__restrict l,
-                       int severity,
-                       const char *__restrict fmt,
-                       va_list vargs)
-{
-    if(severity > l->severity_cap)
-        return;
-
-    _log_write_line_header(l, severity);
-    vfprintf(l->file, fmt, vargs);
-    fflush(l->file);
+    return l->level;
 }
 
 void log_printf(struct log *__restrict l, 
-               int severity, 
-               const char *__restrict fmt, ...)
+               uint8_t level,
+               const char *__restrict tag,
+               const char *__restrict fmt, 
+               ...)
 {
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, severity, fmt, vargs);
+    log_print(l, level, tag, fmt, vargs);
     va_end(vargs);
 }
 
 void log_vprintf(struct log *__restrict l,
-                  int level,
-                  const char *__restrict fmt, va_list vargs)
+                 uint8_t level,
+                 const char *__restrict tag,
+                 const char *__restrict fmt,
+                 va_list vargs)
 {
-    _log_printf(l, level, fmt, vargs);
+    log_print(l, level, tag, fmt, vargs);
 }
 
-void log_debug(struct log *__restrict l, const char *__restrict fmt, ...)
+void log_debug(struct log *__restrict l, 
+               const char *__restrict tag,
+               const char *__restrict fmt,
+               ...)
 {
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_DEBUG, fmt, vargs);
+    log_print(l, LOG_DEBUG, tag, fmt, vargs);
     va_end(vargs);
 }
 
-void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
+void log_info(struct log *__restrict l, 
+              const char *__restrict tag,
+              const char *__restrict fmt,
+              ...)
 {
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_INFO, fmt, vargs);
+    log_print(l, LOG_INFO, tag, fmt, vargs);
     va_end(vargs);
 }
 
-void log_message(struct log *__restrict l, const char *__restrict fmt, ...)
+void log_warning(struct log *__restrict l, 
+                 const char *__restrict tag,
+                 const char *__restrict fmt,
+                 ...)
 {
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_MESSAGE, fmt, vargs);
+    log_print(l, LOG_WARNING, tag, fmt, vargs);
     va_end(vargs);
 }
 
-void log_warning(struct log *__restrict l, const char *__restrict fmt, ...)
+void log_error(struct log *__restrict l, 
+               const char *__restrict tag,
+               const char *__restrict fmt,
+               ...)
 {
     va_list vargs;
     
     va_start(vargs, fmt);
-    _log_printf(l, LOG_WARNING, fmt, vargs);
-    va_end(vargs);
-}
-
-void log_critical(struct log *__restrict l, const char *__restrict fmt, ...)
-{
-    va_list vargs;
-    
-    va_start(vargs, fmt);
-    _log_printf(l, LOG_CRITICAL, fmt, vargs);
-    va_end(vargs);
-}
-
-void log_error(struct log *__restrict l, const char *__restrict fmt, ...)
-{
-    va_list vargs;
-    
-    va_start(vargs, fmt);
-    _log_printf(l, LOG_ERROR, fmt, vargs);
+    log_print(l, LOG_ERROR, tag, fmt, vargs);
     va_end(vargs);
 }

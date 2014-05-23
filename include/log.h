@@ -35,39 +35,33 @@
 #define LOG_DATE          (1 << 0)
 #define LOG_TIMESTAMP     (1 << 1)
 #define LOG_PID           (1 << 2)
-#define LOG_NAME          (1 << 3)
+#define LOG_TAG           (1 << 3)
 #define LOG_HOSTNAME      (1 << 4)
 #define LOG_LEVEL         (1 << 5)
 
 #define LOG_ALL                                                                \
-    (LOG_DATE | LOG_TIMESTAMP | LOG_PID | LOG_NAME | LOG_HOSTNAME | LOG_LEVEL)
+    (LOG_DATE | LOG_TIMESTAMP | LOG_PID | LOG_TAG | LOG_HOSTNAME | LOG_LEVEL)
 
-#define LOG_DEBUG    5
-#define LOG_INFO     4
-#define LOG_MESSAGE  3
+#define LOG_DEBUG    0
+#define LOG_INFO     1
 #define LOG_WARNING  2
-#define LOG_CRITICAL 1
-#define LOG_ERROR    0
+#define LOG_ERROR    3
 
 struct log {
-    char *name;
     char *hostname;
     FILE *file;
     struct clock clock;
     
     uint8_t flags;
-    uint8_t severity_cap;
+    uint8_t level;
 };
 
-struct log *log_new(const char *__restrict path, 
-                    const char *__restrict name, 
-                    uint8_t flags);
+struct log *log_new(const char *__restrict path, uint8_t flags);
 
 void log_delete(struct log *__restrict l);
 
 int log_init(struct log *__restrict l,
              const char *__restrict path,
-             const char *__restrict name, 
              uint8_t flags);
 
 void log_destroy(struct log *__restrict l);
@@ -76,35 +70,40 @@ void log_set_file(struct log *__restrict l, FILE *f);
 
 inline int log_fd(const struct log *__restrict l);
 
-inline void log_set_severity_cap(struct log *__restrict l, int severity_cap);
+inline void log_set_level(struct log *__restrict l, uint8_t level);
 
-inline int log_severity_cap(const struct log *__restrict l);
+inline int log_level(const struct log *__restrict l);
 
 void log_printf(struct log *__restrict l, 
-               int level, 
-               const char *__restrict fmt, ...)
-                                            __attribute__((format(printf,3,4)));
+                uint8_t level,
+                const char *__restrict tag,
+                const char *__restrict fmt, 
+                ...) __attribute__((format(printf,4,5)));
 
 void log_vprintf(struct log *__restrict l,
-                 int level,
-                 const char *__restrict fmt, va_list vargs);
+                 uint8_t level,
+                 const char *__restrict tag,
+                 const char *__restrict fmt,
+                 va_list vargs);
 
-void log_debug(struct log *__restrict l, const char *__restrict fmt, ...)
-                                            __attribute__((format(printf,2,3)));
+void log_debug(struct log *__restrict l, 
+               const char *__restrict tag,
+               const char *__restrict fmt,
+               ...) __attribute__((format(printf,3,4)));
 
-void log_info(struct log *__restrict l, const char *__restrict fmt, ...)
-                                            __attribute__((format(printf,2,3)));
+void log_info(struct log *__restrict l, 
+              const char *__restrict tag,
+              const char *__restrict fmt,
+              ...) __attribute__((format(printf,3,4)));
 
-void log_message(struct log *__restrict l, const char *__restrict fmt, ...)
-                                            __attribute__((format(printf,2,3)));
+void log_warning(struct log *__restrict l, 
+                 const char *__restrict tag,
+                 const char *__restrict fmt,
+                 ...) __attribute__((format(printf,3,4)));
 
-void log_warning(struct log *__restrict l, const char *__restrict fmt, ...)
-                                            __attribute__((format(printf,2,3)));
-
-void log_critical(struct log *__restrict l, const char *__restrict fmt, ...)
-                                            __attribute__((format(printf,2,3)));
-
-void log_error(struct log *__restrict l, const char *__restrict fmt, ...)
-                                            __attribute__((format(printf,2,3)));
+void log_error(struct log *__restrict l, 
+               const char *__restrict tag,
+               const char *__restrict fmt,
+               ...)  __attribute__((format(printf,3,4)));
 
 #endif /* _LOG_H_ */

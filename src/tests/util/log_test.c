@@ -29,37 +29,29 @@
 
 int main(int argc, char *argv[])
 {
-    struct log *l1, *l2;
-    uint8_t flags;
-    
-    flags = LOG_DATE | 
-            LOG_PID | 
-            LOG_NAME | 
-            LOG_LEVEL;
+    struct log *l;
                 
     /* open dummy */
-    l1 = log_new("/dev/null", "MyComponent", flags);
-    l2 = log_new("/dev/null", "MyOtherComponent", LOG_ALL);
+    l = log_new("/dev/null", LOG_ALL);
 
-    assert(l1);
-    assert(l2);
-    
-    log_set_severity_cap(l1, LOG_INFO);
-    log_set_severity_cap(l2, LOG_INFO);
+    assert(l);
     
     /* set file now */
-    log_set_file(l1, stdout);
-    log_set_file(l2, stdout);
+    log_set_file(l, stdout);
     
-    log_error(l1, "error message\n");
-    log_critical(l1, "critical message\n");
-    log_warning(l1, "warning message\n");
-    log_message(l2, "general message\n");
-    log_debug(l2, "debug message\n");
-    log_info(l2, "info message\n");
+    log_set_level(l, LOG_INFO);
+    log_debug(l, "module-1", "debug message\n");
     
-    log_delete(l1);
-    log_delete(l2);
+    log_set_level(l, LOG_DEBUG);
+    log_debug(l, "module-1", "debug message\n");
+    
+    log_info(l, "module-2", "info message\n");
+    log_warning(l, NULL, "warning message\n");
+    log_error(l, "module-1","error message\n");
+    
+    log_printf(l, LOG_WARNING, "module-3", "more warnings\n");
+    
+    log_delete(l);
     
     return 0;
 }
