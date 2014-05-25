@@ -29,9 +29,14 @@
 #include <semaphore.h>
 #include <stdbool.h>
 
+#include "link.h"
 #include "map.h"
 #include "queue.h"
-#include "threadpool_task.h"
+
+struct threadpool_task {
+    struct link link;
+    void (*func)(struct threadpool_task *);
+};
 
 struct threadpool {
     struct queue task_queue_in;

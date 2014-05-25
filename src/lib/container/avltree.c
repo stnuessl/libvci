@@ -116,7 +116,7 @@ _avlnode_child_reference(struct avlnode *__restrict node)
 static void _avltree_rebalance_nodes(struct avltree *__restrict tree,
                                      struct avlnode *node)
 {
-    struct avlnode **node_ref;;
+    struct avlnode **node_ref;
     int left_height, right_height, balance;
     
     while(node) {

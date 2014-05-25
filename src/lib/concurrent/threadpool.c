@@ -34,10 +34,8 @@
 
 #include "queue.h"
 #include "map.h"
-#include "threadpool_task.h"
 #include "threadpool.h"
 #include "macro.h"
-
 
 struct exit_task {
     struct threadpool_task task;
@@ -378,8 +376,8 @@ int threadpool_remove_thread(struct threadpool *__restrict pool)
     if(!task)
         return -errno;
     
-    threadpool_task_set_function(&task->task, &_exit_task_thread);
-
+    task->task.func = _exit_task_thread;
+    
     task->pool = pool;
     
     return threadpool_add_task(pool, &task->task);

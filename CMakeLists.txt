@@ -3,7 +3,10 @@ cmake_minimum_required(VERSION 2.6)
 # project name
 project(libvci C)
 
+add_definitions(-D_GNU_SOURCE)
 add_definitions(-Wall)
+#add_definitions(-Wextra)
+#add_definitions(-Wpedantic)
 add_definitions(-O2)
 #add_definitions(-g3)
 
@@ -21,6 +24,7 @@ set(HEADER
     include/clock.h
     include/compare.h
     include/config.h
+    include/error.h
     include/hash.h
     include/heap.h
     include/map.h
@@ -35,14 +39,12 @@ set(HEADER
     include/stack.h
     include/subject.h
     include/ringbuffer.h
-    include/threadpool_task.h
     include/threadpool.h
     include/vector.h
     )
         
 set(SOURCE
     src/lib/concurrent/async_task.c
-    src/lib/concurrent/threadpool_task.c
     src/lib/concurrent/threadpool.c
     src/lib/container/avltree.c
     src/lib/container/buffer.c
@@ -59,6 +61,7 @@ set(SOURCE
     src/lib/util/compare.c
     src/lib/util/config.c
     src/lib/util/config_parser.c
+    src/lib/util/error.c
     src/lib/util/hash.c
     src/lib/util/log.c
     src/lib/util/mempool.c

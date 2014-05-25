@@ -22,23 +22,11 @@
  * SOFTWARE.
  */
 
-#include <pthread.h>
-#include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
-#include "threadpool_task.h"
-#include "macro.h"
-
-
-void threadpool_task_set_function(struct threadpool_task *__restrict task, 
-                                  void (*func)(struct threadpool_task *))
+const char *errstr(int err)
 {
-    task->func = func;
-}
-
-void (*threadpool_task_function(struct threadpool_task *__restrict task))
-                               (struct threadpool_task *)
-{
-    return task->func;
+    static __thread char s[64];
+    
+    return strerror_r(err, s, sizeof(s));
 }

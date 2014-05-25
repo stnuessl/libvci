@@ -31,7 +31,6 @@
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 
-#include <libvci/threadpool_task.h>
 #include <libvci/threadpool.h>
 #include <libvci/macro.h>
 
@@ -86,7 +85,7 @@ void insert_tasks(int num_tasks)
         my_task = malloc(sizeof(*my_task));
         assert(my_task);
 
-        threadpool_task_set_function(&my_task->task, &my_task_run);
+        my_task->task.func = &my_task_run;
         
         err = threadpool_add_task(pool, &my_task->task);
         assert(err == 0);
