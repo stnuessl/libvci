@@ -29,11 +29,16 @@
 #include <stdbool.h>
 
 #include "map.h"
-#include "vector.h"
-#include "list.h"
+
+struct config_handle {
+    void (*func)(const char *, const char *, void *);
+    char *key;
+    void *arg;
+};
 
 struct config {
-    struct map map;
+    struct map key_map;
+    struct map handle_map;
     char *path;
     char *mem;
 };
@@ -60,7 +65,13 @@ int config_set_path(struct config *__restrict config,
 
 const char *config_path(struct config *__restrict config);
 
+int config_insert_handle(struct config *__restrict config, 
+                         struct config_handle *handle);
+
+struct config_handle *config_take_handle(struct config *__restrict config,
+                                         struct config_handle *handle);
+
 #define config_for_each(config, entry)                                         \
-    map_for_each(&(config)->map, (entry))
+    map_for_each(&(config)->key_map, (entry))
 
 #endif /* _CONFIG_H_ */  

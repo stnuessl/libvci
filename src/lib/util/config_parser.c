@@ -162,6 +162,7 @@ out:
 
 int config_parser_parse(struct config_parser *__restrict parser)
 {
+    struct config_handle *handle;
     int err;
     char c, *key, *val;
     
@@ -187,9 +188,13 @@ int config_parser_parse(struct config_parser *__restrict parser)
             if(!val)
                 return -errno;
             
-            err = map_insert(&parser->config->map, key, val);
+            err = map_insert(&parser->config->key_map, key, val);
             if(err < 0)
                 return err;
+            
+            handle = map_retrieve(&parser->config->handle_map, key);
+            if(handle)
+                handle->func(key, val, handle->arg);
             
             key = NULL;
         } else {

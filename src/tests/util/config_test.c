@@ -37,6 +37,19 @@
     fprintf(stdout,                                                            \
     "%15s -> %20s\n",                                                          \
     key, config_value(config, key))
+    
+static void print_key_value_pair(const char *key, const char *val, void *arg)
+{
+    fprintf(stdout, " %6s -> %s\n", key, val);
+}
+
+static struct config_handle handles[] = {
+    { &print_key_value_pair,    "Year",      NULL },
+    { &print_key_value_pair,    "Month",     NULL },
+    { &print_key_value_pair,    "Day",       NULL },
+    { &print_key_value_pair,    "Name",      NULL },
+    { &print_key_value_pair,    "Age",       NULL }
+};
 
 void *run(void *__restrict path)
 {
@@ -44,15 +57,26 @@ void *run(void *__restrict path)
     struct entry *e;
     const char *k;
     char *v;
-    int err;
+    int i, err;
     
     config = config_new(path);
     assert(config);
     
+    for(i = 0; i < ARRAY_SIZE(handles); ++i) {
+        err = config_insert_handle(config, handles + i);
+        assert(err == 0);
+    }
+    
+    fprintf(stdout, "starting parsing...\n");
+    /* multiple parser runs shouldn't have an effect on ressource allocations */
     err = config_parse(config);
     assert(err == 0);
     
-    /* multiple parser runs shouldn't have an effect */
+    fprintf(stdout, "finished parsing...\n");
+    
+    for(i = 0; i < ARRAY_SIZE(handles); ++i)
+        assert(config_take_handle(config, handles + i) == (handles + i));
+    
     err = config_parse(config);
     assert(err == 0);
     

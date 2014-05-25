@@ -69,14 +69,20 @@ int config_init(struct config *__restrict config, const char *__restrict path)
         goto out;
     }
     
-    err = map_init(&config->map, 0, &compare_string, &hash_string);
+    err = map_init(&config->key_map, 0, &compare_string, &hash_string);
     if(err < 0) 
         goto cleanup1;
+    
+    err = map_init(&config->handle_map, 0, &compare_string, &hash_string);
+    if(err < 0)
+        goto cleanup2;
     
     config->mem = NULL;
     
     return 0;
 
+cleanup2:
+    map_destroy(&config->key_map);
 cleanup1:
     free(config->path);
 out:    
@@ -86,7 +92,8 @@ out:
 void config_destroy(struct config *__restrict config)
 {
     free(config->mem);
-    map_destroy(&config->map);
+    map_destroy(&config->handle_map);
+    map_destroy(&config->key_map);
     free(config->path);
 }
 
@@ -95,8 +102,8 @@ int config_parse(struct config *__restrict config)
     struct config_parser *parser;
     int err;
     
-    if(!map_empty(&config->map))
-        map_clear(&config->map);
+    if(!map_empty(&config->key_map))
+        map_clear(&config->key_map);
     
     free(config->mem);
     
@@ -114,7 +121,7 @@ int config_parse(struct config *__restrict config)
 const char *config_value(struct config *__restrict config, 
                     const char *__restrict key)
 {
-    return map_retrieve(&config->map, key);
+    return map_retrieve(&config->key_map, key);
 }
 
 int config_set_path(struct config *__restrict config, 
@@ -132,4 +139,16 @@ int config_set_path(struct config *__restrict config,
 const char *config_path(struct config *__restrict config)
 {
     return config->path;
+}
+
+int config_insert_handle(struct config *__restrict config, 
+                         struct config_handle *handle)
+{
+    return map_insert(&config->handle_map, handle->key, handle);
+}
+
+struct config_handle *config_take_handle(struct config *__restrict config,
+                                         struct config_handle *handle)
+{
+    return map_take(&config->handle_map, handle->key);
 }

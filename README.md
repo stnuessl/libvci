@@ -6,49 +6,13 @@ A C library with implementations for basic everyday stuff.
 FEATURES
 --------
 
-### clock
-Clock implementation for messuring elapsed time.
+( TODO )
 
-### config
-Config interface for reading out config files.
+### concurrent
 
 ### container
-Implementation of various container types. Includes:
 
-        AVL Tree                --> struct avltree
-        Serial Buffer           --> struct buffer
-        LRU Cache               --> struct cache
-        List                    --> struct link
-        Hashtable / Hashmap     --> struct map
-        FIFO Queue              --> struct queue
-        Ring-/ Circular Buffer  --> struct ringbuffer
-        LIFO Stack              --> struct stack
-        Dynamic Array           --> struct vector
-
-### mempool
-Mempool implementation for fast memory allocation on fixed memory sizes.
-
-### threadpool
-Threadpool implementation for managing tasks and threads.
-
-        Task:           Defining callback function and arguments.
-        --> struct task
-        
-        Threadpool:     Executes inserted tasks in FIFO Order.
-        --> struct threadpool
-
-### observer
-Register a list of callbacks that get executed on defined events.
-
-        Observer:       Define event and callback which shall get executed.
-        --> struct observer
-
-        Subject:        Register observer and signal events.
-        --> struct subject
-        
-### log
-Logging functions providing configurable line header and severity levels.
-
+### util
 
 INSTALLING
 ----------
