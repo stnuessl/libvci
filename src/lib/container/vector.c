@@ -203,12 +203,36 @@ void *vector_take(struct vector *__restrict vec, void *data)
 {
     unsigned int i;
     
-    for(i = 0; i < vec->size; ++i) {
-        if(vec->data[i] == data)
-            return vector_take_at(vec, i);
+    if(vec->data_compare) {
+        for(i = 0; i < vec->size; ++i) {
+            if(vec->data_compare(vec->data[i], data) == 0)
+                return vector_take_at(vec, i);
+        }
+    } else {
+        for(i = 0; i < vec->size; ++i) {
+            if(vec->data[i] == data)
+                return vector_take_at(vec, i);
+        }
     }
     
     return NULL;
+}
+
+void vector_take_all(struct vector *__restrict vec, void *data)
+{
+    unsigned int i;
+    
+    if(vec->data_compare) {
+        for(i = 0; i < vec->size; ++i) {
+            if(vec->data_compare(vec->data[i], data) == 0)
+                vector_take_at(vec, i);
+        }
+    } else {
+        for(i = 0; i < vec->size; ++i) {
+            if(vec->data[i] == data)
+                vector_take_at(vec, i);
+        }
+    }
 }
 
 void **vector_at(struct vector *__restrict vec, unsigned int i)

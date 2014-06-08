@@ -72,6 +72,8 @@ void *vector_take_back(struct vector *__restrict vec);
 
 void *vector_take(struct vector *__restrict vec, void *data);
 
+void vector_take_all(struct vector *__restrict vec, void *data);
+
 void **vector_at(struct vector *__restrict vec, unsigned int i);
 
 void **vector_front(struct vector *__restrict vec);
