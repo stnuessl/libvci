@@ -46,10 +46,10 @@
 static int _map_rehash(struct map *__restrict map, unsigned int capacity)
 {
     struct entry *old_table;
-    unsigned int i, old_capacity, old_entries;
+    unsigned int i, old_capacity, old_size;
     int err;
     
-    old_entries  = map->size;
+    old_size     = map->size;
     old_capacity = map->capacity;
     old_table    = map->table;
     
@@ -57,29 +57,31 @@ static int _map_rehash(struct map *__restrict map, unsigned int capacity)
     map->capacity = max(capacity, MAP_DEFAULT_CAPACITY);
     map->table    = calloc(map->capacity, sizeof(*map->table));
 
-    if(!map->table)
-        return -errno;
+    if(!map->table) {
+        err = -errno;
+        goto out;
+    }
     
     for(i = 0; i < old_capacity; ++i) {
         if(old_table[i].state == MAP_DATA_STATE_AVAILABLE) {
-
             err = map_insert(map, old_table[i].key, old_table[i].data);
-            if(err < 0) {
-                /* revert to old table, which wasn't changed */
-                free(map->table);
-                
-                map->size     = old_entries;
-                map->capacity = old_capacity;
-                map->table    = old_table;
-                
-                return err;
-            }
+            if(err < 0)
+                goto cleanup1;
         }
     }
     
     free(old_table);
     
     return 0;
+
+cleanup1:
+    free(map->table);
+out:
+    map->size     = old_size;
+    map->capacity = old_capacity;
+    map->table    = old_table;
+
+    return err;
 }
 
 /*
@@ -224,10 +226,16 @@ int map_rehash(struct map *__restrict map, unsigned int size)
  */
 int map_insert(struct map *__restrict map, const void *key, void *data)
 {
-    unsigned int hash, index, offset;
+    unsigned int hash, index, offset, capacity;
+    int err;
     
-    if(_map_should_grow(map))
-        _map_rehash(map, map->capacity << 1);
+    if(_map_should_grow(map)) {
+        capacity = map->capacity << 1;
+        do {
+            err = _map_rehash(map, capacity);
+            capacity <<= 1;
+        } while(err == -EBADSLT);
+    }
     
     hash = map->key_hash(key);
     
@@ -252,7 +260,7 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
         index &= (map->capacity - 1);
     }
     
-    return -1;
+    return -EBADSLT;
 }
 
 void *map_retrieve(struct map *__restrict map, const void *key)
