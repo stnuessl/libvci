@@ -88,12 +88,12 @@ unsigned int hash_string(const void *key)
     k = key;
     hval = 1;
     
-    while(*k != '\0') {
+    while(*k != '\0')
         hval += *k++;
-        hval += (hval << 10);
-        hval ^= (hval >> 6);
-        hval &= 0x0fffffff;
-    }
+    
+    hval += (hval << 10);
+    hval ^= (hval >> 6);
+    hval &= 0x0fffffff;
     
     hval += (hval << 3);
     hval ^= (hval >> 11);
