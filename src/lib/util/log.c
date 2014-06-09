@@ -88,11 +88,11 @@ static void write_line_header(struct log *__restrict l,
 }
 
 
-static void log_print(struct log *__restrict l,
-                      uint8_t level,
-                      const char *__restrict tag,
-                      const char *__restrict fmt,
-                      va_list vargs)
+static void print(struct log *__restrict l,
+                  uint8_t level,
+                  const char *__restrict tag,
+                  const char *__restrict fmt,
+                  va_list vargs)
 {
     if(level < l->level)
         return;
@@ -136,7 +136,7 @@ int log_init(struct log *__restrict l,
     int err;
     
     
-    l->file = fopen(path, "a");
+    l->file = fopen(path, "a+");
     if(!l->file) {
         err = -errno;
         goto out;
@@ -196,7 +196,7 @@ void log_set_file(struct log *__restrict l, FILE *f)
     if(l->file)
         fclose(l->file);
 
-    l->file  =  f;
+    l->file = f;
 }
 
 inline int log_fd(const struct log *__restrict l)
@@ -214,6 +214,15 @@ inline int log_level(const struct log *__restrict l)
     return l->level;
 }
 
+void log_append(struct log *__restrict l, const char *fmt, ...)
+{
+    va_list vargs;
+    
+    va_start(vargs, fmt);
+    vfprintf(l->file, fmt, vargs);
+    va_end(vargs);
+}
+
 void log_printf(struct log *__restrict l, 
                uint8_t level,
                const char *__restrict tag,
@@ -223,7 +232,7 @@ void log_printf(struct log *__restrict l,
     va_list vargs;
     
     va_start(vargs, fmt);
-    log_print(l, level, tag, fmt, vargs);
+    print(l, level, tag, fmt, vargs);
     va_end(vargs);
 }
 
@@ -233,7 +242,7 @@ void log_vprintf(struct log *__restrict l,
                  const char *__restrict fmt,
                  va_list vargs)
 {
-    log_print(l, level, tag, fmt, vargs);
+    print(l, level, tag, fmt, vargs);
 }
 
 void log_debug(struct log *__restrict l, 
@@ -244,7 +253,7 @@ void log_debug(struct log *__restrict l,
     va_list vargs;
     
     va_start(vargs, fmt);
-    log_print(l, LOG_DEBUG, tag, fmt, vargs);
+    print(l, LOG_DEBUG, tag, fmt, vargs);
     va_end(vargs);
 }
 
@@ -256,7 +265,7 @@ void log_info(struct log *__restrict l,
     va_list vargs;
     
     va_start(vargs, fmt);
-    log_print(l, LOG_INFO, tag, fmt, vargs);
+    print(l, LOG_INFO, tag, fmt, vargs);
     va_end(vargs);
 }
 
@@ -268,7 +277,7 @@ void log_warning(struct log *__restrict l,
     va_list vargs;
     
     va_start(vargs, fmt);
-    log_print(l, LOG_WARNING, tag, fmt, vargs);
+    print(l, LOG_WARNING, tag, fmt, vargs);
     va_end(vargs);
 }
 
@@ -280,6 +289,28 @@ void log_error(struct log *__restrict l,
     va_list vargs;
     
     va_start(vargs, fmt);
-    log_print(l, LOG_ERROR, tag, fmt, vargs);
+    print(l, LOG_ERROR, tag, fmt, vargs);
     va_end(vargs);
+}
+
+void log_print(struct log *__restrict l, int fd)
+{
+    char *line;
+    size_t size;
+    ssize_t n; 
+    
+    line = NULL;
+    size = 0;
+    
+    rewind(l->file);
+    
+    while(1) {
+        n = getline(&line, &size, l->file);
+        if(n < 0)
+            break;
+        
+        dprintf(fd, "%s", line);
+    }
+    
+    free(line);
 }

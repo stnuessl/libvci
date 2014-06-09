@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
+#include <unistd.h>
 #include <assert.h>
 
 #include <libvci/log.h>
@@ -30,26 +30,26 @@
 int main(int argc, char *argv[])
 {
     struct log *l;
-                
+    
     /* open dummy */
-    l = log_new("/dev/null", LOG_ALL);
+    l = log_new("/tmp/log_test.txt", LOG_ALL);
 
     assert(l);
     
-    /* set file now */
-    log_set_file(l, stdout);
-    
     log_set_level(l, LOG_INFO);
     log_debug(l, "module-1", "debug message\n");
-    
+
     log_set_level(l, LOG_DEBUG);
     log_debug(l, "module-1", "debug message\n");
     
     log_info(l, "module-2", "info message\n");
     log_warning(l, NULL, "warning message\n");
     log_error(l, "module-1","error message\n");
-    
+
     log_printf(l, LOG_WARNING, "module-3", "more warnings\n");
+    
+    fprintf(stdout, "log_print():\n");
+    log_print(l, STDOUT_FILENO);
     
     log_delete(l);
     

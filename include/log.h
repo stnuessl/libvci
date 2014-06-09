@@ -74,6 +74,9 @@ inline void log_set_level(struct log *__restrict l, uint8_t level);
 
 inline int log_level(const struct log *__restrict l);
 
+void log_append(struct log *__restrict l, const char *fmt, ...)
+                                            __attribute__((format(printf,2,3)));
+
 void log_printf(struct log *__restrict l, 
                 uint8_t level,
                 const char *__restrict tag,
@@ -105,5 +108,7 @@ void log_error(struct log *__restrict l,
                const char *__restrict tag,
                const char *__restrict fmt,
                ...)  __attribute__((format(printf,3,4)));
+
+void log_print(struct log *__restrict l, int fd);
 
 #endif /* _LOG_H_ */
