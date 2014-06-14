@@ -36,6 +36,8 @@ int main(int argc, char *argv[])
 
     assert(l);
     
+    log_clear(l);
+    
     log_set_level(l, LOG_INFO);
     log_debug(l, "module-1", "debug message\n");
 
@@ -46,7 +48,8 @@ int main(int argc, char *argv[])
     log_warning(l, NULL, "warning message\n");
     log_error(l, "module-1","error message\n");
 
-    log_printf(l, LOG_WARNING, "module-3", "more warnings\n");
+    log_printf(l, LOG_WARNING, "module-3", "more warnings - ");
+    log_append(l, "%s\n", "this string is appended");
     
     fprintf(stdout, "log_print():\n");
     log_print(l, STDOUT_FILENO);

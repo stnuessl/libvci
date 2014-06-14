@@ -109,6 +109,8 @@ void log_error(struct log *__restrict l,
                const char *__restrict fmt,
                ...)  __attribute__((format(printf,3,4)));
 
+void log_clear(struct log *__restrict l);
+
 void log_print(struct log *__restrict l, int fd);
 
 #endif /* _LOG_H_ */

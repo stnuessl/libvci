@@ -293,6 +293,17 @@ void log_error(struct log *__restrict l,
     va_end(vargs);
 }
 
+void log_clear(struct log *__restrict l)
+{
+    int fd, err;
+    
+    fd = fileno(l->file);
+    
+    do {
+        err = ftruncate(fd, 0);
+    } while(err < 0 && errno == EINTR);
+}
+
 void log_print(struct log *__restrict l, int fd)
 {
     char *line;
