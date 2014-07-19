@@ -114,7 +114,7 @@ int vector_set_capacity(struct vector *__restrict vec, unsigned int capacity)
 {
     void **data;
     
-    if(capacity <= vec->size)
+    if(capacity < vec->size)
         vec->size = capacity;
     
     capacity = adjust(capacity, VECTOR_DEFAULT_CAPACITY);
@@ -140,6 +140,32 @@ inline unsigned int vector_capacity(const struct vector *__restrict vec)
 int vector_squeeze(struct vector *__restrict vec)
 {
     return vector_set_capacity(vec, vec->size);
+}
+
+unsigned int vector_index_of(const struct vector *__restrict vec, 
+                             const void *data)
+{
+    unsigned int i;
+    
+    if(vec->data_compare) {
+        for(i = 0; i < vec->size; ++i) {
+            if(vec->data_compare(vec->data[i], data) == 0)
+                return i;
+        }
+    } else {
+        for(i = 0; i < vec->size; ++i) {
+            if(vec->data[i] == data)
+                return i;
+        }
+    }
+
+    return (unsigned int) -1;
+}
+
+bool vector_contains(const struct vector *__restrict vec, 
+                     const void *data)
+{
+    return vector_index_of(vec, data) != (unsigned int) -1;
 }
 
 int vector_insert_front(struct vector *__restrict vec, void *data)
@@ -283,11 +309,23 @@ int vector_insert_sorted(struct vector *__restrict vec, void *data)
 
 void *vector_take_sorted(struct vector *__restrict vec, void *data)
 {
+    unsigned int index;
+    
+    index = vector_index_of_sorted(vec, data);
+    if(index == (unsigned int) -1)
+        return NULL;
+    
+    return vector_take_at(vec, index);
+}
+
+unsigned int vector_index_of_sorted(const struct vector *__restrict vec, 
+                                    const void *data)
+{
     unsigned int l, r, m;
     int res;
     
     if(vector_empty(vec))
-        return NULL;
+        return (unsigned int) -1;
     
     l = 0;
     r = vec->size - 1;
@@ -301,10 +339,16 @@ void *vector_take_sorted(struct vector *__restrict vec, void *data)
         else if(res > 0)
             l = m + 1;
         else
-            return vector_take_at(vec, m);
+            return m;
     }
     
-    return NULL;
+    return (unsigned int) -1;
+}
+
+bool vector_contains_sorted(const struct vector *__restrict vec, 
+                            const void *data)
+{
+    return vector_index_of_sorted(vec, data) != (unsigned int) -1;
 }
 
 void vector_set_data_compare(struct vector *__restrict vec, 

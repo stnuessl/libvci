@@ -58,6 +58,12 @@ inline unsigned int vector_capacity(const struct vector *__restrict vec);
 
 int vector_squeeze(struct vector *__restrict vec);
 
+unsigned int vector_index_of(const struct vector *__restrict vec, 
+                             const void *data);
+
+bool vector_contains(const struct vector *__restrict vec, 
+                     const void *data);
+
 int vector_insert_front(struct vector *__restrict vec, void *data);
 
 int vector_insert_at(struct vector *__restrict vec, unsigned int i, void *data);
@@ -85,6 +91,12 @@ void vector_sort(struct vector *__restrict vec);
 int vector_insert_sorted(struct vector *__restrict vec, void *data);
 
 void *vector_take_sorted(struct vector *__restrict vec, void *data);
+
+unsigned int vector_index_of_sorted(const struct vector *__restrict vec, 
+                                    const void *data);
+
+bool vector_contains_sorted(const struct vector *__restrict vec, 
+                            const void *data);
 
 /* 
  * This data compare function must absolutely make sure that it compares
