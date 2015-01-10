@@ -27,8 +27,8 @@
 
 #include <stdbool.h>
 
-#include <map.h>
-#include <vector.h>
+#include "map.h"
+#include "vector.h"
 
 enum value_type {
     OPTIONS_BOOL,
@@ -38,15 +38,15 @@ enum value_type {
     OPTIONS_MUL_INT,
     OPTIONS_DOUBLE,
     OPTIONS_MUL_DOUBLE,
-    OPTIONS_NONE,
 };
 
 struct options {
     const char *description;
-    struct vector vec;
-    struct map args;
+    struct vector opt_vec;
     struct vector unknowns;
+    struct vector data;
     int last_err;
+    char *parse_err_msg;
 };
 
 int options_init(struct options *__restrict opts, const char *__restrict name);
@@ -59,13 +59,15 @@ int options_add(struct options *__restrict opts,
                 void *val,
                 const char *desc);
 
-int options_parse(const struct options *__restrict opts,
-                  char *argv, 
+int options_parse(struct options *__restrict opts, 
+                  const char **argv, 
                   int argc);
 
-bool options_ok(const struct options *__restrict opts);
+bool options_adding_ok(const struct options *__restrict opts);
 
-const char *options_last_error(const struct options *__restrict opts);
+const char *options_adding_error(const struct options *__restrict opts);
+
+const char *options_parse_error(const struct options *__restrict opts);
 
 const struct map *options_args(const struct options *__restrict opts);
 

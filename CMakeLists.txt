@@ -7,8 +7,8 @@ add_definitions(-D_GNU_SOURCE)
 add_definitions(-Wall)
 #add_definitions(-Wextra)
 #add_definitions(-Wpedantic)
-add_definitions(-O2)
-#add_definitions(-g3)
+#add_definitions(-O2)
+add_definitions(-g3)
 
 set(TARGET vci)
 set(CMAKE_INSTALL_PREFIX /usr/local)
@@ -34,6 +34,7 @@ set(HEADER
     include/macro.h
     include/mempool.h
     include/observer.h
+    include/options.h
     include/queue.h
     include/random.h
     include/stack.h
@@ -66,6 +67,7 @@ set(SOURCE
     src/lib/util/log.c
     src/lib/util/mempool.c
     src/lib/util/observer.c
+    src/lib/util/options.c
     src/lib/util/random.c
     src/lib/util/subject.c
     )

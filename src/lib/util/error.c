@@ -24,7 +24,7 @@
 
 #include <string.h>
 
-const char *errstr(int err)
+const char *strerr(int err)
 {
     static __thread char s[64];
     

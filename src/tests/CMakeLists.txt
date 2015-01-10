@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.6)
 project(libvci_tests C)
 
 add_definitions(-Wall)
-add_definitions(-O2)
-#add_definitions(-g3)
+#add_definitions(-O2)
+add_definitions(-g3)
 
 set(LIBS vci)
 set(CMAKE_LIBRARY_PATH /usr/local/lib)
@@ -70,3 +70,6 @@ target_link_libraries(async_task_test ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(random_test util/random_test.c)
 target_link_libraries(random_test ${LIBS})
+
+add_executable(options_test util/options_test.c)
+target_link_libraries(options_test ${LIBS})
