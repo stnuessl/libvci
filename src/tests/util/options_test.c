@@ -31,60 +31,48 @@
 #include <libvci/vector.h>
 #include <libvci/macro.h>
 
-#define DESC "Long description text goes here"
+#define DESC_ADD_B    "Add a new bookmark."
+#define DESC_CHANNELS "Retrieve information about a channel."
+#define DESC_CHECK_B  "Check which bookmarks are streaming."
+#define DESC_DESC     "Print descriptive line headers, if applicable." 
+#define DESC_FEATURED "Query featured streams."
+#define DESC_GET_F    "Show all specified bookmarks."
+#define DESC_HELP     "Print this help message."
+#define DESC_JSON     "Pretty print the json strings sent from the server."
+#define DESC_LIMIT    "Set the number of returned results."
+#define DESC_LIVE     "If searching for games: list only games that are live."
+#define DESC_REMOVE_B "Remove a bookmark."
+#define DESC_SEARCH_C "Search for channels."
+#define DESC_SEARCH_G "Search for games."
+#define DESC_SEARCH_S "Search for streams."
+#define DESC_STREAMS  "Retrieve information about a steam. Stream must be live."
+#define DESC_TOP      "Get a list of the currently top played games."
+#define DESC_VERBOSE  "Retrieve more information about queried items."
 
-int main(int argc, char *argv[])
-{
-    struct options opts;
-    struct vector adds, channels;
-    struct vector *all[] = { &adds, &channels };
-    int i, err;
-    bool check = false;
-    
-    err = options_init(&opts, "option test");
-    if (err < 0) {
-        fprintf(stderr, "options_init() failed - %s\n", strerr(-err));
-        exit(EXIT_FAILURE);
-    }
-    
-    for (i = 0; i < ARRAY_SIZE(all); ++i) {
-        err = vector_init(all[i], 0);
-        if (err < 0) {
-            fprintf(stderr, "vector_init() failed - %s\n", strerr(-err));
-            exit(EXIT_FAILURE);
-        }
-    }
-    
-    options_add(&opts, "add-bookmark,a", OPTIONS_MUL_STRING, &adds, DESC);
-    options_add(&opts, "channels,c", OPTIONS_MUL_STRING, &channels, DESC);
-    options_add(&opts, "check-bookmarks,b", OPTIONS_BOOL, &check,   DESC);
-    
-    if (!options_adding_ok(&opts)) {
-        const char *msg = options_adding_error(&opts);
-        fprintf(stderr, "options_adding_ok(): %s\n", msg);
-        exit(EXIT_FAILURE);
-    }
-    
-    err = options_parse(&opts, argv, argc);
-    if (err < 0) {
-        fprintf(stderr, "Parse error: %s\n", options_parse_error(&opts));
-        exit(EXIT_FAILURE);
-    }
-    
-    for (i = 0; i < ARRAY_SIZE(all); ++i) {
-        char **data;
-        
-        vector_for_each(all[i], data) {
-            fprintf(stdout, "%s\n", *data);
-        }
-        
-        fprintf(stdout, "\n");
-    }
-    
-    if (check) {
-        fprintf(stdout, "check enabled!\n");
-    }
-    
+struct vector adds;
+struct vector channels;
+struct vector streams;
+struct vector removes;
+struct vector s_streams;
+bool check_bookmarks = false;
+bool descriptive = false;
+bool featured = false;
+bool json = false;
+int limit = 10;
+
+struct program_option po[] = {
+    { "add-bookmarks",   "a", OPTIONS_MUL_STRING, &adds,            DESC_ADD_B    },
+    { "channels"     ,   "c", OPTIONS_MUL_STRING, &channels,        DESC_CHANNELS },
+    { "check-bookmarks", "b", OPTIONS_BOOL,       &check_bookmarks, DESC_CHECK_B  },
+    { "descriptive",     "d", OPTIONS_BOOL,       &descriptive,     DESC_DESC     },
+    { "featured",        "f", OPTIONS_BOOL,       &featured,        DESC_FEATURED },
+    { "json",            "j", OPTIONS_BOOL,       &json,            DESC_JSON     },
+    { "limit",           "l", OPTIONS_INT,        &limit,           DESC_LIMIT    },
+    { "streams",         "s", OPTIONS_MUL_STRING, &streams,         DESC_STREAMS  },
+    { "remove-bookmark", "r", OPTIONS_MUL_STRING, &removes,         DESC_REMOVE_B },
+    { "search-streams",  "s", OPTIONS_MUL_STRING, &s_streams,       DESC_REMOVE_B },
+};
+
 //     ("add-bookmark,a",    VAL_MUL(&args.adds),       DESC_ADD_B)
 //     ("channels,C",        VAL_MUL(&args.channels),   DESC_CHANNELS)
 //     ("check-bookmarks,b",                            DESC_CHECK_B)
@@ -101,12 +89,36 @@ int main(int argc, char *argv[])
 //     ("search-streams,s",  VAL_MUL(&args.s_streams),  DESC_SEARCH_S)
 //     ("streams,S",         VAL_MUL(&args.streams),    DESC_STREAMS)
 //     ("top,t",                                        DESC_TOP)
-//     ("verbose,v",                                    DESC_VERBOSE);
+//     ("verbose,v",  
+
+int main(int argc, char *argv[])
+{
+    struct vector *all[] = { &adds, &channels };
+    char *err_msg = NULL;
+    int i, err;
     
-    for (i = 0; i < ARRAY_SIZE(all); ++i)
-        vector_destroy(all[i]);
+    err = options_parse(po, ARRAY_SIZE(po), argv, argc, &err_msg);
+    if (err < 0) {
+        fprintf(stderr, "options_parse() failed: %s\n", err_msg);
+        free(err_msg);
+        exit(EXIT_FAILURE);
+    }
+    
+    for (i = 0; i < ARRAY_SIZE(all); ++i) {
+        char **data;
         
-    options_destroy(&opts);
+        vector_for_each(all[i], data) {
+            fprintf(stdout, "%s\n", *data);
+        }
+        
+        fprintf(stdout, "\n");
+    }
     
+    if (check_bookmarks) {
+        fprintf(stdout, "check enabled!\n");
+    }
+    
+    options_destroy(po, ARRAY_SIZE(po));
+
     return EXIT_SUCCESS;
 }

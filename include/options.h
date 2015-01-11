@@ -40,37 +40,21 @@ enum value_type {
     OPTIONS_MUL_DOUBLE,
 };
 
-struct options {
+struct program_option {
+    const char *cmd_flag_long;
+    const char *cmd_flag_short;
+    enum value_type type;
+    void *val;
     const char *description;
-    struct vector opt_vec;
-    struct vector unknowns;
-    struct vector data;
-    int last_err;
-    char *parse_err_msg;
 };
 
-int options_init(struct options *__restrict opts, const char *__restrict name);
+int options_parse(struct program_option *__restrict po,
+                  unsigned int po_size,
+                  char ** const argv, 
+                  int argc,
+                  char **err_msg);
 
-void options_destroy(struct options *__restrict opts);
-
-int options_add(struct options *__restrict opts, 
-                const char *str, 
-                enum value_type type,
-                void *val,
-                const char *desc);
-
-int options_parse(struct options *__restrict opts, 
-                  const char **argv, 
-                  int argc);
-
-bool options_adding_ok(const struct options *__restrict opts);
-
-const char *options_adding_error(const struct options *__restrict opts);
-
-const char *options_parse_error(const struct options *__restrict opts);
-
-const struct map *options_args(const struct options *__restrict opts);
-
-const struct vector *options_unknowns(const struct options *__restrict opts);
+void options_destroy(struct program_option *__restrict po,
+                     unsigned int po_size);
 
 #endif /* _OPTIONS_H_ */
