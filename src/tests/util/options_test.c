@@ -99,8 +99,13 @@ int main(int argc, char *argv[])
     
     err = options_parse(po, ARRAY_SIZE(po), argv, argc, &err_msg);
     if (err < 0) {
-        fprintf(stderr, "options_parse() failed: %s\n", err_msg);
-        free(err_msg);
+        if (!err_msg) {
+            fprintf(stderr, "options_parse() failed: %s\n", strerr(-err));
+        } else {
+            fprintf(stderr, "options_parse() failed: %s\n", err_msg);
+            free(err_msg);
+        }
+            
         exit(EXIT_FAILURE);
     }
     

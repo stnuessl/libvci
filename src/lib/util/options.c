@@ -274,13 +274,13 @@ void options_destroy(struct program_option *__restrict po,
     
     for (i = 0; i < po_size; ++i) {
         switch (po[i].type) {
-            case OPTIONS_MUL_STRING:
-            case OPTIONS_MUL_DOUBLE:
-            case OPTIONS_MUL_INT:
-                vector_destroy(po[i].val);
-                break;
-            default:
-                break;
+        case OPTIONS_MUL_STRING:
+        case OPTIONS_MUL_DOUBLE:
+        case OPTIONS_MUL_INT:
+            vector_destroy(po[i].val);
+            break;
+        default:
+            break;
         }
     }
 }
