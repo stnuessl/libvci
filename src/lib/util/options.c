@@ -34,6 +34,124 @@
 
 #include "options.h"
 
+
+static int string_to_integer(const char *__restrict s, int *__restrict ret)
+{
+    char *end;
+    
+    errno = 0;
+    *ret = (int) strtol(s, &end, 10);
+    
+    if (errno != 0)
+        return -errno;
+    
+    if (end == s)
+        return -EINVAL;
+    
+    if (*end != '\0')
+        return -EINVAL;
+    
+    return 0;
+}
+
+static int string_to_double(const char *__restrict s, double *__restrict ret)
+{
+    char *end;
+    
+    errno = 0;
+    *ret = strtod(s, &end);
+    
+    if (errno != 0)
+        return -errno;
+    
+    if (end == s)
+        return -EINVAL;
+    
+    if (*end != '\0')
+        return -EINVAL;
+    
+    return 0;
+}
+
+static int assign_value(struct program_option *__restrict po, 
+                        const char *__restrict val)
+{
+    double *d;
+    char *c;
+    int *i, err;
+    
+    switch (po->type) {
+    case OPTIONS_DOUBLE:
+        err = string_to_double(val, po->val);
+        if (err < 0)
+            return err;
+        
+        break;
+    case OPTIONS_INT:
+        err = string_to_integer(val, po->val);
+        if (err < 0)
+            return err;
+        
+        break;
+    case OPTIONS_STRING:
+        *(char **) po->val = strdup(val);
+        if (!*(char **) po->val)
+            return -errno;
+        
+        break;
+    case OPTIONS_MUL_DOUBLE:
+        d = malloc(sizeof(*d));
+        if (!d)
+            return -errno;
+        
+        err = string_to_double(val, d);
+        if (err < 0) {
+            free(d);
+            return err;
+        }
+            
+        err = vector_insert_back(po->val, d);
+        if (err < 0) {
+            free(d);
+            return err;
+        }
+        break;
+    case OPTIONS_MUL_INT:
+        i = malloc(sizeof(*i));
+        if (!i)
+            return -errno;
+        
+        err = string_to_integer(val, i);
+        if (err < 0) {
+            free(i);
+            return err;
+        }
+        
+        err = vector_insert_back(po->val, i);
+        if (err < 0) {
+            free(i);
+            return err;
+        }
+        
+        break;
+    case OPTIONS_MUL_STRING:
+        c = strdup(val);
+        if (!c)
+            return -errno;
+        
+        err = vector_insert_back(po->val, c);
+        if (err < 0) {
+            free(c);
+            return err;
+        }
+        break;
+    default:
+        return -EINVAL;
+    }
+    
+    return 0;
+}
+
 static int option_parse(struct program_option *__restrict po,
                         int *i,
                         const struct map *__restrict map,
@@ -45,17 +163,23 @@ static int option_parse(struct program_option *__restrict po,
 
     /* get length of possible arguments */
     
-    for (j = *i + 1; j < args_size; ++j) {
-        if (map_contains(map, *vector_at(args, j)))
-            break;
+    if (po->type != OPTIONS_BOOL) {
+        for (j = *i + 1; j < args_size; ++j) {
+            if (map_contains(map, *vector_at(args, j)))
+                break;
+        }
     }
+    
+    j -= 1;
     
     switch (po->type) {
     case OPTIONS_BOOL:
         *(bool *) po->val = true;
         break;
     case OPTIONS_MUL_STRING:
-        if (j == *i + 1) {
+    case OPTIONS_MUL_INT:
+    case OPTIONS_MUL_DOUBLE:
+        if (*i == j) {
             if (e_msg) {
                 asprintf(e_msg, "option \"%s\" expects at least one argument.",
                          po->cmd_flag_long);
@@ -65,52 +189,35 @@ static int option_parse(struct program_option *__restrict po,
         }
         
         /* add possible arguments to the vector */
-        for (*i += 1; *i < j; ++(*i)) {
-            char *arg = strdup(*vector_at(args, *i));
-            if (!arg)
-                return -errno;
-            
-            err = vector_insert_back(po->val, arg);
+        for (*i += 1; *i <= j; ++(*i)) {
+            err = assign_value(po, *vector_at(args, *i));
             if (err < 0)
                 return err;
         }
         
         *i -= 1;
-        
         break;
     case OPTIONS_STRING:
-        if (j == *i + 1) {
+    case OPTIONS_DOUBLE:
+    case OPTIONS_INT:
+        if (*i == j || j - 1 != *i) {
             if (e_msg) {
                 asprintf(e_msg, "option \"%s\" expects exactly one argument - "
-                              "none provided.", po->cmd_flag_long);
+                              "%d provided.", po->cmd_flag_long, j - *i);
             }
 
             return -EINVAL;
         }
         
         *i += 1;
-
-        *(char **) po->val = strdup(*vector_at(args, *i));
-        if (!*(char **) po->val)
-            return -errno;
         
-        /* only one passed argument was expected */
-        if (*i < j) {
-            if (e_msg) {
-                asprintf(e_msg, "option \"%s\" expects exactly one argument - "
-                              "%d provided.", po->cmd_flag_long, j - *i - 1);
-            }
-            return -EINVAL;
-        }
+        err = assign_value(po, *vector_at(args, *i));
+        if (err < 0)
+            return err;
+        
         break;
-    case OPTIONS_MUL_INT:
-        break;
-    case OPTIONS_INT:
-        break;
-    case OPTIONS_MUL_DOUBLE:
-        break;
-    case OPTIONS_DOUBLE:
-        break;
+    default:
+        return -EINVAL;
     }
     
     return 0;
@@ -123,7 +230,7 @@ static int options_init(struct program_option *__restrict po,
     
     for (i = 0; i < po_size; ++i) {
         /*
-         * Only the vectorss get initialized; it is easy to set
+         * Only the vectors and strings get initialized; it is easy to set
          * default values for the other data types
          */
         switch (po[i].type) {
@@ -135,6 +242,9 @@ static int options_init(struct program_option *__restrict po,
                 return err;
             
             vector_set_data_delete(po[i].val, &free);
+            break;
+        case OPTIONS_STRING:
+            *(char **) po[i].val = NULL;
             break;
         default:
             break;
@@ -179,7 +289,7 @@ int options_parse(struct program_option *__restrict po,
     
     /* 
      * Initialize 'args' which contains all elements of 'argv',
-     * however compact flags like -abcd into a vector { a b c d }
+     * however compact flags like -abcd are split into a vector { a b c d }
      * which enables to later parse the options without having a special
      * case for the compact flags
      */
@@ -278,6 +388,9 @@ void options_destroy(struct program_option *__restrict po,
         case OPTIONS_MUL_DOUBLE:
         case OPTIONS_MUL_INT:
             vector_destroy(po[i].val);
+            break;
+        case OPTIONS_STRING:
+            free(*(char **) po[i].val);
             break;
         default:
             break;

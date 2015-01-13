@@ -25,77 +25,84 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include <libvci/options.h>
 #include <libvci/error.h>
 #include <libvci/vector.h>
 #include <libvci/macro.h>
+#include <libvci/clock.h>
 
-#define DESC_ADD_B    "Add a new bookmark."
-#define DESC_CHANNELS "Retrieve information about a channel."
-#define DESC_CHECK_B  "Check which bookmarks are streaming."
-#define DESC_DESC     "Print descriptive line headers, if applicable." 
-#define DESC_FEATURED "Query featured streams."
-#define DESC_GET_F    "Show all specified bookmarks."
-#define DESC_HELP     "Print this help message."
-#define DESC_JSON     "Pretty print the json strings sent from the server."
-#define DESC_LIMIT    "Set the number of returned results."
-#define DESC_LIVE     "If searching for games: list only games that are live."
-#define DESC_REMOVE_B "Remove a bookmark."
-#define DESC_SEARCH_C "Search for channels."
-#define DESC_SEARCH_G "Search for games."
-#define DESC_SEARCH_S "Search for streams."
-#define DESC_STREAMS  "Retrieve information about a steam. Stream must be live."
-#define DESC_TOP      "Get a list of the currently top played games."
-#define DESC_VERBOSE  "Retrieve more information about queried items."
+#define DESC ""
 
-struct vector adds;
-struct vector channels;
-struct vector streams;
-struct vector removes;
-struct vector s_streams;
-bool check_bookmarks = false;
-bool descriptive = false;
-bool featured = false;
-bool json = false;
-int limit = 10;
+struct vector strings;
+struct vector doubles;
+struct vector ints;
+char *string;
+double double_val = 0.0;
+int int_val = 0;
+bool bool_val = false;
+
+static void vector_print(struct vector *__restrict vec)
+{
+    void **data, **end;
+
+    fprintf(stdout, "[ ");
+    
+    end = vector_back(vec);
+    
+    vector_for_each(vec, data) {
+        if (vec == &strings)
+            fprintf(stdout, "%s", * (char **) data);
+        else if (vec == &doubles)
+            fprintf(stdout, "%lf", **(double **) data);
+        else if (vec == &ints)
+            fprintf(stdout, "%i", **(int **) data);
+        else
+            return;
+        
+        if (data != end)
+            fprintf(stdout, ", ");
+    }
+        
+    fprintf(stdout, " ]\n");
+}
 
 struct program_option po[] = {
-    { "add-bookmarks",   "a", OPTIONS_MUL_STRING, &adds,            DESC_ADD_B    },
-    { "channels"     ,   "c", OPTIONS_MUL_STRING, &channels,        DESC_CHANNELS },
-    { "check-bookmarks", "b", OPTIONS_BOOL,       &check_bookmarks, DESC_CHECK_B  },
-    { "descriptive",     "d", OPTIONS_BOOL,       &descriptive,     DESC_DESC     },
-    { "featured",        "f", OPTIONS_BOOL,       &featured,        DESC_FEATURED },
-    { "json",            "j", OPTIONS_BOOL,       &json,            DESC_JSON     },
-    { "limit",           "l", OPTIONS_INT,        &limit,           DESC_LIMIT    },
-    { "streams",         "s", OPTIONS_MUL_STRING, &streams,         DESC_STREAMS  },
-    { "remove-bookmark", "r", OPTIONS_MUL_STRING, &removes,         DESC_REMOVE_B },
-    { "search-streams",  "s", OPTIONS_MUL_STRING, &s_streams,       DESC_REMOVE_B },
+    { "strings",         "s", OPTIONS_MUL_STRING, &strings,         DESC },
+    { "doubles",         "d", OPTIONS_MUL_DOUBLE, &doubles,         DESC },
+    { "ints",            "i", OPTIONS_MUL_INT,    &ints,            DESC },
+    { "string",          "S", OPTIONS_STRING,     &string,          DESC },
+    { "double-val",      "D", OPTIONS_DOUBLE,     &double_val,      DESC },
+    { "int-val",         "I", OPTIONS_INT,        &int_val,         DESC },
+    { "bool-val",        "B", OPTIONS_BOOL,       &bool_val,        DESC },
 };
 
-//     ("add-bookmark,a",    VAL_MUL(&args.adds),       DESC_ADD_B)
-//     ("channels,C",        VAL_MUL(&args.channels),   DESC_CHANNELS)
-//     ("check-bookmarks,b",                            DESC_CHECK_B)
-//     ("descriptive,d",                                DESC_DESC)
-//     ("featured,f",                                   DESC_FEATURED)
-//     ("get-bookmarks",                                DESC_GET_F)
-//     ("help,h",                                       DESC_HELP)
-//     ("json,j",                                       DESC_JSON)
-//     ("limit",             VAL(&args.limit),          DESC_LIMIT)
-//     ("live",                                         DESC_LIVE)
-//     ("remove-bookmark,r", VAL_MUL(&args.removes),    DESC_REMOVE_B)
-//     ("search-channels,c", VAL_MUL(&args.s_channels), DESC_SEARCH_C)
-//     ("search-games,g",    VAL_MUL(&args.s_games),    DESC_SEARCH_G)
-//     ("search-streams,s",  VAL_MUL(&args.s_streams),  DESC_SEARCH_S)
-//     ("streams,S",         VAL_MUL(&args.streams),    DESC_STREAMS)
-//     ("top,t",                                        DESC_TOP)
-//     ("verbose,v",  
+char *argv_test[] = {
+    "-s",               "file1",        "file2",        "file3",
+    "--double-val",     "3.14159265",
+    "-i",               "1",            "2",            "3",            "4",
+    "-Bd",              "3.14159265",   "2.71828182846",
+    "-I",               "631",
+    "-S",               "Hello World!"
+};
+
+int argc_test = ARRAY_SIZE(argv_test);
 
 int main(int argc, char *argv[])
 {
-    struct vector *all[] = { &adds, &channels };
+    struct clock c;
     char *err_msg = NULL;
-    int i, err;
+    int err;
+    
+    if (argc <= 1) {
+        argv = argv_test;
+        argc = argc_test;
+    }
+    
+    assert(clock_init(&c, CLOCK_PROCESS_CPUTIME_ID) == 0 && "clock_init");
+    
+    clock_start(&c);
     
     err = options_parse(po, ARRAY_SIZE(po), argv, argc, &err_msg);
     if (err < 0) {
@@ -109,21 +116,20 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     
-    for (i = 0; i < ARRAY_SIZE(all); ++i) {
-        char **data;
-        
-        vector_for_each(all[i], data) {
-            fprintf(stdout, "%s\n", *data);
-        }
-        
-        fprintf(stdout, "\n");
-    }
+    clock_stop(&c);
+    fprintf(stdout, "Elapsed time for parsing: %lu us\n", clock_elapsed_us(&c));
     
-    if (check_bookmarks) {
-        fprintf(stdout, "check enabled!\n");
-    }
+    vector_print(&strings);
+    vector_print(&doubles);
+    vector_print(&ints);
+    
+    fprintf(stdout, "double: %lf\n", double_val);
+    fprintf(stdout, "int: %i\n", int_val);
+    fprintf(stdout, "string: %s\n", string);
+    fprintf(stdout, "bool: %s\n", (bool_val) ? "true" : "false");
     
     options_destroy(po, ARRAY_SIZE(po));
+    clock_destroy(&c);
 
     return EXIT_SUCCESS;
 }

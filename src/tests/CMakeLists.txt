@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.6)
 project(libvci_tests C)
 
 add_definitions(-Wall)
-#add_definitions(-O2)
-add_definitions(-g3)
+add_definitions(-O2)
+#add_definitions(-g3)
 
 set(LIBS vci)
 set(CMAKE_LIBRARY_PATH /usr/local/lib)
