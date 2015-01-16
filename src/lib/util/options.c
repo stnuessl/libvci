@@ -23,6 +23,7 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 
@@ -45,9 +46,6 @@ static int string_to_integer(const char *__restrict s, int *__restrict ret)
     if (errno != 0)
         return -errno;
     
-    if (end == s)
-        return -EINVAL;
-    
     if (*end != '\0')
         return -EINVAL;
     
@@ -63,9 +61,6 @@ static int string_to_double(const char *__restrict s, double *__restrict ret)
     
     if (errno != 0)
         return -errno;
-    
-    if (end == s)
-        return -EINVAL;
     
     if (*end != '\0')
         return -EINVAL;
@@ -170,6 +165,7 @@ static int option_parse(struct program_option *__restrict po,
         }
     }
     
+    /* 'j' describes the last valid index of a possible argument */
     j -= 1;
     
     switch (po->type) {
@@ -298,8 +294,6 @@ int options_parse(struct program_option *__restrict po,
     if (err < 0)
         goto cleanup1;
     
-    vector_set_data_delete(&args, &free);
-    
     for (i = 0; i < argc; ++i) {
         size_t len = strlen(argv[i]);
         
@@ -309,7 +303,7 @@ int options_parse(struct program_option *__restrict po,
             for (p = argv[i] + 1; *p != '\0'; ++p) {
                 char a[] = { *p, '\0' };
                 
-                char *dup = strdup(a);
+                char *dup = strdupa(a);
                 if (!dup) {
                     err = -errno;
                     goto cleanup2;
@@ -320,23 +314,11 @@ int options_parse(struct program_option *__restrict po,
                     goto cleanup2;
             }
         } else if (len > 1 && argv[i][0] == '-' && argv[i][1] == '-') {
-            char *dup = strdup(argv[i] + 2);
-            if (!dup) {
-                err = -errno;
-                goto cleanup2;
-            }
-            
-            err = vector_insert_back(&args, dup);
+            err = vector_insert_back(&args, argv[i] + 2);
             if (err < 0)
                 goto cleanup2;
         } else {
-            char *dup = strdup(argv[i]);
-            if (!dup) {
-                err = -errno;
-                goto cleanup2;
-            }
-            
-            err = vector_insert_back(&args, dup);
+            err = vector_insert_back(&args, argv[i]);
             if (err < 0)
                 goto cleanup2;
         }
@@ -375,6 +357,59 @@ cleanup2:
 cleanup1:
     map_destroy(&map);
     return err;
+}
+
+void options_help(int fd,
+                  const char *__restrict description, 
+                  const struct program_option *__restrict po,
+                  unsigned int po_size)
+{
+    unsigned int i;
+    int max_s, max_l, max;
+    
+    if (description)
+        dprintf(fd, "%s\n", description);
+    
+    for (i = 0, max_s = 0, max_l = 0; i < po_size; ++i) {
+        int len_s = strlen(po[i].cmd_flag_short);
+        int len_l = strlen(po[i].cmd_flag_long);
+        
+        if (len_s > max_s)
+            max_s = len_s;
+        
+        if (len_l > max_l)
+            max_l = len_l;
+    }
+    
+    max = max_s + max_l;
+    
+    for (i = 0; i < po_size; ++i) {
+        const char *p;
+        const char *s = po[i].cmd_flag_short;
+        const char *l = po[i].cmd_flag_long;
+        const char *d = po[i].description;
+        const char *arg = (po[i].type != OPTIONS_BOOL) ? "arg" : "   ";
+
+        if (*s != '\0' && *l != '\0')
+            dprintf(fd, "  -%-*s [ --%-*s ] %s", max_s, s, max_l, l, arg);
+        else if (*s != '\0')
+            dprintf(fd, "  -%-*s     %s   ", max, s, arg);
+        else if (*l != '\0')
+            dprintf(fd, "  --%-*s    %s   ", max, l, arg);
+        else 
+            continue;
+        
+        if (*d != '\0') {
+            dprintf(fd, "   ");
+            
+            for (p = strchr(d, '\n'); p; d = p + 1, p = strchr(d, '\n')) {
+                int diff = p - d;
+                dprintf(fd, "%.*s\n   %-*s              ", diff, d, max, "   ");
+            }
+            
+            dprintf(fd, "%s\n", d);
+        }
+    }
 }
 
 void options_destroy(struct program_option *__restrict po,

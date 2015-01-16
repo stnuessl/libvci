@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <stdbool.h>
 #include <assert.h>
 
@@ -33,7 +34,16 @@
 #include <libvci/macro.h>
 #include <libvci/clock.h>
 
-#define DESC ""
+#define DESC "very\nlong\ndescription"
+#define DESC_STRINGS "Pass one or more strings."
+#define DESC_DOUBLES "Pass one or more doubles."
+#define DESC_INTS    "Pass one or more ints."
+#define DESC_STRING  "Pass a string."
+#define DESC_DOUBLE  "Pass a double."
+#define DESC_INT     "Pass a int."
+#define DESC_BOOL    "Activates this flag."
+#define DESC_HELP    "Print this help message."
+
 
 struct vector strings;
 struct vector doubles;
@@ -42,11 +52,35 @@ char *string;
 double double_val = 0.0;
 int int_val = 0;
 bool bool_val = false;
+bool help = false;
+
+struct program_option po[] = {
+    { "strings",        "s", OPTIONS_MUL_STRING, &strings,    DESC_STRINGS    },
+    { "doubles",        "d", OPTIONS_MUL_DOUBLE, &doubles,    DESC_DOUBLES    },
+    { "ints",           "i", OPTIONS_MUL_INT,    &ints,       DESC_INTS       },
+    { "string",         "S", OPTIONS_STRING,     &string,     DESC_STRING     },
+    { "double-val",     "D", OPTIONS_DOUBLE,     &double_val, DESC_DOUBLE     },
+    { "int-val",        "I", OPTIONS_INT,        &int_val,    DESC_INT        },
+    { "bool-val",       "B", OPTIONS_BOOL,       &bool_val,   DESC_BOOL       },
+    { "help",           "" , OPTIONS_BOOL,       &help,       DESC_HELP       },
+    { "",               "h", OPTIONS_BOOL,       &help,       DESC            },
+};
+
+char *argv_test[] = {
+    "-s",               "file1",        "file2",        "file3",
+    "--double-val",     "3.14159265",
+    "-i",               "1",            "2",            "3",            "4",
+    "-Bd",              "3.14159265",   "2.71828182846",
+    "-I",               "631",
+    "-S",               "Hello World!"
+};
+
+int argc_test = ARRAY_SIZE(argv_test);
 
 static void vector_print(struct vector *__restrict vec)
 {
     void **data, **end;
-
+    
     fprintf(stdout, "[ ");
     
     end = vector_back(vec);
@@ -64,30 +98,9 @@ static void vector_print(struct vector *__restrict vec)
         if (data != end)
             fprintf(stdout, ", ");
     }
-        
+    
     fprintf(stdout, " ]\n");
 }
-
-struct program_option po[] = {
-    { "strings",         "s", OPTIONS_MUL_STRING, &strings,         DESC },
-    { "doubles",         "d", OPTIONS_MUL_DOUBLE, &doubles,         DESC },
-    { "ints",            "i", OPTIONS_MUL_INT,    &ints,            DESC },
-    { "string",          "S", OPTIONS_STRING,     &string,          DESC },
-    { "double-val",      "D", OPTIONS_DOUBLE,     &double_val,      DESC },
-    { "int-val",         "I", OPTIONS_INT,        &int_val,         DESC },
-    { "bool-val",        "B", OPTIONS_BOOL,       &bool_val,        DESC },
-};
-
-char *argv_test[] = {
-    "-s",               "file1",        "file2",        "file3",
-    "--double-val",     "3.14159265",
-    "-i",               "1",            "2",            "3",            "4",
-    "-Bd",              "3.14159265",   "2.71828182846",
-    "-I",               "631",
-    "-S",               "Hello World!"
-};
-
-int argc_test = ARRAY_SIZE(argv_test);
 
 int main(int argc, char *argv[])
 {
@@ -127,6 +140,9 @@ int main(int argc, char *argv[])
     fprintf(stdout, "int: %i\n", int_val);
     fprintf(stdout, "string: %s\n", string);
     fprintf(stdout, "bool: %s\n", (bool_val) ? "true" : "false");
+    
+    if (help)
+        options_help(STDOUT_FILENO, "options_test:", po, ARRAY_SIZE(po));
     
     options_destroy(po, ARRAY_SIZE(po));
     clock_destroy(&c);

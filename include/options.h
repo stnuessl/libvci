@@ -54,6 +54,11 @@ int options_parse(struct program_option *__restrict po,
                   int argc,
                   char **err_msg);
 
+void options_help(int fd,
+                  const char *__restrict description, 
+                  const struct program_option *__restrict po,
+                  unsigned int po_size);
+
 void options_destroy(struct program_option *__restrict po,
                      unsigned int po_size);
 
