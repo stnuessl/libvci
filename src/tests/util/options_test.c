@@ -77,16 +77,19 @@ char *argv_test[] = {
 
 int argc_test = ARRAY_SIZE(argv_test);
 
+struct options o;
+
 static void vector_print(struct vector *__restrict vec)
 {
     void **data, **end;
+    struct vector *u = options_unknowns(&o);
     
     fprintf(stdout, "[ ");
     
     end = vector_back(vec);
     
     vector_for_each(vec, data) {
-        if (vec == &strings)
+        if (vec == &strings || vec == u)
             fprintf(stdout, "%s", * (char **) data);
         else if (vec == &doubles)
             fprintf(stdout, "%lf", **(double **) data);
@@ -117,15 +120,21 @@ int main(int argc, char *argv[])
     
     clock_start(&c);
     
-    err = options_parse(po, ARRAY_SIZE(po), argv, argc, &err_msg);
+    err = options_init(&o, po, ARRAY_SIZE(po));
+    if (err < 0) {
+        fprintf(stderr, "options_init() failed - %s\n", strerr(-err));
+        exit(EXIT_FAILURE);
+    }
+    
+    err = options_parse(&o, argv, argc, &err_msg);
     if (err < 0) {
         if (!err_msg) {
-            fprintf(stderr, "options_parse() failed: %s\n", strerr(-err));
+            fprintf(stderr, "options_init() failed: %s\n", strerr(-err));
         } else {
-            fprintf(stderr, "options_parse() failed: %s\n", err_msg);
+            fprintf(stderr, "options_init() failed: %s\n", err_msg);
             free(err_msg);
         }
-            
+        
         exit(EXIT_FAILURE);
     }
     
@@ -141,10 +150,14 @@ int main(int argc, char *argv[])
     fprintf(stdout, "string: %s\n", string);
     fprintf(stdout, "bool: %s\n", (bool_val) ? "true" : "false");
     
-    if (help)
-        options_help(STDOUT_FILENO, "options_test:", po, ARRAY_SIZE(po));
+    fprintf(stdout, "No valid options: ");
+    vector_print(options_unknowns(&o));
+    fprintf(stdout, "\n");
     
-    options_destroy(po, ARRAY_SIZE(po));
+    if (help)
+        options_help(&o, "options_test:", STDOUT_FILENO);
+    
+    options_destroy(&o);
     clock_destroy(&c);
 
     return EXIT_SUCCESS;

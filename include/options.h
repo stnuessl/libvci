@@ -48,18 +48,27 @@ struct program_option {
     const char *description;
 };
 
-int options_parse(struct program_option *__restrict po,
-                  unsigned int po_size,
+struct options {
+    struct program_option *po;
+    unsigned int po_size;
+    struct vector unknowns;
+};
+
+int options_init(struct options *__restrict o, 
+                 struct program_option *po, 
+                 unsigned int po_size);
+
+int options_parse(struct options *__restrict o,
                   char ** const argv, 
                   int argc,
                   char **err_msg);
 
-void options_help(int fd,
-                  const char *__restrict description, 
-                  const struct program_option *__restrict po,
-                  unsigned int po_size);
+struct vector *options_unknowns(struct options *__restrict o);
 
-void options_destroy(struct program_option *__restrict po,
-                     unsigned int po_size);
+void options_help(const struct options *__restrict o,
+                  const char *__restrict description,
+                  int fd);
+
+void options_destroy(struct options *__restrict o);
 
 #endif /* _OPTIONS_H_ */
