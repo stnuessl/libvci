@@ -170,12 +170,19 @@ static int option_parse(struct program_option *__restrict po,
     
     switch (po->type) {
     case OPTIONS_BOOL:
+        if (j - *i > 0) {
+            if (e_msg) {
+                asprintf(e_msg, "option \"%s\" expects no argument:"
+                                "%d provided\n", j - *i);
+            }
+            return -EINVAL;
+        }
         *(bool *) po->val = true;
         break;
     case OPTIONS_MUL_STRING:
     case OPTIONS_MUL_INT:
     case OPTIONS_MUL_DOUBLE:
-        if (*i == j) {
+        if (j - *i == 0) {
             if (e_msg) {
                 asprintf(e_msg, "option \"%s\" expects at least one argument.",
                          po->cmd_flag_long);
@@ -196,7 +203,7 @@ static int option_parse(struct program_option *__restrict po,
     case OPTIONS_STRING:
     case OPTIONS_DOUBLE:
     case OPTIONS_INT:
-        if (*i == j || j - 1 != *i) {
+        if (j - *i != 1) {
             if (e_msg) {
                 asprintf(e_msg, "option \"%s\" expects exactly one argument - "
                               "%d provided.", po->cmd_flag_long, j - *i);
