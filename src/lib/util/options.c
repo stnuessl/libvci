@@ -295,9 +295,6 @@ int options_parse(struct options *__restrict o,
     unsigned int args_size;
     int i, err;
     
-    if (err_msg && *err_msg)
-        return -EINVAL;
-    
     /* initialize options map */
     err = map_init(&map, o->po_size << 1, &compare_string, &hash_string);
     if (err < 0)
