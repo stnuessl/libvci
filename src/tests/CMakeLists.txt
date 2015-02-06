@@ -38,10 +38,6 @@ target_link_libraries(queue_test ${LIBS})
 add_executable(buffer_test container/buffer_test.c)
 target_link_libraries(buffer_test ${LIBS})
 
-add_executable(ringbuffer_test container/ringbuffer_test.c)
-target_link_libraries(ringbuffer_test ${LIBS})
-target_link_libraries(ringbuffer_test ${CMAKE_THREAD_LIBS_INIT})
-
 add_executable(vector_test container/vector_test.c)
 target_link_libraries(vector_test ${LIBS})
 
@@ -60,13 +56,6 @@ target_link_libraries(mempool_test ${LIBS})
 
 add_executable(log_test util/log_test.c)
 target_link_libraries(log_test ${LIBS})
-
-add_executable(observer_test util/observer_test.c)
-target_link_libraries(observer_test ${LIBS})
-
-add_executable(async_task_test concurrent/async_task_test.c)
-target_link_libraries(async_task_test ${LIBS})
-target_link_libraries(async_task_test ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(random_test util/random_test.c)
 target_link_libraries(random_test ${LIBS})

@@ -31,19 +31,17 @@
 #include "container_p.h"
 #include "macro.h"
 
-#define MAP_DEFAULT_CAPACITY 32
+static inline bool map_should_grow(const struct map *__restrict map)
+{
+    return 100 * map->size / map->capacity >= map->upper_bound;
+}
 
-#define MAP_UPPER_TABLE_BOUND 60
-#define MAP_LOWER_TABLE_BOUND 10
+static inline bool map_should_shrink(const struct map *__restrict map)
+{
+    return 100 * map->size / map->capacity < map->lower_bound;
+}
 
-#define _map_should_grow(map)                                                  \
-    (100 * (map)->size / (map)->capacity) >= MAP_UPPER_TABLE_BOUND
-    
-#define _map_should_shrink(map)                                                \
-    (100 * (map)->size / (map)->capacity) < MAP_LOWER_TABLE_BOUND
-
-
-static int _map_rehash(struct map *__restrict map, unsigned int capacity)
+static int map_resize(struct map *__restrict map, unsigned int capacity)
 {
     struct entry *old_table;
     unsigned int i, old_capacity, old_size;
@@ -54,16 +52,16 @@ static int _map_rehash(struct map *__restrict map, unsigned int capacity)
     old_table    = map->table;
     
     map->size     = 0;
-    map->capacity = max(capacity, MAP_DEFAULT_CAPACITY);
+    map->capacity = max(capacity, MAP_DEFAULT_SIZE);
     map->table    = calloc(map->capacity, sizeof(*map->table));
 
-    if(!map->table) {
+    if (!map->table) {
         err = -errno;
         goto out;
     }
     
-    for(i = 0; i < old_capacity; ++i) {
-        if(old_table[i].state == MAP_DATA_STATE_AVAILABLE) {
+    for (i = 0; i < old_capacity; ++i) {
+        if (old_table[i].state == MAP_DATA_STATE_AVAILABLE) {
             err = map_insert(map, old_table[i].key, old_table[i].data);
             if(err < 0)
                 goto cleanup1;
@@ -98,8 +96,8 @@ out:
  * If there is a bug in this function it is very likely that
  * map_insert() suffers from the same bug.
  */
-static struct entry *_map_lookup(const struct map *__restrict map,
-                                 const void *__restrict key)
+static struct entry *map_lookup(const struct map *__restrict map,
+                                const void *__restrict key)
 {
     unsigned int hash, index, offset;
     
@@ -111,19 +109,19 @@ static struct entry *_map_lookup(const struct map *__restrict map,
     while(offset < map->capacity) {
 
         switch(map->table[index].state) {
-            case MAP_DATA_STATE_AVAILABLE:
-                if(map->table[index].hash != hash)
-                    break;
-                
-                if(map->key_compare(map->table[index].key, key) == 0)
-                    return map->table + index;
-                
+        case MAP_DATA_STATE_AVAILABLE:
+            if(map->table[index].hash != hash)
                 break;
-            case MAP_DATA_STATE_EMPTY:
-                /* 'key' does not exist within the table */
-                return NULL;
-            default:
-                break;
+            
+            if(map->key_compare(map->table[index].key, key) == 0)
+                return map->table + index;
+            
+            break;
+        case MAP_DATA_STATE_EMPTY:
+            /* 'key' does not exist within the table */
+            return NULL;
+        default:
+            break;
         }
         
         index  += offset;
@@ -135,20 +133,19 @@ static struct entry *_map_lookup(const struct map *__restrict map,
     return NULL;
 }
 
-struct map *map_new(unsigned int size,
-                    int (*key_compare)(const void *, const void *),
-                    unsigned int (*key_hash)(const void *))
+struct map *map_new(const struct map_config *__restrict conf)
 {
     struct map *map;
     int err;
     
     map = malloc(sizeof(*map));
-    if(!map)
+    if (!map)
         return NULL;
     
-    err = map_init(map, size, key_compare, key_hash);
-    if(err < 0) {
+    err = map_init(map, conf);
+    if (err < 0) {
         free(map);
+        errno = -err;
         return NULL;
     }
     
@@ -162,22 +159,25 @@ void map_delete(struct map *__restrict map)
 }
 
 int map_init(struct map *__restrict map,
-             unsigned int size,
-             int (*key_compare)(const void *, const void *),
-             unsigned int (*key_hash)(const void *))
+             const struct map_config *__restrict conf)
 {
-    size = adjust(size << 1, MAP_DEFAULT_CAPACITY);
+    unsigned int size = adjust(conf->size << 1, MAP_DEFAULT_SIZE);
     
     map->table = calloc(size, sizeof(*map->table));
-    if(!map->table)
+    if (!map->table)
         return -errno;
     
+    map->size     = 0;
     map->capacity = size;
-    map->size = 0;
     
-    map->key_compare = key_compare;
-    map->key_hash    = key_hash;
-    map->data_delete = NULL;
+    map->lower_bound = conf->lower_bound;
+    map->upper_bound = conf->upper_bound;
+    
+    map->static_size = conf->static_size;
+    
+    map->key_compare = conf->key_compare;
+    map->key_hash    = conf->key_hash;
+    map->data_delete = conf->data_delete;
     
     return 0;
 }
@@ -194,13 +194,13 @@ void map_clear(struct map *__restrict map)
     
     map->size = 0;
     
-    if(!map->data_delete) {
+    if (!map->data_delete) {
         memset(map->table, 0, sizeof(*map->table) * map->capacity);
         return;
     }
     
-    for(i = 0; i < map->capacity; ++i) {
-        if(map->table[i].state == MAP_DATA_STATE_AVAILABLE) {
+    for (i = 0; i < map->capacity; ++i) {
+        if (map->table[i].state == MAP_DATA_STATE_AVAILABLE) {
             map->data_delete(map->table[i].data);
             
             map->table[i].state = MAP_DATA_STATE_EMPTY;
@@ -211,12 +211,12 @@ void map_clear(struct map *__restrict map)
 int map_rehash(struct map *__restrict map, unsigned int size)
 {
     /* ensure that we don't have to rehash for 'size' additional insertions */
-    size = adjust((size + map->size) << 1, MAP_DEFAULT_CAPACITY);
+    size = adjust((size + map->size) << 1, MAP_DEFAULT_SIZE);
     
-    if(size == map->capacity)
+    if (size == map->capacity)
         return 0;
     
-    return _map_rehash(map, size);
+    return map_resize(map, size);
 }
 
 /*
@@ -229,12 +229,12 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
     unsigned int hash, index, offset, capacity;
     int err;
     
-    if(_map_should_grow(map)) {
+    if (!map->static_size && map_should_grow(map)) {
         capacity = map->capacity << 1;
         do {
-            err = _map_rehash(map, capacity);
+            err = map_resize(map, capacity);
             capacity <<= 1;
-        } while(err == -EBADSLT);
+        } while (err == -EBADSLT);
     }
     
     hash = map->key_hash(key);
@@ -242,8 +242,8 @@ int map_insert(struct map *__restrict map, const void *key, void *data)
     index = hash & (map->capacity - 1);
     offset = 1;
     
-    while(offset < map->capacity) {
-        if(map->table[index].state != MAP_DATA_STATE_AVAILABLE) {
+    while (offset < map->capacity) {
+        if (map->table[index].state != MAP_DATA_STATE_AVAILABLE) {
             map->table[index].key   = key;
             map->table[index].data  = data;
             map->table[index].hash  = hash;
@@ -267,7 +267,7 @@ void *map_retrieve(struct map *__restrict map, const void *key)
 {
     struct entry *entry;
     
-    entry = _map_lookup(map, key);
+    entry = map_lookup(map, key);
     
     return (entry) ? entry->data : NULL;
 }
@@ -277,7 +277,7 @@ void *map_take(struct map *__restrict map, const void *key)
     struct entry *entry;
     void *data;
     
-    entry = _map_lookup(map, key);
+    entry = map_lookup(map, key);
     if(!entry)
         return NULL;
 
@@ -287,15 +287,15 @@ void *map_take(struct map *__restrict map, const void *key)
     
     map->size -= 1;
     
-    if(_map_should_shrink(map))
-        _map_rehash(map, map->capacity >> 2);
+    if(!map->static_size && map_should_shrink(map))
+        map_resize(map, map->capacity >> 2);
     
     return data;
 }
 
 bool map_contains(const struct map *__restrict map, const void *key)
 {
-    return _map_lookup(map, key) != NULL;
+    return map_lookup(map, key) != NULL;
 }
 
 inline unsigned int map_size(const struct map *__restrict map)
@@ -308,37 +308,14 @@ inline bool map_empty(const struct map *__restrict map)
     return map->size == 0;
 }
 
-inline void map_set_key_compare(struct map *__restrict map,
-                                int (*key_compare)(const void *, const void *))
+void map_set_static_size(struct map *__restrict map, bool static_size)
 {
-    map->key_compare = key_compare;
+    map->static_size = static_size;
 }
 
-inline void map_set_key_hash(struct map *__restrict map, 
-                              unsigned int (*key_hash)(const void *))
+bool map_static_size(const struct map *__restrict map)
 {
-    map->key_hash = key_hash;
-}
-
-inline void map_set_data_delete(struct map *__restrict map,
-                                void (*data_delete)(void *))
-{
-    map->data_delete = data_delete;
-}
-
-int (*map_key_compare(struct map *__restrict map))(const void *, const void *)
-{
-    return map->key_compare;
-}
-
-unsigned int (*map_key_hash(struct map *__restrict map))(const void *)
-{
-    return map->key_hash;
-}
-
-void (*map_data_delete(struct map *__restrict map))(void *)
-{
-    return map->data_delete;
+    return map->static_size;
 }
 
 inline const void *entry_key(struct entry *__restrict e)

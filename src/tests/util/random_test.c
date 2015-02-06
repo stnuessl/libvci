@@ -91,12 +91,21 @@ void test_randomness(void)
 
 void test_duplicates(unsigned int num)
 {
+    const struct map_config map_conf = {
+        .size           = MAP_DEFAULT_SIZE,
+        .lower_bound    = MAP_DEFAULT_LOWER_BOUND,
+        .upper_bound    = MAP_DEFAULT_UPPER_BOUND,
+        .static_size    = false,
+        .key_compare    = &compare_int,
+        .key_hash       = &hash_uint,
+        .data_delete    = NULL,
+    };
     struct map *m;
     struct random *random;
     unsigned int i, n, dups1, dups2;;
     int err;
     
-    m = map_new(0, &compare_int, &hash_uint);
+    m = map_new(&map_conf);
     random = random_new();
     
     assert(m);

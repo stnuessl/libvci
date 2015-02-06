@@ -61,6 +61,14 @@ void config_delete(struct config *__restrict config)
 
 int config_init(struct config *__restrict config, const char *__restrict path)
 {
+    const struct map_config map_conf = {
+        .size           = MAP_DEFAULT_SIZE,
+        .lower_bound    = MAP_DEFAULT_LOWER_BOUND,
+        .upper_bound    = MAP_DEFAULT_UPPER_BOUND,
+        .static_size    = false,
+        .key_compare    = &compare_string,
+        .key_hash       = &hash_string,
+    };
     int err;
     
     config->path = strdup(path);
@@ -69,11 +77,11 @@ int config_init(struct config *__restrict config, const char *__restrict path)
         goto out;
     }
     
-    err = map_init(&config->key_map, 0, &compare_string, &hash_string);
+    err = map_init(&config->key_map, &map_conf);
     if(err < 0) 
         goto cleanup1;
     
-    err = map_init(&config->handle_map, 0, &compare_string, &hash_string);
+    err = map_init(&config->handle_map, &map_conf);
     if(err < 0)
         goto cleanup2;
     

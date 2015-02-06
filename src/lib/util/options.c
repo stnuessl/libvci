@@ -157,12 +157,9 @@ static int option_parse(struct program_option *__restrict po,
     int err;
 
     /* get length of possible arguments */
-    
-    if (po->type != OPTIONS_BOOL) {
-        for (j = *i + 1; j < args_size; ++j) {
-            if (map_contains(map, *vector_at(args, j)))
-                break;
-        }
+    for (j = *i + 1; j < args_size; ++j) {
+        if (map_contains(map, *vector_at(args, j)))
+            break;
     }
     
     /* 'j' describes the last valid index of a possible argument */
@@ -173,7 +170,7 @@ static int option_parse(struct program_option *__restrict po,
         if (j - *i > 0) {
             if (e_msg) {
                 asprintf(e_msg, "option \"%s\" expects no argument:"
-                                "%d provided\n", j - *i);
+                                "%d provided\n", po->cmd_flag_long, j - *i);
             }
             return -EINVAL;
         }
@@ -290,13 +287,22 @@ int options_parse(struct options *__restrict o,
                   int argc,
                   char **err_msg)
 {
+    const struct map_config map_conf = {
+        .size           = o->po_size << 1,
+        .lower_bound    = MAP_DEFAULT_LOWER_BOUND,
+        .upper_bound    = MAP_DEFAULT_UPPER_BOUND,
+        .static_size    = false,
+        .key_compare    = &compare_string,
+        .key_hash       = &hash_string,
+        .data_delete    = NULL,
+    };
     struct map map;
     struct vector args;
     unsigned int args_size;
     int i, err;
     
     /* initialize options map */
-    err = map_init(&map, o->po_size << 1, &compare_string, &hash_string);
+    err = map_init(&map, &map_conf);
     if (err < 0)
         return err;
     

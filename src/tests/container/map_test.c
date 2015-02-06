@@ -41,8 +41,8 @@ void inspect_map(const struct map *__restrict map)
     struct entry *e;
     unsigned int i;
     
-    for(i = 0; i < map->capacity; ++i) {
-        if(map->table[i].state == MAP_DATA_STATE_AVAILABLE)
+    for (i = 0; i < map->capacity; ++i) {
+        if (map->table[i].state == MAP_DATA_STATE_AVAILABLE)
             fprintf(stdout, "At index %2d: Key %d -> Value %d -> Hash %u\n",
                     i, 
                     (int)(long) map->table[i].key,
@@ -63,21 +63,30 @@ void inspect_map(const struct map *__restrict map)
 
 void map_test_insert_remove(void)
 {
+    const struct map_config map_conf = {
+        .size           = MAP_DEFAULT_SIZE,
+        .lower_bound    = MAP_DEFAULT_LOWER_BOUND,
+        .upper_bound    = MAP_DEFAULT_UPPER_BOUND,
+        .static_size    = false,
+        .key_compare    = &compare_int,
+        .key_hash       = &hash_long,
+        .data_delete    = NULL,
+    };
     struct map *map;
     unsigned int num_elements;
     int i, err;
     
     num_elements = 32;
     
-    map = map_new(0, &compare_int, &hash_long);
+    map = map_new(&map_conf);
     assert(map);
     
-    for(i = 0; i < num_elements; ++i) {
+    for (i = 0; i < num_elements; ++i) {
         err = map_insert(map, (void *)(long)i, (void *)(long) i);
         assert(err == 0);
     }
     
-    for(i = 0; i < num_elements - (num_elements >> 1); ++i)
+    for (i = 0; i < num_elements - (num_elements >> 1); ++i)
         assert((int)(long)map_take(map, (void *)(long) i) == i);
     
     inspect_map(map);
@@ -87,18 +96,27 @@ void map_test_insert_remove(void)
 
 void map_test_performance(unsigned int num)
 {
+    const struct map_config map_conf = {
+        .size           = MAP_DEFAULT_SIZE,
+        .lower_bound    = MAP_DEFAULT_LOWER_BOUND,
+        .upper_bound    = MAP_DEFAULT_UPPER_BOUND,
+        .static_size    = false,
+        .key_compare    = &compare_int,
+        .key_hash       = &hash_int,
+        .data_delete    = NULL,
+    };
     struct map *map;
     struct clock *c;
     int i, err;
     
-    map = map_new(0, &compare_int, &hash_uint);
+    map = map_new(&map_conf);
     c   = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(map);
     assert(c);
     
     clock_start(c);
     
-    for(i = 0; i < num; ++i) {
+    for (i = 0; i < num; ++i) {
         err = map_insert(map, (void *)(long) i, (void *)(long) i);
         assert(err == 0);
     }
@@ -109,7 +127,7 @@ void map_test_performance(unsigned int num)
     
     clock_reset(c);
     
-    for(i = 0; i < num; ++i)
+    for (i = 0; i < num; ++i)
         assert((int)(long) map_retrieve(map, (void *)(long) i) == i);
     
     fprintf(stdout, "Elapsed time for %u lookups: %lu us\n",
@@ -118,7 +136,7 @@ void map_test_performance(unsigned int num)
     
     clock_reset(c);
     
-    for(i = 0; i < num; ++i)
+    for (i = 0; i < num; ++i)
         assert((int)(long) map_take(map, (void *)(long) i) == i);
     
     fprintf(stdout, "Elapsed time for %u removals: %lu us\n",
@@ -128,7 +146,7 @@ void map_test_performance(unsigned int num)
     clock_delete(c);
     map_delete(map);
     
-    map = map_new(0, &compare_int, &hash_uint);
+    map = map_new(&map_conf);
     c   = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     assert(map);
     assert(c);
@@ -138,7 +156,7 @@ void map_test_performance(unsigned int num)
     err = map_rehash(map, num);
     assert(err == 0);
     
-    for(i = 0; i < num; ++i) {
+    for (i = 0; i < num; ++i) {
         err = map_insert(map, (void *)(long) i, (void *)(long) i);
         assert(err == 0);
     }
@@ -156,38 +174,47 @@ void map_test_performance(unsigned int num)
 void map_stress_test(void)
 {
     struct map *map;
+    const struct map_config map_conf = {
+        .size           = MAP_DEFAULT_SIZE,
+        .lower_bound    = MAP_DEFAULT_LOWER_BOUND,
+        .upper_bound    = MAP_DEFAULT_UPPER_BOUND,
+        .static_size    = false,
+        .key_compare    = &compare_int,
+        .key_hash       = &hash_ulong,
+        .data_delete    = NULL,
+    };
     int err, i, num_elements;
     
-    map = map_new(0, &compare_int, &hash_ulong);
+    map = map_new(&map_conf);
     assert(map);
     
     num_elements = 1000000;
     
-    for(i = 0; i < num_elements / 2; ++i) {            
+    for (i = 0; i < num_elements / 2; ++i) {            
         err = map_insert(map, (void *)(long)i, (void *)(long) i);
         assert(err == 0);
     }
     
-    for(i = 0; i < num_elements / 4; i += 3)
+    for (i = 0; i < num_elements / 4; i += 3)
         assert((int)(long)map_take(map, (void *)(long)i) == i);
     
-    for(i = 0; i < num_elements / 4; i += 3) {
+    for (i = 0; i < num_elements / 4; i += 3) {
         if((i % 3) == 0)
             assert((int)(long)map_retrieve(map, (void *)(long) i) == 0);
         else
             assert((int)(long)map_retrieve(map, (void *)(long) i) == i);
     }
     
-    for(i = num_elements / 2; i < num_elements; ++i) {
+    for (i = num_elements / 2; i < num_elements; ++i) {
         err = map_insert(map, (void *)(long)i, (void *)(long) i);
         assert(err == 0);
     }
     
-    for(i = num_elements / 2; i < num_elements / 4; i += 3)
+    for (i = num_elements / 2; i < num_elements / 4; i += 3)
         assert((int)(long)map_take(map, (void *)(long)i) == i);
     
-    for(i = num_elements / 2; i < num_elements / 4; i += 3) {
-        if((i % 3) == 0)
+    for (i = num_elements / 2; i < num_elements / 4; i += 3) {
+        if ((i % 3) == 0)
             assert((int)(long)map_retrieve(map, (void *)(long) i) == 0);
         else
             assert((int)(long)map_retrieve(map, (void *)(long) i) == i);
@@ -208,19 +235,27 @@ void map_string_test(void)
         "thing",        "5",
         "works",        "6"
     };
-    
     struct map *map;
+    const struct map_config map_conf = {
+        .size           = MAP_DEFAULT_SIZE,
+        .lower_bound    = MAP_DEFAULT_LOWER_BOUND,
+        .upper_bound    = MAP_DEFAULT_UPPER_BOUND,
+        .static_size    = false,
+        .key_compare    = &compare_string,
+        .key_hash       = &hash_string,
+        .data_delete    = NULL,
+    };
     int err, i;
     
-    map = map_new(0, &compare_string, &hash_string);
+    map = map_new(&map_conf);
     assert(map);
     
-    for(i = 0; i < ARRAY_SIZE(strings); i += 2) {
+    for (i = 0; i < ARRAY_SIZE(strings); i += 2) {
         err = map_insert(map, strings[i + 1], strings[i]);
         assert(err == 0);
     }
     
-    for(i = 0; i < ARRAY_SIZE(strings); i += 2)
+    for (i = 0; i < ARRAY_SIZE(strings); i += 2)
         fprintf(stdout, "%s ", (char *)map_retrieve(map, strings[i + 1]));
     
     fprintf(stdout, "\n");
@@ -233,7 +268,7 @@ int main(int argc, char *argv[])
 
     map_test_insert_remove();
     
-    if(argc == 2)
+    if (argc == 2)
         map_test_performance((unsigned int) atoi(argv[1]));
     
     map_stress_test();

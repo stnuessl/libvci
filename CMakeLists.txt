@@ -17,7 +17,6 @@ set(TARGET_INSTALL_DIR lib)
 set(HEADER_INSTALL_DIR include/libvci)
 
 set(HEADER
-    include/async_task.h
     include/avltree.h
     include/buffer.h
     include/cache.h
@@ -33,19 +32,15 @@ set(HEADER
     include/log.h
     include/macro.h
     include/mempool.h
-    include/observer.h
     include/options.h
     include/queue.h
     include/random.h
     include/stack.h
-    include/subject.h
-    include/ringbuffer.h
     include/threadpool.h
     include/vector.h
     )
         
 set(SOURCE
-    src/lib/concurrent/async_task.c
     src/lib/concurrent/threadpool.c
     src/lib/container/avltree.c
     src/lib/container/buffer.c
@@ -55,7 +50,6 @@ set(SOURCE
     src/lib/container/list.c
     src/lib/container/map.c
     src/lib/container/queue.c
-    src/lib/container/ringbuffer.c
     src/lib/container/stack.c
     src/lib/container/vector.c
     src/lib/util/clock.c
@@ -66,10 +60,8 @@ set(SOURCE
     src/lib/util/hash.c
     src/lib/util/log.c
     src/lib/util/mempool.c
-    src/lib/util/observer.c
     src/lib/util/options.c
     src/lib/util/random.c
-    src/lib/util/subject.c
     )
 
 find_package(Threads)

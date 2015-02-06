@@ -53,7 +53,7 @@ static unsigned int _thread_hash(const void *thread)
     
     hval = 1;
     
-    while(size--) {
+    while (size--) {
         hval += *buf++;
         hval += (hval << 10);
         hval ^= (hval >> 6);
@@ -97,7 +97,7 @@ static void _thread_exit(void *arg)
      */
 again:
     err = sem_wait(&pool->sem_exit);
-    if(err < 0) {
+    if (err < 0) {
         if(errno == EINTR)
             goto again;
         
@@ -113,7 +113,7 @@ again:
     
     sem_post(&pool->sem_exit);
     
-    if(thread) {
+    if (thread) {
         /* 
          * This means another thread did not try to cancel this thread
          * => it is now responsible to clean itself up
@@ -147,10 +147,10 @@ static void *_thread_handle_tasks(void *arg)
     
     pool = arg;
     
-    while(1) {
+    while (1) {
         err = sem_wait(&pool->sem_queue_in);
-        if(err < 0) {
-            if(errno == EINTR)
+        if (err < 0) {
+            if (errno == EINTR)
                 continue;
             
             _thread_exit(pool);
@@ -167,7 +167,7 @@ static void *_thread_handle_tasks(void *arg)
         pthread_mutex_lock(&pool->mutex_queue_out);
         
         err = sem_post(&pool->sem_queue_out);
-        if(err == 0)
+        if (err == 0)
             queue_insert(&pool->task_queue_out, &task->link);
 
         pthread_mutex_unlock(&pool->mutex_queue_out);
@@ -187,11 +187,11 @@ struct threadpool *threadpool_new(int threads)
     int err;
     
     pool = malloc(sizeof(*pool));
-    if(!pool)
+    if (!pool)
         return NULL;
     
     err = threadpool_init(pool, threads);
-    if(err < 0) {
+    if (err < 0) {
         free(pool);
         return NULL;
     }
@@ -207,54 +207,60 @@ void threadpool_delete(struct threadpool *__restrict pool)
 
 int threadpool_init(struct threadpool *__restrict pool, int threads)
 {
+    const struct map_config map_conf = {
+        .size           = MAP_DEFAULT_SIZE,
+        .lower_bound    = MAP_DEFAULT_LOWER_BOUND,
+        .upper_bound    = MAP_DEFAULT_UPPER_BOUND,
+        .static_size    = false,
+        .key_compare    = &_thread_compare,
+        .key_hash       = &_thread_hash,
+        .data_delete    = &_thread_delete,
+    };
     int i, err;
     
     memset(pool, 0, sizeof(*pool));
     
     pool->event_fd = eventfd(0, 0);
-    if(pool->event_fd < 0) {
+    if (pool->event_fd < 0) {
         err = -errno;
         goto out;
     }
     
     err = pthread_mutex_init(&pool->mutex_queue_in, NULL);
-    if(err) {
+    if (err) {
         errno = err;
         goto cleanup1;
     }
     
     err = pthread_mutex_init(&pool->mutex_queue_out, NULL);
-    if(err) {
+    if (err) {
         errno = err;
         goto cleanup2;
     }
     
     err = pthread_mutex_init(&pool->mutex_map, NULL);
-    if(err) {
+    if (err) {
         errno = err;
         goto cleanup3;
     }
 
     err = sem_init(&pool->sem_queue_in, 0, 0);
-    if(err < 0)
+    if (err < 0)
         goto cleanup4;
     
     err = sem_init(&pool->sem_queue_out, 0, 0);
-    if(err < 0)
+    if (err < 0)
         goto cleanup5;
     
     err = sem_init(&pool->sem_exit, 0, 1);
-    if(err < 0)
+    if (err < 0)
         goto cleanup6;
     
-    err = map_init(&pool->thread_map, 0, &_thread_compare, &_thread_hash);
-    if(err < 0)
+    err = map_init(&pool->thread_map, &map_conf);
+    if (err < 0)
         goto cleanup7;
     
-    map_set_key_compare(&pool->thread_map, &_thread_compare);
-    map_set_data_delete(&pool->thread_map, &_thread_delete);
-    
-    for(i = 0; i < threads; ++i) {
+    for (i = 0; i < threads; ++i) {
         err = threadpool_add_thread(pool);
         if(err < 0)
             goto cleanup8;
@@ -328,24 +334,24 @@ int threadpool_add_thread(struct threadpool *__restrict pool)
     int err;
     
     thread = malloc(sizeof(*thread));
-    if(!thread) {
+    if (!thread) {
         err = -errno;
         goto out;
     }
 
     err = pthread_attr_init(&attr);
-    if(err)
+    if (err)
         goto cleanup1;
     
     err = pthread_create(thread, &attr, &_thread_handle_tasks, pool);
-    if(err)
+    if (err)
         goto cleanup2;
     
     pthread_mutex_lock(&pool->mutex_map);
     err = map_insert(&pool->thread_map, thread, thread);
     pthread_mutex_unlock(&pool->mutex_map);
     
-    if(err < 0)
+    if (err < 0)
         goto cleanup3;
     
     pthread_attr_destroy(&attr);
@@ -373,7 +379,7 @@ int threadpool_remove_thread(struct threadpool *__restrict pool)
      * However, before that it has to deallocate the memory allocated here.
      */
     task = malloc(sizeof(*task));
-    if(!task)
+    if (!task)
         return -errno;
     
     task->task.func = _exit_task_thread;
@@ -391,7 +397,7 @@ int threadpool_add_task(struct threadpool *__restrict pool,
     pthread_mutex_lock(&pool->mutex_queue_in);
     
     err = sem_post(&pool->sem_queue_in);
-    if(err < 0) {
+    if (err < 0) {
         pthread_mutex_unlock(&pool->mutex_queue_in);
         return -errno;
     }
@@ -410,7 +416,7 @@ threadpool_take_completed_task(struct threadpool *__restrict pool)
     
 again:
     err = sem_wait(&pool->sem_queue_out);
-    if(err < 0) {
+    if (err < 0) {
         if(errno == EINTR)
             goto again;
         else

@@ -27,6 +27,10 @@
 
 #include <stdbool.h>
 
+#define MAP_DEFAULT_LOWER_BOUND 10
+#define MAP_DEFAULT_UPPER_BOUND 60
+#define MAP_DEFAULT_SIZE 32
+
 enum map_data_state {
     MAP_DATA_STATE_EMPTY        = 0x00,
     MAP_DATA_STATE_AVAILABLE    = 0x01,
@@ -41,26 +45,40 @@ struct entry {
     enum map_data_state state;
 };
 
+struct map_config {
+    unsigned int size;
+    
+    unsigned int lower_bound;
+    unsigned int upper_bound;
+    
+    bool static_size;
+    
+    int (*key_compare)(const void *, const void *);
+    unsigned int (*key_hash)(const void *);
+    void (*data_delete)(void *);
+};
+
 struct map {
     struct entry *table;
     unsigned int size;
     unsigned int capacity;
+    
+    unsigned int lower_bound;
+    unsigned int upper_bound;
+    
+    bool static_size;
 
     int (*key_compare)(const void *, const void *);
     unsigned int (*key_hash)(const void *);
     void (*data_delete)(void *);
 };
 
-struct map *map_new(unsigned int size,
-                    int (*key_compare)(const void *, const void *),
-                    unsigned int (*key_hash)(const void *));
+struct map *map_new(const struct map_config *__restrict conf);
 
 void map_delete(struct map *__restrict map);
 
 int map_init(struct map *__restrict map,
-             unsigned int size,
-             int (*key_compare)(const void *, const void *),
-             unsigned int (*key_hash)(const void *));
+             const struct map_config *__restrict conf);
 
 void map_destroy(struct map *__restrict map);
 
@@ -80,20 +98,9 @@ inline unsigned int map_size(const struct map *__restrict map);
 
 inline bool map_empty(const struct map *__restrict map);
 
-inline void map_set_key_compare(struct map *__restrict map,
-                                int (*key_compare)(const void *, const void *));
+void map_set_static_size(struct map *__restrict map, bool static_size);
 
-inline void map_set_key_hash(struct map *__restrict map, 
-                              unsigned int (*key_hash)(const void *));
-
-inline void map_set_data_delete(struct map *__restrict map,
-                                void (*data_delete)(void *));
-
-int (*map_key_compare(struct map *__restrict map))(const void *, const void *);
-
-unsigned int (*map_key_hash(struct map *__restrict map))(const void *);
-
-void (*map_data_delete(struct map *__restrict map))(void *);
+bool map_static_size(const struct map *__restrict map);
 
 inline const void *entry_key(struct entry *__restrict e);
 
