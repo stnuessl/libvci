@@ -37,7 +37,7 @@ static int _buffer_resize(struct buffer *__restrict buf, size_t new_size)
 {
     void *new_data;
     
-    new_size = adjust(new_size, BUFFER_DEFAULT_SIZE);
+    new_size = get_nice_size(new_size, BUFFER_DEFAULT_SIZE);
     
     if(new_size == buf->size)
         return 0;
@@ -105,7 +105,7 @@ void buffer_delete(struct buffer *__restrict buf)
 
 int buffer_init(struct buffer *__restrict buf, size_t size)
 {
-    size = adjust(size, BUFFER_DEFAULT_SIZE);
+    size = get_nice_size(size, BUFFER_DEFAULT_SIZE);
     
     memset(buf, 0, sizeof(*buf));
     
@@ -220,7 +220,7 @@ void buffer_clear_unaccessed(struct buffer *__restrict buf)
     _buffer_remove(buf, buf->accessed, buf->used - buf->accessed);
 }
 
-inline void *buffer_data(struct buffer *__restrict buf)
+inline char *buffer_data(struct buffer *__restrict buf)
 {
     return buf->data;
 }

@@ -19,7 +19,6 @@ set(HEADER_INSTALL_DIR include/libvci)
 set(HEADER
     include/avltree.h
     include/buffer.h
-    include/cache.h
     include/clock.h
     include/compare.h
     include/config.h
@@ -44,7 +43,6 @@ set(SOURCE
     src/lib/concurrent/threadpool.c
     src/lib/container/avltree.c
     src/lib/container/buffer.c
-    src/lib/container/cache.c
     src/lib/container/container_p.c
     src/lib/container/heap.c
     src/lib/container/list.c

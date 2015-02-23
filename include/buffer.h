@@ -93,7 +93,7 @@ void buffer_clear_accessed(struct buffer *__restrict buf);
 
 void buffer_clear_unaccessed(struct buffer *__restrict buf);
 
-inline void *buffer_data(struct buffer *__restrict buf);
+inline char *buffer_data(struct buffer *__restrict buf);
 
 inline size_t buffer_size(const struct buffer *__restrict buf);
 

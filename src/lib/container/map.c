@@ -161,7 +161,7 @@ void map_delete(struct map *__restrict map)
 int map_init(struct map *__restrict map,
              const struct map_config *__restrict conf)
 {
-    unsigned int size = adjust(conf->size << 1, MAP_DEFAULT_SIZE);
+    unsigned int size = get_nice_size(conf->size << 1, MAP_DEFAULT_SIZE);
     
     map->table = calloc(size, sizeof(*map->table));
     if (!map->table)
@@ -211,7 +211,7 @@ void map_clear(struct map *__restrict map)
 int map_rehash(struct map *__restrict map, unsigned int size)
 {
     /* ensure that we don't have to rehash for 'size' additional insertions */
-    size = adjust((size + map->size) << 1, MAP_DEFAULT_SIZE);
+    size = get_nice_size((size + map->size) << 1, MAP_DEFAULT_SIZE);
     
     if (size == map->capacity)
         return 0;

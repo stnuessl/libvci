@@ -27,6 +27,12 @@
 
 #include <errno.h>
 
+#define ___str(x)    ___str2(x)
+#define ___str2(x)   #x
+
+#define __LINE_STR__    ___str(__LINE__)
+#define __FILE_POS__   __FILE__ ":" __LINE_STR__
+
 #define errstr  (strerr(errno))
 
 const char *strerr(int err);

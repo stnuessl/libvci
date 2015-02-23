@@ -139,7 +139,7 @@ int heap_init(struct heap *__restrict heap,
               unsigned int capacity, 
               int (*data_compare)(const void *, const void *))
 {
-    capacity = adjust(capacity, HEAP_DEFAULT_CAPACITY);
+    capacity = get_nice_size(capacity, HEAP_DEFAULT_CAPACITY);
     
     heap->data = malloc(capacity * sizeof(*heap->data));
     if(!heap->data)

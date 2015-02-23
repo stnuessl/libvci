@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-unsigned int adjust(unsigned int m, unsigned int min)
+unsigned int get_nice_size(unsigned int m, unsigned int min)
 {
     unsigned int n;
     

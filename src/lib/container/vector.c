@@ -69,7 +69,7 @@ void vector_delete(struct vector *__restrict vec)
 
 int vector_init(struct vector *__restrict vec, unsigned int capacity)
 {
-    capacity = adjust(capacity, VECTOR_DEFAULT_CAPACITY);
+    capacity = get_nice_size(capacity, VECTOR_DEFAULT_CAPACITY);
     
     vec->data = calloc(capacity, sizeof(*vec->data));
     if(!vec->data)
@@ -117,7 +117,7 @@ int vector_set_capacity(struct vector *__restrict vec, unsigned int capacity)
     if(capacity < vec->size)
         vec->size = capacity;
     
-    capacity = adjust(capacity, VECTOR_DEFAULT_CAPACITY);
+    capacity = get_nice_size(capacity, VECTOR_DEFAULT_CAPACITY);
     
     if(capacity == vec->capacity)
         return 0;

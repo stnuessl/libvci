@@ -22,12 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef _CONTAINER_P_H_
-#define _CONTAINER_P_H_
+#ifndef _FILESYSTEM_H_
+#define _FILESYSTEM_H_
 
-unsigned int get_nice_size(unsigned int m, unsigned int min);
+#include <stdbool.h>
+#include <sys/stat.h>
 
-#endif /* _CONTAINER_P_H_ */
+int path_create(char *path, mode_t mode);
 
+int path_remove(char *__restrict path);
 
+bool path_exists(const char *__restrict path);
 
+bool path_is_reg(const char *__restrict path);
+
+bool path_is_dir(const char *__restrict path);
+
+bool path_is_sock(const char *__restrict path);
+
+bool path_is_fifo(const char *__restrict path);
+
+bool path_is_absolute(const char *__restrict path);
+
+#endif /* _FILESYSTEM_H_ */
