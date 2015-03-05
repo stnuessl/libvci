@@ -68,11 +68,11 @@ void log_destroy(struct log *__restrict l);
 
 void log_set_file(struct log *__restrict l, FILE *f);
 
-inline int log_fd(const struct log *__restrict l);
+int log_fd(const struct log *__restrict l);
 
-inline void log_set_level(struct log *__restrict l, uint8_t level);
+void log_set_level(struct log *__restrict l, uint8_t level);
 
-inline int log_level(const struct log *__restrict l);
+int log_level(const struct log *__restrict l);
 
 void log_append(struct log *__restrict l, const char *fmt, ...)
                                             __attribute__((format(printf,2,3)));

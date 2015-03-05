@@ -94,17 +94,17 @@ void *map_take(struct map *__restrict map, const void *key);
 
 bool map_contains(const struct map *__restrict map, const void *key);
 
-inline unsigned int map_size(const struct map *__restrict map);
+unsigned int map_size(const struct map *__restrict map);
 
-inline bool map_empty(const struct map *__restrict map);
+bool map_empty(const struct map *__restrict map);
 
 void map_set_static_size(struct map *__restrict map, bool static_size);
 
 bool map_static_size(const struct map *__restrict map);
 
-inline const void *entry_key(struct entry *__restrict e);
+const void *entry_key(struct entry *__restrict e);
 
-inline void *entry_data(struct entry *__restrict e);
+void *entry_data(struct entry *__restrict e);
 
 
 #define map_for_each(map, entry)                                               \

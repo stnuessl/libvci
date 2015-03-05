@@ -60,8 +60,8 @@ void random_delete(struct random *__restrict rand)
 int random_init(struct random *__restrict rand)
 {
     ssize_t err;
-    unsigned int num;
-    int i, fd;
+    unsigned int i, num;
+    int fd;
     
     fd = open("/dev/urandom", O_RDONLY);
     if(!fd)
@@ -93,7 +93,7 @@ int random_set_seed(struct random *__restrict rand,
                   const unsigned int *a,
                   unsigned int size)
 {
-    int i;
+    unsigned int i;
     
     for(i = 0; i < ARRAY_SIZE(rand->x) && i < size; ++i) {
         rand->seed[i] = a[i];
@@ -110,7 +110,7 @@ int random_get_seed(const struct random *__restrict rand,
                     unsigned int *__restrict a, 
                     unsigned int size)
 {
-    int i;
+    unsigned int i;
     
     if(size < ARRAY_SIZE(rand->x))
         return -EINVAL;

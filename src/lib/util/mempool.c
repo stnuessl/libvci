@@ -77,12 +77,13 @@ void mempool_destroy(struct mempool *__restrict pool)
 
 void* mempool_alloc_chunk(struct mempool *__restrict pool)
 {
+    void *end = (char *) pool->mem + pool->size;
     unsigned long *chunk;
     
-    if(pool->init < pool->mem + pool->size) {
+    if(pool->init < end) {
         chunk = pool->init;
         *chunk = (unsigned long) pool->init + pool->chunk_size;
-        pool->init += pool->chunk_size;
+        pool->init = (char *) pool->init + pool->chunk_size;
     }
     
     if(unlikely(mempool_empty(pool)))
@@ -98,6 +99,7 @@ void* mempool_alloc_chunk(struct mempool *__restrict pool)
 
 void mempool_free_chunk(struct mempool *__restrict pool, void *chunk)
 {
+    void *end = (char *) pool->mem + pool->size;
     unsigned long *next;
     /* 
      * We can risk to further trash the performance for an empty mempool
@@ -106,7 +108,7 @@ void mempool_free_chunk(struct mempool *__restrict pool, void *chunk)
      * (e.g. 'mempool_empty()') and increase to memory size of the pool 
      * accordingly.
      */
-    if(unlikely(chunk < pool->mem || chunk >= pool->mem + pool->size)) {
+    if(unlikely(chunk < pool->mem || chunk >= end)) {
         free(chunk);
         return;
     }
@@ -119,7 +121,7 @@ void mempool_free_chunk(struct mempool *__restrict pool, void *chunk)
     pool->next = next;
 }
 
-inline bool mempool_empty(const struct mempool *__restrict pool)
+bool mempool_empty(const struct mempool *__restrict pool)
 {
     return pool->chunks == 0;
 }

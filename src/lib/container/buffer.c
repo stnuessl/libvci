@@ -220,22 +220,22 @@ void buffer_clear_unaccessed(struct buffer *__restrict buf)
     _buffer_remove(buf, buf->accessed, buf->used - buf->accessed);
 }
 
-inline char *buffer_data(struct buffer *__restrict buf)
+char *buffer_data(struct buffer *__restrict buf)
 {
     return buf->data;
 }
 
-inline size_t buffer_size(const struct buffer *__restrict buf)
+size_t buffer_size(const struct buffer *__restrict buf)
 {
     return buf->used;
 }
 
-inline bool buffer_empty(const struct buffer *__restrict buf)
+bool buffer_empty(const struct buffer *__restrict buf)
 {
     return buffer_size(buf) == 0;
 }
 
-inline char buffer_at(const struct buffer *__restrict buf, int i)
+char buffer_at(const struct buffer *__restrict buf, int i)
 {
     return *(char *) (buf->data + i);
 }

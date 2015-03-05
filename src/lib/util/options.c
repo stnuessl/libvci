@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -148,7 +149,7 @@ static int assign_value(struct program_option *__restrict po,
 }
 
 static int option_parse(struct program_option *__restrict po,
-                        int *i,
+                        unsigned int *i,
                         const struct map *__restrict map,
                         struct vector *__restrict args,
                         char **e_msg)
@@ -282,6 +283,47 @@ cleanup1:
     return err;
 }
 
+void options_destroy(struct options *__restrict o)
+{
+    for (unsigned int i = 0; i < o->po_size; ++i) {
+        switch (o->po[i].type) {
+            case OPTIONS_MUL_STRING:
+            case OPTIONS_MUL_DOUBLE:
+            case OPTIONS_MUL_INT:
+                vector_destroy(o->po[i].val);
+                break;
+            case OPTIONS_STRING:
+                free(*(char **) o->po[i].val);
+                break;
+            default:
+                break;
+        }
+    }
+    
+    vector_destroy(&o->unknowns);
+}
+
+void options_clear(struct options *__restrict o)
+{
+     for (unsigned int i = 0; i < o->po_size; ++i) {
+        switch (o->po[i].type) {
+            case OPTIONS_MUL_STRING:
+            case OPTIONS_MUL_DOUBLE:
+            case OPTIONS_MUL_INT:
+                vector_clear(o->po[i].val);
+                break;
+            case OPTIONS_STRING:
+                free(*(char **) o->po[i].val);
+                *(char **) o->po[i].val = NULL;
+                break;
+            default:
+                break;
+        }
+    }
+    
+    vector_clear(&o->unknowns);
+}
+
 int options_parse(struct options *__restrict o,
                   char ** const argv,
                   int argc,
@@ -299,14 +341,14 @@ int options_parse(struct options *__restrict o,
     struct map map;
     struct vector args;
     unsigned int args_size;
-    int i, err;
+    int err;
     
     /* initialize options map */
     err = map_init(&map, &map_conf);
     if (err < 0)
         return err;
     
-    for (i = 0; i < o->po_size; ++i) {
+    for (unsigned int i = 0; i < o->po_size; ++i) {
         if (*o->po[i].cmd_flag_long != '\0') {
             err = map_insert(&map, o->po[i].cmd_flag_long, o->po + i);
             if (err < 0)
@@ -331,7 +373,7 @@ int options_parse(struct options *__restrict o,
     if (err < 0)
         goto cleanup1;
     
-    for (i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
         size_t len = strlen(argv[i]);
         
         if (len > 1 && argv[i][0] == '-' && argv[i][1] != '-') {
@@ -364,7 +406,7 @@ int options_parse(struct options *__restrict o,
     /* actually do the args parsing */
     args_size = vector_size(&args);
     
-    for (i = 0; i < args_size; ++i) {
+    for (unsigned int i = 0; i < args_size; ++i) {
         char *arg = *vector_at(&args, i);
         
         struct program_option *po = map_retrieve(&map, arg);
@@ -409,13 +451,12 @@ void options_help(const struct options *__restrict o,
                   const char *__restrict description,
                   int fd)
 {
-    unsigned int i;
-    int max_s, max_l, max;
+    int max_s = 0, max_l = 0, max;
     
     if (description)
         dprintf(fd, "%s\n", description);
     
-    for (i = 0, max_s = 0, max_l = 0; i < o->po_size; ++i) {
+    for (unsigned int i = 0; i < o->po_size; ++i) {
         int len_s = strlen(o->po[i].cmd_flag_short);
         int len_l = strlen(o->po[i].cmd_flag_long);
         
@@ -428,7 +469,7 @@ void options_help(const struct options *__restrict o,
     
     max = max_s + max_l;
     
-    for (i = 0; i < o->po_size; ++i) {
+    for (unsigned int i = 0; i < o->po_size; ++i) {
         const char *p;
         const char *s = o->po[i].cmd_flag_short;
         const char *l = o->po[i].cmd_flag_long;
@@ -455,26 +496,4 @@ void options_help(const struct options *__restrict o,
             dprintf(fd, "%s\n", d);
         }
     }
-}
-
-void options_destroy(struct options *__restrict o)
-{
-    unsigned int i;
-
-    for (i = 0; i < o->po_size; ++i) {
-        switch (o->po[i].type) {
-        case OPTIONS_MUL_STRING:
-        case OPTIONS_MUL_DOUBLE:
-        case OPTIONS_MUL_INT:
-            vector_destroy(o->po[i].val);
-            break;
-        case OPTIONS_STRING:
-            free(*(char **) o->po[i].val);
-            break;
-        default:
-            break;
-        }
-    }
-    
-    vector_destroy(&o->unknowns);
 }

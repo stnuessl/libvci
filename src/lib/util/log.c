@@ -199,17 +199,17 @@ void log_set_file(struct log *__restrict l, FILE *f)
     l->file = f;
 }
 
-inline int log_fd(const struct log *__restrict l)
+int log_fd(const struct log *__restrict l)
 {
     return fileno(l->file);
 }
 
-inline void log_set_level(struct log *__restrict l, uint8_t level)
+void log_set_level(struct log *__restrict l, uint8_t level)
 {
     l->level = level;
 }
 
-inline int log_level(const struct log *__restrict l)
+int log_level(const struct log *__restrict l)
 {
     return l->level;
 }

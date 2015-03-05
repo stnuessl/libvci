@@ -93,12 +93,12 @@ void buffer_clear_accessed(struct buffer *__restrict buf);
 
 void buffer_clear_unaccessed(struct buffer *__restrict buf);
 
-inline char *buffer_data(struct buffer *__restrict buf);
+char *buffer_data(struct buffer *__restrict buf);
 
-inline size_t buffer_size(const struct buffer *__restrict buf);
+size_t buffer_size(const struct buffer *__restrict buf);
 
-inline bool buffer_empty(const struct buffer *__restrict buf);
+bool buffer_empty(const struct buffer *__restrict buf);
 
-inline char buffer_at(const struct buffer *__restrict buf, int i);
+char buffer_at(const struct buffer *__restrict buf, int i);
 
 #endif /* _BUFFER_H_ */

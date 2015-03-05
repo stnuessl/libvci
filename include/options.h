@@ -58,6 +58,10 @@ int options_init(struct options *__restrict o,
                  struct program_option *po, 
                  unsigned int po_size);
 
+void options_destroy(struct options *__restrict o);
+
+void options_clear(struct options *__restrict o);
+
 int options_parse(struct options *__restrict o,
                   char ** const argv, 
                   int argc,
@@ -69,6 +73,5 @@ void options_help(const struct options *__restrict o,
                   const char *__restrict description,
                   int fd);
 
-void options_destroy(struct options *__restrict o);
 
 #endif /* _OPTIONS_H_ */

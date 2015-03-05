@@ -157,6 +157,9 @@ int main(int argc, char *argv[])
     if (help)
         options_help(&o, "options_test:", STDOUT_FILENO);
     
+    options_clear(&o);
+    assert(options_parse(&o, argv, argc, &err_msg) == 0);
+    options_clear(&o);
     options_destroy(&o);
     clock_destroy(&c);
 

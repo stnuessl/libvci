@@ -53,6 +53,6 @@ void* mempool_alloc_chunk(struct mempool *__restrict pool);
 
 void mempool_free_chunk(struct mempool *__restrict pool, void *chunk);
 
-inline bool mempool_empty(const struct mempool *__restrict pool);
+bool mempool_empty(const struct mempool *__restrict pool);
 
 #endif /* _MEMPOOL_H_ */

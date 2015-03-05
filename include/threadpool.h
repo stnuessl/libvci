@@ -62,7 +62,7 @@ int threadpool_init(struct threadpool *__restrict pool, int threads);
 
 void threadpool_destroy(struct threadpool *__restrict pool);
 
-inline int threadpool_event_fd(const struct threadpool *__restrict pool);
+int threadpool_event_fd(const struct threadpool *__restrict pool);
 
 int threadpool_add_thread(struct threadpool *__restrict pool);
 

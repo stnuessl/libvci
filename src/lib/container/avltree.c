@@ -31,7 +31,7 @@
 
 static inline int _avlnode_get_height(const struct avlnode *__restrict node)
 {
-    return (node) ? node->height : -1;
+    return (node) ? (int) node->height : -1;
 }
 
 static void _avlnode_rotate_left(struct avlnode **node)

@@ -322,7 +322,7 @@ void threadpool_destroy(struct threadpool *__restrict pool)
     pthread_mutex_destroy(&pool->mutex_queue_in);
 }
 
-inline int threadpool_event_fd(const struct threadpool *__restrict pool)
+int threadpool_event_fd(const struct threadpool *__restrict pool)
 {
     return pool->event_fd;
 }

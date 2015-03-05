@@ -190,7 +190,7 @@ void map_destroy(struct map *__restrict map)
 
 void map_clear(struct map *__restrict map)
 {
-    int i;
+    unsigned int i;
     
     map->size = 0;
     
@@ -298,12 +298,12 @@ bool map_contains(const struct map *__restrict map, const void *key)
     return map_lookup(map, key) != NULL;
 }
 
-inline unsigned int map_size(const struct map *__restrict map)
+unsigned int map_size(const struct map *__restrict map)
 {
     return map->size;
 }
 
-inline bool map_empty(const struct map *__restrict map)
+bool map_empty(const struct map *__restrict map)
 {
     return map->size == 0;
 }
@@ -318,12 +318,12 @@ bool map_static_size(const struct map *__restrict map)
     return map->static_size;
 }
 
-inline const void *entry_key(struct entry *__restrict e)
+const void *entry_key(struct entry *__restrict e)
 {
     return e->key;
 }
 
-inline void *entry_data(struct entry *__restrict e)
+void *entry_data(struct entry *__restrict e)
 {
     return e->data;
 }
