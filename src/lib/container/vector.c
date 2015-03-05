@@ -96,16 +96,18 @@ void vector_clear(struct vector *__restrict vec)
         return;
     }
     
-    while(vec->size--)
-        vec->data_delete(vec->data[vec->size]);
+    for (unsigned int i = 0; i < vec->size; ++i)
+        vec->data_delete(vec->data[i]);
+    
+    vec->size = 0;
 }
 
-inline unsigned int vector_size(const struct vector *__restrict vec)
+unsigned int vector_size(const struct vector *__restrict vec)
 {
     return vec->size;
 }
 
-inline bool vector_empty(const struct vector *__restrict vec)
+bool vector_empty(const struct vector *__restrict vec)
 {
     return vec->size == 0;
 }
@@ -132,7 +134,7 @@ int vector_set_capacity(struct vector *__restrict vec, unsigned int capacity)
     return 0;
 }
 
-inline unsigned int vector_capacity(const struct vector *__restrict vec)
+unsigned int vector_capacity(const struct vector *__restrict vec)
 {
     return vec->capacity;
 }

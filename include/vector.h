@@ -48,13 +48,13 @@ void vector_destroy(struct vector *__restrict vec);
 
 void vector_clear(struct vector *__restrict vec);
 
-inline unsigned int vector_size(const struct vector *__restrict vec);
+unsigned int vector_size(const struct vector *__restrict vec);
 
-inline bool vector_empty(const struct vector *__restrict vec);
+bool vector_empty(const struct vector *__restrict vec);
 
 int vector_set_capacity(struct vector *__restrict vec, unsigned int capacity);
 
-inline unsigned int vector_capacity(const struct vector *__restrict vec);
+unsigned int vector_capacity(const struct vector *__restrict vec);
 
 int vector_squeeze(struct vector *__restrict vec);
 
