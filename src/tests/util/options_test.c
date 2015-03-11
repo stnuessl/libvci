@@ -55,15 +55,15 @@ bool bool_val = false;
 bool help = false;
 
 struct program_option po[] = {
-    { "strings",        "s", OPTIONS_MUL_STRING, &strings,    DESC_STRINGS    },
-    { "doubles",        "d", OPTIONS_MUL_DOUBLE, &doubles,    DESC_DOUBLES    },
-    { "ints",           "i", OPTIONS_MUL_INT,    &ints,       DESC_INTS       },
-    { "string",         "S", OPTIONS_STRING,     &string,     DESC_STRING     },
-    { "double-val",     "D", OPTIONS_DOUBLE,     &double_val, DESC_DOUBLE     },
-    { "int-val",        "I", OPTIONS_INT,        &int_val,    DESC_INT        },
-    { "bool-val",       "B", OPTIONS_BOOL,       &bool_val,   DESC_BOOL       },
-    { "help",           "" , OPTIONS_BOOL,       &help,       DESC_HELP       },
-    { "",               "h", OPTIONS_BOOL,       &help,       DESC            },
+    { "strings",    "s", PO_STRING_VEC, &strings,    DESC_STRINGS    },
+    { "doubles",    "d", PO_DOUBLE_VEC, &doubles,    DESC_DOUBLES    },
+    { "ints",       "i", PO_INT_VEC,    &ints,       DESC_INTS       },
+    { "string",     "S", PO_STRING,     &string,     DESC_STRING     },
+    { "double-val", "D", PO_DOUBLE,     &double_val, DESC_DOUBLE     },
+    { "int-val",    "I", PO_INT,        &int_val,    DESC_INT        },
+    { "bool-val",   "B", PO_BOOL,       &bool_val,   DESC_BOOL       },
+    { "help",       "" , PO_BOOL,       &help,       DESC_HELP       },
+    { "",           "h", PO_BOOL,       &help,       DESC            },
 };
 
 char *argv_test[] = {
@@ -82,7 +82,7 @@ struct options o;
 static void vector_print(struct vector *__restrict vec)
 {
     void **data, **end;
-    struct vector *u = options_unknowns(&o);
+    struct vector *u = options_invalid_args(&o);
     
     fprintf(stdout, "[ ");
     
@@ -150,8 +150,8 @@ int main(int argc, char *argv[])
     fprintf(stdout, "string: %s\n", string);
     fprintf(stdout, "bool: %s\n", (bool_val) ? "true" : "false");
     
-    fprintf(stdout, "No valid options: ");
-    vector_print(options_unknowns(&o));
+    fprintf(stdout, "Invalid options: ");
+    vector_print(options_invalid_args(&o));
     fprintf(stdout, "\n");
     
     if (help)

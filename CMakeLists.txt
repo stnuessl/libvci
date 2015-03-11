@@ -24,6 +24,7 @@ set(HEADER
     include/compare.h
     include/config.h
     include/error.h
+    include/filesystem.h
     include/hash.h
     include/heap.h
     include/map.h
@@ -56,6 +57,7 @@ set(SOURCE
     src/lib/util/config.c
     src/lib/util/config_parser.c
     src/lib/util/error.c
+    src/lib/util/filesystem.c
     src/lib/util/hash.c
     src/lib/util/log.c
     src/lib/util/mempool.c

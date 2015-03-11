@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "filesystem.h"
 
 static int remove_dir_entries(const char *__restrict path)
 {

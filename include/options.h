@@ -31,13 +31,13 @@
 #include "vector.h"
 
 enum value_type {
-    OPTIONS_BOOL,
-    OPTIONS_STRING,
-    OPTIONS_MUL_STRING,
-    OPTIONS_INT,
-    OPTIONS_MUL_INT,
-    OPTIONS_DOUBLE,
-    OPTIONS_MUL_DOUBLE,
+    PO_BOOL,
+    PO_STRING,
+    PO_STRING_VEC,
+    PO_INT,
+    PO_INT_VEC,
+    PO_DOUBLE,
+    PO_DOUBLE_VEC,
 };
 
 struct program_option {
@@ -51,7 +51,7 @@ struct program_option {
 struct options {
     struct program_option *po;
     unsigned int po_size;
-    struct vector unknowns;
+    struct vector invalid_options;
 };
 
 int options_init(struct options *__restrict o, 
@@ -67,7 +67,7 @@ int options_parse(struct options *__restrict o,
                   int argc,
                   char **err_msg);
 
-struct vector *options_unknowns(struct options *__restrict o);
+struct vector *options_invalid_args(struct options *__restrict o);
 
 void options_help(const struct options *__restrict o,
                   const char *__restrict description,
