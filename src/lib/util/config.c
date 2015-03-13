@@ -40,7 +40,7 @@
 #include "config_parser.h"
 #include "filesystem.h"
 
-struct config *config_new(char *__restrict path,
+struct config *config_new(const char *__restrict path,
                           const char *__restrict conf_txt)
 {
     struct config *config;
@@ -66,7 +66,7 @@ void config_delete(struct config *__restrict config)
 }
 
 int config_init(struct config *__restrict config, 
-                char *__restrict path,
+                const char *__restrict path,
                 const char *__restrict conf_txt)
 {
     const struct map_config map_conf = {
@@ -80,31 +80,33 @@ int config_init(struct config *__restrict config,
     struct stat st;
     int fd, err;
     
-    err = stat(path, &st);
+    config->path = strdup(path);
+    if(!config->path) 
+        return -errno;
+    
+    err = stat(config->path, &st);
     if (err < 0) {
-        if (errno != ENOENT)
-            return -errno;
+        if (errno != ENOENT) {
+            err = -errno;
+            goto cleanup1;
+        }
         
-        err = path_create(path, 0755);
+        err = path_create(config->path, 0755);
         if (err < 0)
-            return err;
+            goto cleanup1;
         
-        fd = open(path, O_WRONLY | O_CREAT | O_EXCL, 0644);
+        fd = open(config->path, O_WRONLY | O_CREAT | O_EXCL, 0644);
         if (fd < 0) {
-            if (errno != EEXIST)
-                return -errno;
+            if (errno != EEXIST) {
+                err = -errno;
+                goto cleanup1;
+            }
         }
         
         if (conf_txt)
             write(fd, conf_txt, strlen(conf_txt));
         
         close(fd);
-    }
-    
-    config->path = strdup(path);
-    if(!config->path) {
-        err = -errno;
-        goto out;
     }
     
     err = map_init(&config->key_map, &map_conf);
@@ -123,7 +125,7 @@ cleanup2:
     map_destroy(&config->key_map);
 cleanup1:
     free(config->path);
-out:    
+    
     return err;
 }
 

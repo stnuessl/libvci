@@ -43,13 +43,13 @@ struct config {
     char *mem;
 };
 
-struct config *config_new(char *__restrict path,
+struct config *config_new(const char *__restrict path,
                           const char *__restrict conf_txt);
 
 void config_delete(struct config *__restrict config);
 
 int config_init(struct config *__restrict config, 
-                char *__restrict path,
+                const char *__restrict path,
                 const char *__restrict conf_txt);
 
 void config_destroy(struct config *__restrict config);
