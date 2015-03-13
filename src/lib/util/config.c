@@ -25,6 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "map.h"
 #include "hash.h"
@@ -34,8 +38,10 @@
 #include "macro.h"
 #include "config.h"
 #include "config_parser.h"
+#include "filesystem.h"
 
-struct config *config_new(const char *__restrict path)
+struct config *config_new(char *__restrict path,
+                          const char *__restrict conf_txt)
 {
     struct config *config;
     int err;
@@ -44,7 +50,7 @@ struct config *config_new(const char *__restrict path)
     if(!config)
         return NULL;
     
-    err = config_init(config, path);
+    err = config_init(config, path, conf_txt);
     if(err < 0) {
         free(config);
         return NULL;
@@ -59,7 +65,9 @@ void config_delete(struct config *__restrict config)
     free(config);
 }
 
-int config_init(struct config *__restrict config, const char *__restrict path)
+int config_init(struct config *__restrict config, 
+                char *__restrict path,
+                const char *__restrict conf_txt)
 {
     const struct map_config map_conf = {
         .size           = MAP_DEFAULT_SIZE,
@@ -69,7 +77,29 @@ int config_init(struct config *__restrict config, const char *__restrict path)
         .key_compare    = &compare_string,
         .key_hash       = &hash_string,
     };
-    int err;
+    struct stat st;
+    int fd, err;
+    
+    err = stat(path, &st);
+    if (err < 0) {
+        if (errno != ENOENT)
+            return -errno;
+        
+        err = path_create(path, 0755);
+        if (err < 0)
+            return err;
+        
+        fd = open(path, O_WRONLY | O_CREAT | O_EXCL, 0644);
+        if (fd < 0) {
+            if (errno != EEXIST)
+                return -errno;
+        }
+        
+        if (conf_txt)
+            write(fd, conf_txt, strlen(conf_txt));
+        
+        close(fd);
+    }
     
     config->path = strdup(path);
     if(!config->path) {

@@ -51,6 +51,28 @@ static struct config_handle handles[] = {
     { &print_key_value_pair,    "Age",       NULL }
 };
 
+static const char conf_txt[] = {
+    "#\n"
+    "# Example config file which can by accessed\n"
+    "# via the config API calls of the vci library.\n"
+    "# Keys and values must beginn with a letter or a digit.\n"
+    "#\n"
+    "\n"
+    "#\n"
+    "# the parser ignores lines beginning with a '#'\n"
+    "#\n"
+    ";\n"
+    "; same goes for lines with a ';'\n"
+    ";\n"
+    "\n"
+    "Year   = 2013\n"
+    "Month  = September\n"
+    "Day    = Wednesday\n"
+    "\n"
+    "Name = Doge\n"
+    "Age  = 1\n"
+};
+
 void *run(void *__restrict path)
 {
     struct config *config;
@@ -59,7 +81,7 @@ void *run(void *__restrict path)
     char *v;
     int i, err;
     
-    config = config_new(path);
+    config = config_new(path, conf_txt);
     assert(config);
     
     for(i = 0; i < ARRAY_SIZE(handles); ++i) {
@@ -101,29 +123,53 @@ void *run(void *__restrict path)
 
 int main(int argc, char *argv[])
 {
-    pthread_t *threads;
+    struct config *config;
+    struct entry *e;
+    const char *k;
+    char *v;
     int i, err;
-
+    
     if(argc < 2) {
-        fprintf(stderr, 
-                "Usage: %s <config01> <config02> <...>\n"
-                "Example: %s config01.txt config02.txt\n",
-                argv[0], argv[0]);
+        fprintf(stderr, "Usage: %s <path where to dump config>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
     
-    threads = calloc(argc - 1, sizeof(*threads));
-    assert(threads);
+    config = config_new(argv[1], conf_txt);
+    assert(config);
     
-    for(i = 1; i < argc; ++i) {
-        err = pthread_create(threads + i - 1, NULL, &run, argv[i]);
+    for(i = 0; i < ARRAY_SIZE(handles); ++i) {
+        err = config_insert_handle(config, handles + i);
         assert(err == 0);
     }
     
-    for(i = 1; i < argc; ++i)
-        pthread_join(threads[i - 1], NULL);
+    fprintf(stdout, "starting parsing...\n");
+    /* multiple parser runs shouldn't have an effect on ressource allocations */
+    err = config_parse(config);
+    assert(err == 0);
     
-    free(threads);
+    fprintf(stdout, "finished parsing...\n");
+    
+    for(i = 0; i < ARRAY_SIZE(handles); ++i)
+        assert(config_take_handle(config, handles + i) == (handles + i));
+    
+    err = config_parse(config);
+    assert(err == 0);
+    
+    PRINT_CONFIG(config, "Year");
+    PRINT_CONFIG(config, "Month");
+    PRINT_CONFIG(config, "Day");
+    
+    PRINT_CONFIG(config, "Name");
+    PRINT_CONFIG(config, "Age");
+    
+    config_for_each(config, e) {
+        k = entry_key(e);
+        v = entry_data(e);
+        
+        fprintf(stdout, "%s -> %s\n", k, v);
+    }
+    
+    config_delete(config);
     
     return EXIT_SUCCESS;
 }
