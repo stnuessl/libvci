@@ -51,7 +51,7 @@ static struct config_handle handles[] = {
     { &print_key_value_pair,    "Age",       NULL }
 };
 
-static const char conf_txt[] = {
+static char conf_txt[] = {
     "#\n"
     "# Example config file which can by accessed\n"
     "# via the config API calls of the vci library.\n"
@@ -73,52 +73,9 @@ static const char conf_txt[] = {
     "Age  = 1\n"
 };
 
-void *run(void *__restrict path)
+static void text_init(int fd, void *arg)
 {
-    struct config *config;
-    struct entry *e;
-    const char *k;
-    char *v;
-    int i, err;
-    
-    config = config_new(path, conf_txt);
-    assert(config);
-    
-    for(i = 0; i < ARRAY_SIZE(handles); ++i) {
-        err = config_insert_handle(config, handles + i);
-        assert(err == 0);
-    }
-    
-    fprintf(stdout, "starting parsing...\n");
-    /* multiple parser runs shouldn't have an effect on ressource allocations */
-    err = config_parse(config);
-    assert(err == 0);
-    
-    fprintf(stdout, "finished parsing...\n");
-    
-    for(i = 0; i < ARRAY_SIZE(handles); ++i)
-        assert(config_take_handle(config, handles + i) == (handles + i));
-    
-    err = config_parse(config);
-    assert(err == 0);
-    
-    PRINT_CONFIG(config, "Year");
-    PRINT_CONFIG(config, "Month");
-    PRINT_CONFIG(config, "Day");
-    
-    PRINT_CONFIG(config, "Name");
-    PRINT_CONFIG(config, "Age");
-    
-    config_for_each(config, e) {
-        k = entry_key(e);
-        v = entry_data(e);
-    
-        fprintf(stdout, "%s -> %s\n", k, v);
-    }
-    
-    config_delete(config);
-    
-    return NULL;
+    dprintf(fd, "%s\n", (char *) arg);
 }
 
 int main(int argc, char *argv[])
@@ -134,7 +91,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     
-    config = config_new(argv[1], conf_txt);
+    config = config_new(argv[1], &text_init, conf_txt);
     assert(config);
     
     for(i = 0; i < ARRAY_SIZE(handles); ++i) {

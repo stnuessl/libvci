@@ -41,7 +41,8 @@
 #include "filesystem.h"
 
 struct config *config_new(const char *__restrict path,
-                          const char *__restrict conf_txt)
+                          void (*text_init)(int, void *),
+                          void *arg)
 {
     struct config *config;
     int err;
@@ -50,7 +51,7 @@ struct config *config_new(const char *__restrict path,
     if(!config)
         return NULL;
     
-    err = config_init(config, path, conf_txt);
+    err = config_init(config, path, text_init, arg);
     if(err < 0) {
         free(config);
         return NULL;
@@ -67,7 +68,8 @@ void config_delete(struct config *__restrict config)
 
 int config_init(struct config *__restrict config, 
                 const char *__restrict path,
-                const char *__restrict conf_txt)
+                void (*text_init)(int, void *),
+                void *arg)
 {
     const struct map_config map_conf = {
         .size           = MAP_DEFAULT_SIZE,
@@ -103,8 +105,8 @@ int config_init(struct config *__restrict config,
             }
         }
         
-        if (conf_txt)
-            write(fd, conf_txt, strlen(conf_txt));
+        if (text_init)
+            text_init(fd, arg);
         
         close(fd);
     }

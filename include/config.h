@@ -44,13 +44,15 @@ struct config {
 };
 
 struct config *config_new(const char *__restrict path,
-                          const char *__restrict conf_txt);
+                          void (*text_init)(int, void *),
+                          void *arg);
 
 void config_delete(struct config *__restrict config);
 
 int config_init(struct config *__restrict config, 
                 const char *__restrict path,
-                const char *__restrict conf_txt);
+                void (*text_init)(int, void *),
+                void *arg);
 
 void config_destroy(struct config *__restrict config);
 
