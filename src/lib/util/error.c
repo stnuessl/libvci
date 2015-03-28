@@ -22,11 +22,12 @@
  * SOFTWARE.
  */
 
+#include <stdlib.h>
 #include <string.h>
 
 const char *strerr(int err)
 {
     static __thread char s[64];
     
-    return strerror_r(err, s, sizeof(s));
+    return strerror_r(abs(err), s, sizeof(s));
 }
