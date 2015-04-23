@@ -35,6 +35,8 @@
 #include "clock.h"
 #include "log.h"
 
+#define BUFFER_SIZE 1024
+
 static const char *log_level_string(int severity)
 {
     static const char *strings[] = {
@@ -306,22 +308,25 @@ void log_clear(struct log *__restrict l)
 
 void log_print(struct log *__restrict l, int fd)
 {
-    char *line;
-    size_t size;
+    static __thread char buf[BUFFER_SIZE];
     ssize_t n; 
-    
-    line = NULL;
-    size = 0;
     
     rewind(l->file);
     
     while(1) {
-        n = getline(&line, &size, l->file);
-        if(n < 0)
+        n = read(fileno(l->file), buf, BUFFER_SIZE);
+        if (n < 0) {
+            if (errno == EINTR)
+                continue;
+            else
+                return;
+        } 
+        
+        if (n == 0)
             break;
         
-        dprintf(fd, "%s", line);
+        do {
+            n = write(fd, buf, BUFFER_SIZE);
+        } while (n < 0 && errno == EINTR);
     }
-    
-    free(line);
 }

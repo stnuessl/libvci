@@ -26,12 +26,10 @@
 
 #include <libvci/log.h>
 
-
 int main(int argc, char *argv[])
 {
     struct log *l;
-    
-    /* open dummy */
+
     l = log_new("/tmp/log_test.txt", LOG_ALL);
 
     assert(l);
@@ -49,7 +47,7 @@ int main(int argc, char *argv[])
     log_error(l, "module-1","error message\n");
 
     log_printf(l, LOG_WARNING, "module-3", "more warnings - ");
-    log_append(l, "%s\n", "this string is appended");
+    log_append(l, "%s\n", "\"this string is appended\"");
     
     fprintf(stdout, "log_print():\n");
     log_print(l, STDOUT_FILENO);
