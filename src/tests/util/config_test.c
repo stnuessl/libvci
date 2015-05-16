@@ -40,6 +40,8 @@
     
 static void print_key_value_pair(const char *key, const char *val, void *arg)
 {
+    (void) arg;
+    
     fprintf(stdout, " %6s -> %s\n", key, val);
 }
 
@@ -84,7 +86,7 @@ int main(int argc, char *argv[])
     struct entry *e;
     const char *k;
     char *v;
-    int i, err;
+    int err;
     
     if(argc < 2) {
         fprintf(stderr, "Usage: %s <path where to dump config>\n", argv[0]);
@@ -94,7 +96,7 @@ int main(int argc, char *argv[])
     config = config_new(argv[1], &text_init, conf_txt);
     assert(config);
     
-    for(i = 0; i < ARRAY_SIZE(handles); ++i) {
+    for(unsigned int i = 0; i < ARRAY_SIZE(handles); ++i) {
         err = config_insert_handle(config, handles + i);
         assert(err == 0);
     }
@@ -106,7 +108,7 @@ int main(int argc, char *argv[])
     
     fprintf(stdout, "finished parsing...\n");
     
-    for(i = 0; i < ARRAY_SIZE(handles); ++i)
+    for(unsigned int i = 0; i < ARRAY_SIZE(handles); ++i)
         assert(config_take_handle(config, handles + i) == (handles + i));
     
     err = config_parse(config);

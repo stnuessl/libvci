@@ -45,64 +45,45 @@
 #define DESC_HELP    "Print this help message."
 
 
-struct vector strings;
-struct vector doubles;
-struct vector ints;
-char *string;
-double double_val = 0.0;
-int int_val = 0;
-bool bool_val = false;
-bool help = false;
 
 struct program_option po[] = {
-    { "strings",    "s", PO_STRING_VEC, &strings,    DESC_STRINGS    },
-    { "doubles",    "d", PO_DOUBLE_VEC, &doubles,    DESC_DOUBLES    },
-    { "ints",       "i", PO_INT_VEC,    &ints,       DESC_INTS       },
-    { "string",     "S", PO_STRING,     &string,     DESC_STRING     },
-    { "double-val", "D", PO_DOUBLE,     &double_val, DESC_DOUBLE     },
-    { "int-val",    "I", PO_INT,        &int_val,    DESC_INT        },
-    { "bool-val",   "B", PO_BOOL,       &bool_val,   DESC_BOOL       },
-    { "help",       "" , PO_BOOL,       &help,       DESC_HELP       },
-    { "",           "h", PO_BOOL,       &help,       DESC            },
+    PROGRAM_OPTION_INIT("--opt1", "-1", 2),
+    PROGRAM_OPTION_INIT("--opt2", "-2", 0),
+    PROGRAM_OPTION_INIT("--opt3", "-3", 1),
+    PROGRAM_OPTION_INIT("--opt4", "-4", -1),
 };
 
+/* Make an easy mapping to the options */
+struct program_option *opt1 = po + 0;
+struct program_option *opt2 = po + 1;
+struct program_option *opt3 = po + 2;
+struct program_option *opt4 = po + 3;
+
+
 char *argv_test[] = {
-    "-s",               "file1",        "file2",        "file3",
-    "--double-val",     "3.14159265",
-    "-i",               "1",            "2",            "3",            "4",
-    "-Bd",              "3.14159265",   "2.71828182846",
-    "-I",               "631",
-    "-S",               "Hello World!"
+    "options_test",
+    "-1234",   "arg11", "arg12", "arg31", "arg41", "arg42", "arg43", "arg44",
 };
 
 int argc_test = ARRAY_SIZE(argv_test);
 
-struct options o;
 
-static void vector_print(struct vector *__restrict vec)
+void print_opt(struct program_option *__restrict po)
 {
-    void **data, **end;
-    struct vector *u = options_invalid_args(&o);
     
-    fprintf(stdout, "[ ");
-    
-    end = vector_back(vec);
-    
-    vector_for_each(vec, data) {
-        if (vec == &strings || vec == u)
-            fprintf(stdout, "%s", * (char **) data);
-        else if (vec == &doubles)
-            fprintf(stdout, "%lf", **(double **) data);
-        else if (vec == &ints)
-            fprintf(stdout, "%i", **(int **) data);
-        else
-            return;
+    if (po->argc <= 0) {
+        const char *passed = (po->passed) ? "passed with no arguments" : "";
         
-        if (data != end)
-            fprintf(stdout, ", ");
+        fprintf(stdout, "%s: { %s }\n", po->cmd_flag_long, passed);
+    } else {
+        fprintf(stdout, "%s: { ", po->cmd_flag_long);
+        
+        for (int i = 0; i < po->argc - 1; ++i) {
+            fprintf(stdout, "%s, ", po->argv[i]);
+        }
+        
+        fprintf(stdout, "%s }\n", po->argv[po->argc - 1]);
     }
-    
-    fprintf(stdout, " ]\n");
 }
 
 int main(int argc, char *argv[])
@@ -119,19 +100,13 @@ int main(int argc, char *argv[])
     assert(clock_init(&c, CLOCK_PROCESS_CPUTIME_ID) == 0 && "clock_init");
     
     clock_start(&c);
-    
-    err = options_init(&o, po, ARRAY_SIZE(po));
-    if (err < 0) {
-        fprintf(stderr, "options_init() failed - %s\n", strerr(-err));
-        exit(EXIT_FAILURE);
-    }
-    
-    err = options_parse(&o, argv, argc, &err_msg);
+        
+    err = options_parse(po, ARRAY_SIZE(po), argv + 1, argc - 1, &err_msg);
     if (err < 0) {
         if (!err_msg) {
-            fprintf(stderr, "options_init() failed: %s\n", strerr(-err));
+            fprintf(stderr, "options_parse() failed: %s\n", strerr(-err));
         } else {
-            fprintf(stderr, "options_init() failed: %s\n", err_msg);
+            fprintf(stderr, "options_parse() failed: %s\n", err_msg);
             free(err_msg);
         }
         
@@ -141,26 +116,11 @@ int main(int argc, char *argv[])
     clock_stop(&c);
     fprintf(stdout, "Elapsed time for parsing: %lu us\n", clock_elapsed_us(&c));
     
-    vector_print(&strings);
-    vector_print(&doubles);
-    vector_print(&ints);
-    
-    fprintf(stdout, "double: %lf\n", double_val);
-    fprintf(stdout, "int: %i\n", int_val);
-    fprintf(stdout, "string: %s\n", string);
-    fprintf(stdout, "bool: %s\n", (bool_val) ? "true" : "false");
-    
-    fprintf(stdout, "Invalid options: ");
-    vector_print(options_invalid_args(&o));
-    fprintf(stdout, "\n");
-    
-    if (help)
-        options_help(&o, "options_test:", STDOUT_FILENO);
-    
-    options_clear(&o);
-    assert(options_parse(&o, argv, argc, &err_msg) == 0);
-    options_clear(&o);
-    options_destroy(&o);
+    print_opt(opt1);
+    print_opt(opt2);
+    print_opt(opt3);
+    print_opt(opt4);
+   
     clock_destroy(&c);
 
     return EXIT_SUCCESS;

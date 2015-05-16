@@ -28,6 +28,9 @@
 
 int main(int argc, char *argv[])
 {
+    (void) argc;
+    (void) argv;
+    
     struct log *l;
 
     l = log_new("/tmp/log_test.txt", LOG_ALL);

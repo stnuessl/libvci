@@ -35,10 +35,8 @@
 #include <libvci/hash.h>
 #include <libvci/compare.h>
 
-int compare_int(const void *a, const void *b)
-{
-    return a - b;
-}
+#include <libvci/compare.h>
+
 
 void test_seeding(unsigned int num)
 {
@@ -168,7 +166,7 @@ void test_range(unsigned int num)
     
     for(i = 0; i < num; ++i) {
         n = random_uint_range(rand, 0, 100);
-        assert(n >= 0 && n <= 100);
+        assert(n <= 100);
         
         n = random_uint_range(rand, 1000, 10000);
         assert(n >= 1000 && n <= 10000);

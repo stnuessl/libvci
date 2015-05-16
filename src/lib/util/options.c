@@ -36,293 +36,95 @@
 
 #include "options.h"
 
-
-static int string_to_integer(const char *__restrict s, int *__restrict ret)
+static int error_unknown_option(const char *__restrict o, char **msg)
 {
-    char *end;
+    if (msg)
+        asprintf(msg, "unknown option \"%s\"", o);
     
-    errno = 0;
-    *ret = (int) strtol(s, &end, 10);
-    
-    if (errno != 0)
-        return -errno;
-    
-    if (*end != '\0')
-        return -EINVAL;
-    
-    return 0;
+    return -EINVAL;
 }
 
-static int string_to_double(const char *__restrict s, double *__restrict ret)
+static int error_missing_arguments(const char *__restrict o, int n, char **msg)
 {
-    char *end;
+    if (msg)
+        asprintf(msg, "option \"%s\" expects %d more argument(s)", o, n);
     
-    errno = 0;
-    *ret = strtod(s, &end);
-    
-    if (errno != 0)
-        return -errno;
-    
-    if (*end != '\0')
-        return -EINVAL;
-    
-    return 0;
+    return -ENODATA;
 }
 
-static int assign_value(struct program_option *__restrict po, 
-                        const char *__restrict val)
+static int error_dupped_option(const char *__restrict o, char **msg)
 {
-    double *d;
-    char *c;
-    int *i, err;
+    if (msg)
+        asprintf(msg, "option \"%s\" got passed twice", o);
     
-    switch (po->type) {
-    case PO_DOUBLE:
-        err = string_to_double(val, po->val);
-        if (err < 0)
-            return err;
+    return -ENOTSUP;
+}
+
+static int handle_argument(const char *__restrict arg, 
+                           struct map *__restrict map,
+                           int *__restrict i,
+                           char ** const argv,
+                           int argc,
+                           char **err_msg)
+{
+    struct program_option *po = map_retrieve(map, arg);
+    int j = *i + 1;
+    
+    if (!po)
+        return error_unknown_option(arg, err_msg);
+    
+    if (po->passed)
+        return error_dupped_option(arg, err_msg);
+    
+    po->passed = true;
+    
+    if (po->accepts < 0) {
+        while (j < argc && argv[j][0] != '-')
+            ++j;
         
-        break;
-    case PO_INT:
-        err = string_to_integer(val, po->val);
-        if (err < 0)
-            return err;
+        --j;
         
-        break;
-    case PO_STRING:
-        *(char **) po->val = strdup(val);
-        if (!*(char **) po->val)
-            return -errno;
+        po->argc = j - *i;
         
-        break;
-    case PO_DOUBLE_VEC:
-        d = malloc(sizeof(*d));
-        if (!d)
-            return -errno;
+        if (po->argc == 0)
+            return error_missing_arguments(arg, 1, err_msg);
         
-        err = string_to_double(val, d);
-        if (err < 0) {
-            free(d);
-            return err;
-        }
+        po->argv = (const char **) argv + *i + 1;
+        
+        *i = j;
+    } else if (po->accepts > 0) {
+        while(j < argc && argv[j][0] != '-' && j - *i - 1 < po->accepts)
+            ++j;
+        
+        --j;
+        
+        po->argc = j - *i;
+        
+        if (po->argc != po->accepts) {
+            int missing = po->accepts - po->argc;
             
-        err = vector_insert_back(po->val, d);
-        if (err < 0) {
-            free(d);
-            return err;
-        }
-        break;
-    case PO_INT_VEC:
-        i = malloc(sizeof(*i));
-        if (!i)
-            return -errno;
-        
-        err = string_to_integer(val, i);
-        if (err < 0) {
-            free(i);
-            return err;
+            return error_missing_arguments(arg, missing, err_msg);
         }
         
-        err = vector_insert_back(po->val, i);
-        if (err < 0) {
-            free(i);
-            return err;
-        }
+        po->argv = (const char **) argv + *i + 1;
         
-        break;
-    case PO_STRING_VEC:
-        c = strdup(val);
-        if (!c)
-            return -errno;
-        
-        err = vector_insert_back(po->val, c);
-        if (err < 0) {
-            free(c);
-            return err;
-        }
-        break;
-    default:
-        return -EINVAL;
+        *i = j;
+    } else {
+        po->argv = NULL;
+        po->argc = 0;
     }
     
     return 0;
 }
 
-static int option_parse(struct program_option *__restrict po,
-                        unsigned int *i,
-                        const struct map *__restrict map,
-                        struct vector *__restrict args,
-                        char **e_msg)
-{
-    unsigned int j, args_size = vector_size(args);
-    int err;
-
-    /* get length of possible arguments */
-    for (j = *i + 1; j < args_size; ++j) {
-        if (map_contains(map, *vector_at(args, j)))
-            break;
-    }
-    
-    /* 'j' describes the last valid index of a possible argument */
-    j -= 1;
-    
-    switch (po->type) {
-    case PO_BOOL:
-        if (j - *i > 0) {
-            if (e_msg) {
-                asprintf(e_msg, "option \"%s\" expects no argument:"
-                                "%d provided\n", po->cmd_flag_long, j - *i);
-            }
-            return -EINVAL;
-        }
-        *(bool *) po->val = true;
-        break;
-    case PO_STRING_VEC:
-    case PO_INT_VEC:
-    case PO_DOUBLE_VEC:
-
-        /* add possible arguments to the vector */
-        for (*i += 1; *i <= j; ++(*i)) {
-            err = assign_value(po, *vector_at(args, *i));
-            if (err < 0)
-                return err;
-        }
-        
-        *i -= 1;
-        break;
-    case PO_STRING:
-    case PO_DOUBLE:
-    case PO_INT:
-        if (j - *i != 1) {
-            if (e_msg) {
-                asprintf(e_msg, "option \"%s\" expects exactly one argument - "
-                              "%d provided.", po->cmd_flag_long, j - *i);
-            }
-
-            return -EINVAL;
-        }
-        
-        *i += 1;
-        
-        err = assign_value(po, *vector_at(args, *i));
-        if (err < 0)
-            return err;
-        
-        break;
-    default:
-        return -EINVAL;
-    }
-    
-    return 0;
-}
-
-int options_init(struct options *__restrict o, 
-                 struct program_option *po, 
-                 unsigned int po_size)
-{
-    unsigned int i;
-    int err;
-    
-    err = vector_init(&o->invalid_options, 16);
-    if (err < 0)
-        return err;
-    
-    vector_set_data_delete(&o->invalid_options, &free);
-
-    for (i = 0; i < po_size; ++i) {
-        /*
-         * Only the vectors and strings get initialized; it is easy to set
-         * default values for the other data types
-         */
-        switch (po[i].type) {
-        case PO_STRING_VEC:
-        case PO_DOUBLE_VEC:
-        case PO_INT_VEC:
-            err = vector_init(po[i].val, 0);
-            if (err < 0)
-                goto cleanup1;
-            
-            vector_set_data_delete(po[i].val, &free);
-            break;
-        case PO_STRING:
-            *(char **) po[i].val = NULL;
-            break;
-        default:
-            break;
-        }
-    }
-    
-    o->po      = po;
-    o->po_size = po_size;
-    
-    return 0;
-    
-cleanup1:
-    while(i--) {
-        switch (po[i].type) {
-        case PO_STRING_VEC:
-        case PO_DOUBLE_VEC:
-        case PO_INT_VEC:
-            vector_destroy(po[i].val);
-            break;
-        default:
-            break;
-        }
-    }
-
-    vector_destroy(&o->invalid_options);
-    
-    return err;
-}
-
-void options_destroy(struct options *__restrict o)
-{
-    for (unsigned int i = 0; i < o->po_size; ++i) {
-        switch (o->po[i].type) {
-        case PO_STRING_VEC:
-        case PO_DOUBLE_VEC:
-        case PO_INT_VEC:
-            vector_destroy(o->po[i].val);
-            break;
-        case PO_STRING:
-            free(*(char **) o->po[i].val);
-            break;
-        default:
-            break;
-        }
-    }
-
-    vector_destroy(&o->invalid_options);
-}
-
-void options_clear(struct options *__restrict o)
-{
-     for (unsigned int i = 0; i < o->po_size; ++i) {
-        switch (o->po[i].type) {
-        case PO_STRING_VEC:
-        case PO_DOUBLE_VEC:
-        case PO_INT_VEC:
-            vector_clear(o->po[i].val);
-            break;
-        case PO_STRING:
-            free(*(char **) o->po[i].val);
-            *(char **) o->po[i].val = NULL;
-            break;
-        default:
-            break;
-        }
-    }
-    
-    vector_clear(&o->invalid_options);
-}
-
-int options_parse(struct options *__restrict o,
-                  char ** const argv,
-                  int argc,
+int options_parse(struct program_option *__restrict po, 
+                  unsigned int size,
+                  char ** const argv, 
+                  int argc, 
                   char **err_msg)
 {
     const struct map_config map_conf = {
-        .size           = o->po_size << 1,
+        .size           = size << 1,
         .lower_bound    = MAP_DEFAULT_LOWER_BOUND,
         .upper_bound    = MAP_DEFAULT_UPPER_BOUND,
         .static_size    = false,
@@ -331,8 +133,6 @@ int options_parse(struct options *__restrict o,
         .data_delete    = NULL,
     };
     struct map map;
-    struct vector args;
-    unsigned int args_size;
     int err;
     
     /* initialize options map */
@@ -340,152 +140,48 @@ int options_parse(struct options *__restrict o,
     if (err < 0)
         return err;
     
-    for (unsigned int i = 0; i < o->po_size; ++i) {
-        if (*o->po[i].cmd_flag_long != '\0') {
-            err = map_insert(&map, o->po[i].cmd_flag_long, o->po + i);
+    for (unsigned int i = 0; i < size; ++i) {
+        po[i].passed = false;
+        
+        if (*po[i].cmd_flag_long != '\0') {
+            err = map_insert(&map, po[i].cmd_flag_long, po + i);
             if (err < 0)
                 goto cleanup1;
         }
         
-        if (*o->po[i].cmd_flag_short != '\0') {
-            err = map_insert(&map, o->po[i].cmd_flag_short, o->po + i);
+        if (*po[i].cmd_flag_short != '\0') {
+            err = map_insert(&map, po[i].cmd_flag_short, po + i);
             if (err < 0)
                 goto cleanup1;
         }
     }
-    
-    /* 
-     * Initialize 'args' which contains all elements of 'argv',
-     * however compact flags like -abcd are split into a vector { a b c d }
-     * which enables to later parse the options without having a special
-     * case for the compact flags
-     */
-    
-    err = vector_init(&args, argc);
-    if (err < 0)
-        goto cleanup1;
+
     
     for (int i = 0; i < argc; ++i) {
-        size_t len = strlen(argv[i]);
-        
-        if (len > 1 && argv[i][0] == '-' && argv[i][1] != '-') {
-            const char *p;
+        if (strlen(argv[i]) < 2 || argv[i][0] != '-') {
+            if (err_msg)
+                asprintf(err_msg, "expected option, got \"%s\"", argv[i]);
             
-            for (p = argv[i] + 1; *p != '\0'; ++p) {
-                char a[] = { *p, '\0' };
-                
-                char *dup = strdupa(a);
-                if (!dup) {
-                    err = -errno;
-                    goto cleanup2;
-                }
-                
-                err = vector_insert_back(&args, dup);
-                if (err < 0)
-                    goto cleanup2;
-            }
-        } else if (len > 1 && argv[i][0] == '-' && argv[i][1] == '-') {
-            err = vector_insert_back(&args, argv[i] + 2);
-            if (err < 0)
-                goto cleanup2;
-        } else {
-            err = vector_insert_back(&args, argv[i]);
-            if (err < 0)
-                goto cleanup2;
+            err = -EINVAL;
+            goto cleanup1;
         }
-    }
-    
-    /* actually do the args parsing */
-    args_size = vector_size(&args);
-    
-    for (unsigned int i = 0; i < args_size; ++i) {
-        char *arg = *vector_at(&args, i);
-        
-        struct program_option *po = map_retrieve(&map, arg);
-        if (po) {
-            err = option_parse(po, &i, &map, &args, err_msg);
-            if (err < 0)
-                goto cleanup2;
-            
-        } else {
-            char *dup = strdup(arg);
-            if (!dup) {
-                err = -errno;
-                goto cleanup2;
-            }
-            
-            err = vector_insert_back(&o->invalid_options, dup);
-            if (err < 0) {
-                free(dup);
-                goto cleanup2;
-            }
-        }
-    }
-    
-    vector_destroy(&args);
-    map_destroy(&map);
-    
-    return 0;
 
-cleanup2:
-    vector_destroy(&args);
+        if (argv[i][0] == '-' && argv[i][1] != '-') {
+            for (char *p = argv[i] + 1; *p != '\0'; ++p) {
+                const char arg[] = { '-', *p, '\0' };
+                
+                err = handle_argument(arg, &map, &i, argv, argc, err_msg);
+                if (err < 0)
+                    goto cleanup1;
+            }
+        } else {
+            err = handle_argument(argv[i], &map, &i, argv, argc, err_msg);
+            if (err < 0)
+                goto cleanup1;
+        }
+    }
+
 cleanup1:
     map_destroy(&map);
     return err;
-}
-
-struct vector *options_invalid_args(struct options *__restrict o)
-{
-    return &o->invalid_options;
-}
-
-void options_help(const struct options *__restrict o,
-                  const char *__restrict description,
-                  int fd)
-{
-    int max_s = 0, max_l = 0, max;
-    
-    if (description)
-        dprintf(fd, "%s\n", description);
-    
-    for (unsigned int i = 0; i < o->po_size; ++i) {
-        int len_s = strlen(o->po[i].cmd_flag_short);
-        int len_l = strlen(o->po[i].cmd_flag_long);
-        
-        if (len_s > max_s)
-            max_s = len_s;
-        
-        if (len_l > max_l)
-            max_l = len_l;
-    }
-    
-    max = max_s + max_l;
-    
-    for (unsigned int i = 0; i < o->po_size; ++i) {
-        const char *p;
-        const char *s = o->po[i].cmd_flag_short;
-        const char *l = o->po[i].cmd_flag_long;
-        const char *d = o->po[i].description;
-        const char *arg = (o->po[i].type != PO_BOOL) ? "arg" : "   ";
-
-        if (*s != '\0' && *l != '\0')
-            dprintf(fd, "  -%-*s [ --%-*s ] %s", max_s, s, max_l, l, arg);
-        else if (*s != '\0')
-            dprintf(fd, "  -%-*s     %s   ", max, s, arg);
-        else if (*l != '\0')
-            dprintf(fd, "  --%-*s    %s   ", max, l, arg);
-        else 
-            continue;
-        
-        if (*d != '\0') {
-            dprintf(fd, "   ");
-            
-            for (p = strchr(d, '\n'); p; d = p + 1, p = strchr(d, '\n')) {
-                int diff = p - d;
-                dprintf(fd, "%.*s\n   %-*s              ", diff, d, max, "   ");
-            }
-            
-            dprintf(fd, "%s\n", d);
-        }
-    }
 }

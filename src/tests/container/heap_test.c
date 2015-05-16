@@ -205,8 +205,8 @@ void test_heap_performance(int *data, unsigned int size)
 {
     struct heap *heap;
     struct clock *c;
-    unsigned int i;
-    int err, last;
+    unsigned int i, last;
+    int err;
     
     heap = heap_new(0, &_int_compare);
     c    = clock_new(CLOCK_PROCESS_CPUTIME_ID);
@@ -278,8 +278,8 @@ void performance_comparison(int argc, char * const argv[])
 void test_functionality(void)
 {
     struct heap *heap;
-    unsigned int i, num_elements;
-    int fd, err, *data, last;
+    unsigned int i, num_elements, last;
+    int fd, err, *data;
 
     
     num_elements = 1000;

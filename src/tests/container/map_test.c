@@ -74,20 +74,20 @@ void map_test_insert_remove(void)
     };
     struct map *map;
     unsigned int num_elements;
-    int i, err;
+    int err;
     
     num_elements = 32;
     
     map = map_new(&map_conf);
     assert(map);
     
-    for (i = 0; i < num_elements; ++i) {
+    for (unsigned int i = 0; i < num_elements; ++i) {
         err = map_insert(map, (void *)(long)i, (void *)(long) i);
         assert(err == 0);
     }
     
-    for (i = 0; i < num_elements - (num_elements >> 1); ++i)
-        assert((int)(long)map_take(map, (void *)(long) i) == i);
+    for (unsigned int i = 0; i < num_elements - (num_elements >> 1); ++i)
+        assert((unsigned int)(long)map_take(map, (void *)(long) i) == i);
     
     inspect_map(map);
     
@@ -107,7 +107,7 @@ void map_test_performance(unsigned int num)
     };
     struct map *map;
     struct clock *c;
-    int i, err;
+    int err;
     
     map = map_new(&map_conf);
     c   = clock_new(CLOCK_PROCESS_CPUTIME_ID);
@@ -116,7 +116,7 @@ void map_test_performance(unsigned int num)
     
     clock_start(c);
     
-    for (i = 0; i < num; ++i) {
+    for (unsigned int i = 0; i < num; ++i) {
         err = map_insert(map, (void *)(long) i, (void *)(long) i);
         assert(err == 0);
     }
@@ -127,8 +127,8 @@ void map_test_performance(unsigned int num)
     
     clock_reset(c);
     
-    for (i = 0; i < num; ++i)
-        assert((int)(long) map_retrieve(map, (void *)(long) i) == i);
+    for (unsigned int i = 0; i < num; ++i)
+        assert((unsigned int)(long) map_retrieve(map, (void *)(long) i) == i);
     
     fprintf(stdout, "Elapsed time for %u lookups: %lu us\n",
             num,
@@ -136,8 +136,8 @@ void map_test_performance(unsigned int num)
     
     clock_reset(c);
     
-    for (i = 0; i < num; ++i)
-        assert((int)(long) map_take(map, (void *)(long) i) == i);
+    for (unsigned int i = 0; i < num; ++i)
+        assert((unsigned int)(long) map_take(map, (void *)(long) i) == i);
     
     fprintf(stdout, "Elapsed time for %u removals: %lu us\n",
             num,
@@ -156,7 +156,7 @@ void map_test_performance(unsigned int num)
     err = map_rehash(map, num);
     assert(err == 0);
     
-    for (i = 0; i < num; ++i) {
+    for (unsigned int i = 0; i < num; ++i) {
         err = map_insert(map, (void *)(long) i, (void *)(long) i);
         assert(err == 0);
     }
@@ -245,17 +245,17 @@ void map_string_test(void)
         .key_hash       = &hash_string,
         .data_delete    = NULL,
     };
-    int err, i;
+    int err;
     
     map = map_new(&map_conf);
     assert(map);
     
-    for (i = 0; i < ARRAY_SIZE(strings); i += 2) {
+    for (unsigned int i = 0; i < ARRAY_SIZE(strings); i += 2) {
         err = map_insert(map, strings[i + 1], strings[i]);
         assert(err == 0);
     }
     
-    for (i = 0; i < ARRAY_SIZE(strings); i += 2)
+    for (unsigned int i = 0; i < ARRAY_SIZE(strings); i += 2)
         fprintf(stdout, "%s ", (char *)map_retrieve(map, strings[i + 1]));
     
     fprintf(stdout, "\n");

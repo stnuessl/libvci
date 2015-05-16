@@ -49,7 +49,7 @@ void test_sort_vector(void)
 {
     struct vector *v;
     int a[] = { 13, 20, -7, 55, 42, 111, 76 };
-    int i;
+    unsigned int i;
     
     v = vector_new(ARRAY_SIZE(a));
     assert(v);
@@ -131,7 +131,7 @@ void test_insert(void)
     
     err = vector_insert_front(vec, (void *) 1000);
     assert(err == 0);
-    err = vector_insert_at(vec, size / 2, (void *)(long) size + 1);
+    err = vector_insert_at(vec, size / 2, (void *)(long) (size + 1));
     assert(err == 0);
     
     size = vector_size(vec);
@@ -142,7 +142,7 @@ void test_insert(void)
 void test_take(void)
 {
     struct vector *vec;
-    int size = 10, i;
+    unsigned int size = 10, i;
     
     vec = vector_new(size);
     assert(vec);
@@ -206,14 +206,14 @@ void test_sorted(void)
 void test_sorted_simple(void)
 {
     struct vector *v;
-    int i, **p, err, a[] = { 0, -1, 8, 5, 1, 2, 9, 3 ,6 ,4 ,7 };
+    int **p, err, a[] = { 0, -1, 8, 5, 1, 2, 9, 3 ,6 ,4 ,7 };
     
     v = vector_new(0);
     assert(v);
     
     vector_set_data_compare(v, &compare_int);
     
-    for(i = 0; i < ARRAY_SIZE(a); ++i) {
+    for(unsigned int i = 0; i < ARRAY_SIZE(a); ++i) {
         err = vector_insert_sorted(v, (void *)(long) a[i]);
         assert(err == 0);
     }
@@ -238,6 +238,8 @@ void test_sorted_simple(void)
 
 int main(int argc, char *argv[])
 {
+    (void) argc;
+    (void) argv;
     test_sort_vector();
     test_sort_large_vector();
     test_insert();

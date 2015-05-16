@@ -27,51 +27,22 @@
 
 #include <stdbool.h>
 
-#include "map.h"
-#include "vector.h"
+#define PROGRAM_OPTION_INIT(l, s, n) { (l), (s), NULL, 0, (n), false }
 
-enum value_type {
-    PO_BOOL,
-    PO_STRING,
-    PO_STRING_VEC,
-    PO_INT,
-    PO_INT_VEC,
-    PO_DOUBLE,
-    PO_DOUBLE_VEC,
-};
 
 struct program_option {
     const char *cmd_flag_long;
     const char *cmd_flag_short;
-    enum value_type type;
-    void *val;
-    const char *description;
+    const char **argv;
+    int argc;
+    int accepts;
+    bool passed;
 };
 
-struct options {
-    struct program_option *po;
-    unsigned int po_size;
-    struct vector invalid_options;
-};
-
-int options_init(struct options *__restrict o, 
-                 struct program_option *po, 
-                 unsigned int po_size);
-
-void options_destroy(struct options *__restrict o);
-
-void options_clear(struct options *__restrict o);
-
-int options_parse(struct options *__restrict o,
+int options_parse(struct program_option *__restrict po, 
+                  unsigned int size,
                   char ** const argv, 
-                  int argc,
+                  int argc, 
                   char **err_msg);
-
-struct vector *options_invalid_args(struct options *__restrict o);
-
-void options_help(const struct options *__restrict o,
-                  const char *__restrict description,
-                  int fd);
-
 
 #endif /* _OPTIONS_H_ */

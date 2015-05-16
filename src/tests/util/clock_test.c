@@ -40,6 +40,9 @@ int main(int argc, char *argv[])
     struct clock c;
     int loops, err;
     
+    (void) argc;
+    (void) argv;
+    
     err = clock_init(&c, CLOCK_MONOTONIC);
     if(err < 0) {
         fprintf(stderr, "%s\n", strerror(-err));

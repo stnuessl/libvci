@@ -79,6 +79,10 @@ void list_test_usage(void)
 
 int main(int argc, char *argv[])
 {
+    
+    (void) argc;
+    (void) argv;
+    
     struct link list, *link, *tmp;
     struct data a = {
         .a = 10

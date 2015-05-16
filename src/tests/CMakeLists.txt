@@ -3,10 +3,14 @@ cmake_minimum_required(VERSION 2.6)
 # project name
 project(libvci_tests C)
 
+add_definitions(-D_GNU_SOURCE)
 add_definitions(-Wall)
+add_definitions(-Wextra)
+add_definitions(-Wpedantic)
 add_definitions(-O2)
 #add_definitions(-g3)
 
+set(CMAKE_C_FLAGS "-std=c99")
 set(LIBS vci)
 set(CMAKE_LIBRARY_PATH /usr/local/lib)
 

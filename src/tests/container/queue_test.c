@@ -46,14 +46,13 @@ void test_functionality(void)
 #define QUEUE_SIZE 10
     struct queue *q;
     struct data data[QUEUE_SIZE], *tmp;
-    int i;
     
     q = queue_new();
     assert(q);
     
     init_data(data, ARRAY_SIZE(data));
     
-    for(i = 0; i < ARRAY_SIZE(data); ++i)
+    for(unsigned int i = 0; i < ARRAY_SIZE(data); ++i)
         queue_insert(q, &data[i].link);
     
     while(!queue_empty(q)) {
@@ -76,8 +75,6 @@ void test_performance(void)
     struct clock *c;
     struct queue *q;
 
-    int i;
-
     c = clock_new(CLOCK_PROCESS_CPUTIME_ID);
     q = queue_new();
     assert(c);
@@ -85,7 +82,7 @@ void test_performance(void)
     
     clock_start(c);
     
-    for(i = 0; i < QUEUE_SIZE; ++i)
+    for(int i = 0; i < QUEUE_SIZE; ++i)
         queue_insert(q, &data[i].link);
     
     while(!queue_empty(q))
@@ -101,6 +98,9 @@ void test_performance(void)
 
 int main(int argc, char *argv[])
 {
+    (void) argc;
+    (void) argv;
+    
     test_functionality();
     test_performance();
     
