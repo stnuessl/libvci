@@ -71,14 +71,10 @@ static char *parser_read_key(struct config_parser *__restrict parser)
                 *parser->p = '\0';
                 return start;
             default:
-                if(!isalnum(c))
-                    goto out;
-                
                 break;
         }
     }
     
-out:
     errno = EINVAL;
     return NULL;
 }
@@ -168,22 +164,22 @@ int config_parser_parse(struct config_parser *__restrict parser)
     
     key = NULL;
     
-    for(parser->p = parser->fstart; parser->p < parser->fend; ++parser->p) {
+    for (parser->p = parser->fstart; parser->p < parser->fend; ++parser->p) {
         c = *parser->p;
         
-        if(isspace(c))
+        if (isspace(c))
             continue;
         
-        if(c == '#' || c == ';') {
+        if (c == '#' || c == ';') {
             parser_skip_line(parser);
             
-        } else if(isalnum(c) && !key) {
+        } else if (!key) {
             key = parser_read_key(parser);
                 
             if(!key)
                 return -errno;
             
-        } else if(isgraph(c) && key) {
+        } else {
             val = parser_read_value(parser);
             if(!val)
                 return -errno;
@@ -197,8 +193,6 @@ int config_parser_parse(struct config_parser *__restrict parser)
                 handle->func(key, val, handle->arg);
             
             key = NULL;
-        } else {
-            return -EINVAL;
         }
     }
     
