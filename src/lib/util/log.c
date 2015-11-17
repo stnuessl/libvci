@@ -309,8 +309,8 @@ void log_clear(struct log *__restrict l)
 void log_print(struct log *__restrict l, int fd)
 {
     static __thread char buf[BUFFER_SIZE];
-    ssize_t n; 
-    
+    ssize_t n, m; 
+        
     rewind(l->file);
     
     while(1) {
@@ -326,7 +326,7 @@ void log_print(struct log *__restrict l, int fd)
             break;
         
         do {
-            n = write(fd, buf, BUFFER_SIZE);
-        } while (n < 0 && errno == EINTR);
+            m = write(fd, buf, n);
+        } while (m < 0 && errno == EINTR);
     }
 }
