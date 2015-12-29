@@ -77,6 +77,8 @@ int log_level(const struct log *__restrict l);
 void log_append(struct log *__restrict l, const char *fmt, ...)
                                             __attribute__((format(printf,2,3)));
 
+void log_vappend(struct log *__restrict l, const char *fmt, va_list vargs);
+
 void log_printf(struct log *__restrict l, 
                 uint8_t level,
                 const char *__restrict tag,

@@ -225,6 +225,11 @@ void log_append(struct log *__restrict l, const char *fmt, ...)
     va_end(vargs);
 }
 
+void log_vappend(struct log *__restrict l, const char *fmt, va_list vargs)
+{
+    vfprintf(l->file, fmt, vargs);
+}
+
 void log_printf(struct log *__restrict l, 
                uint8_t level,
                const char *__restrict tag,
