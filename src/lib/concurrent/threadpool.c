@@ -372,7 +372,7 @@ out:
 int threadpool_remove_thread(struct threadpool *__restrict pool)
 {
     struct exit_task *task;
-    
+    int err;
     /* 
      * this approach is quite neat since the first thread to take this
      * task (and therefore was idling) exits.
@@ -386,7 +386,11 @@ int threadpool_remove_thread(struct threadpool *__restrict pool)
     
     task->pool = pool;
     
-    return threadpool_add_task(pool, &task->task);
+    err = threadpool_add_task(pool, &task->task);
+    if (err < 0)
+        free(task);
+    
+    return err;
 }
 
 int threadpool_add_task(struct threadpool *__restrict pool, 
@@ -405,7 +409,7 @@ int threadpool_add_task(struct threadpool *__restrict pool,
     queue_insert(&pool->task_queue_in, &task->link);
     pthread_mutex_unlock(&pool->mutex_queue_in);
     
-    return err;
+    return 0;
 }
 
 struct threadpool_task *
